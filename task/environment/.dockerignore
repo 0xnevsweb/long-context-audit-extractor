@@ -1,0 +1,14 @@
+.git
+.gitignore
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+**/node_modules/
+.env
+.env.*
+solution/
+tests/
+scripts/
+Dockerfile
+.dockerignore
+requirements.in

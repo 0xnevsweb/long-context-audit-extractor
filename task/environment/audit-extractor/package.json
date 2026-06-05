@@ -1,0 +1,13 @@
+{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
