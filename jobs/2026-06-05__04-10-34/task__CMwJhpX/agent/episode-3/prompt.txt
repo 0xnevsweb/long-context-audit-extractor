@@ -1,0 +1,116 @@
+New Terminal Output:
+
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@379c90bd96b9:/app#

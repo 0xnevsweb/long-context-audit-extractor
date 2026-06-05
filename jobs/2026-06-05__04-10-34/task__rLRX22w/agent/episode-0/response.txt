@@ -1,0 +1,51 @@
+{
+  "analysis": "We are at a root shell in /app with no commands run yet. The task is to fix the Node-based FY24 audit extractor at /app/audit-extractor so extraction is deterministic across reruns, correctly applies compliance holds including later mail, and applies correction notices to the correct ledger rows, per the handbook at the top of /app/data/audit_archive.md. Also, CLI must require --input and --outdir (stderr + exit 1 on missing). Next we need to inspect the archive spec, inspect current extractor source, reproduce current behavior, then implement policy and rerun the CLI to /app/output.",
+  "plan": "1) Inspect the audit handbook/spec in /app/data/audit_archive.md, especially the reconciliation/exception policy section. 2) Inspect /app/audit-extractor source tree and current parsing/reconciliation logic, plus CLI arg handling. 3) Run the extractor once to observe current output and identify nondeterminism/misapplied holds/corrections. 4) Implement deterministic ordering (stable sorts), correct state machine for compliance holds and later emails, and precise mapping of correction notices to ledger rows (likely by transaction id/date/amount). 5) Ensure missing args cause stderr message + exit(1). 6) Run the required command with the grader paths to /app/output and verify output is stable across two runs (diff).",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Reconciliation and Exception Policy\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"^## Reconciliation and Exception Policy\" -n /app/data/audit_archive.md && awk 'BEGIN{p=0} /^## Reconciliation and Exception Policy/{p=1} p{print} /^## / && p && NR>1{exit}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"extract\" /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src && rg -n \"hold|compliance|correction|reconcil|ledger|status|drift\" /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "find /tmp/audit_out_1 -maxdepth 2 -type f -print -exec sed -n '1,200p' {} \\;\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

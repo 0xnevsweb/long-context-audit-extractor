@@ -1,0 +1,39 @@
+{
+  "analysis": "The handbook in audit_archive.md defines strict reconciliation rules, but current code violates many: it locates sections via indexOf (explicitly forbidden), ledger parser keeps the first occurrence of a transaction_id (should take last non-provisional), ignores provisional flag, emails parser ignores sent: and compliance@ qualification/precedence rules, corrections parser uses indexOf section slicing and doesn’t resolve multiple notices by field with lexicographically greatest effective date, reconcile.js sets report.previous_value to empty and applies notices in input order, doesn’t implement owner amendments, status precedence rules, effective_date logic, exception_reason rules, or output formatting constraints (amount precision, exception join order, report sorting). Need to rewrite section parsing anchored to heading lines, implement proper reconciliation pipeline per handbook, and ensure writers match required JSON shapes and ordering.",
+  "plan": "1) Inspect remaining parsers (policy exceptions, meetings amendments, sections) and writers to see current expectations and what needs changing. 2) Implement robust section extraction in parser/sections.js using regex anchored to whole heading lines (## / ####) to get exactly the intended sections; ensure only exact '## Transaction Ledger' is used and ledger-like decoys ignored. 3) Fix ledger parsing: parse multiple ledger blocks, skip provisional:true blocks, and for duplicate transaction_id keep the last non-provisional in file order. 4) Fix emails parsing: only apply status changes from From containing compliance@; parse optional sent: date; record it for later rule evaluation. 5) Parse meeting amendments: find '#### Amendment for TXN-<uuid>' blocks, only signed:true (case-insensitive); optional effective date must be >= ledger date to apply; these replace owner before corrections. 6) Parse policy exceptions: detect blocks for txn with approved_by: compliance. 7) Implement reconcileTransactions: start from base ledger rows; apply meeting amendments; apply qualifying email status changes with precedence and sent/ledger-date rule; then apply winning correction notices per (txn, field) by max lexicographic effective; compute reconciliation_report.jsonl entries with previous_value at time of application; update effective_date only when winning correction changes status or date (set to notice effective), otherwise keep ledger date. 8) Compute exception_reason per rules with semicolon-joined codes sorted lexically. 9) Ensure outputs: transactions.json/exceptions.json are {\"items\":[...]}; transactions sorted by transaction_id ascending; reconciliation_report.jsonl sorted by notice_id ascending; CSV formatting (2 decimals, blank exception when null). 10) Run extractor to /app/output with grader args.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/utils/sort.js\n@@\n function sortByTransactionId(items) {\n-  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));\n+  return items.sort((a, b) => {\n+    if (a.transaction_id === b.transaction_id) return 0;\n+    return a.transaction_id < b.transaction_id ? -1 : 1;\n+  });\n }\n+\n+function sortByNoticeId(items) {\n+  return items.sort((a, b) => {\n+    if (a.notice_id === b.notice_id) return 0;\n+    return a.notice_id < b.notice_id ? -1 : 1;\n+  });\n+}\n \n-module.exports = { sortByTransactionId };\n+module.exports = { sortByTransactionId, sortByNoticeId };\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

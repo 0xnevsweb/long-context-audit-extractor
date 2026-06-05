@@ -1,0 +1,174 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "8.4.1"
+        },
+        "summary": {
+            "tests": 17,
+            "passed": 16,
+            "failed": 0,
+            "skipped": 1,
+            "pending": 0,
+            "other": 0,
+            "start": 1780658058.0690775,
+            "stop": 1780658059.4347284
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_archive_is_long_context",
+                "status": "passed",
+                "duration": 0.02143469399999276,
+                "start": 1780658058.3092134,
+                "stop": 1780658058.331513,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_cli_requires_arguments",
+                "status": "passed",
+                "duration": 0.2666179099999795,
+                "start": 1780658058.3318517,
+                "stop": 1780658058.5990286,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_files_exist",
+                "status": "passed",
+                "duration": 0.2904799670000102,
+                "start": 1780658058.5999856,
+                "stop": 1780658058.8916028,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_json_schema",
+                "status": "passed",
+                "duration": 0.02197494900002539,
+                "start": 1780658058.8919156,
+                "stop": 1780658058.9146645,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_sorted",
+                "status": "passed",
+                "duration": 0.0025338250000004336,
+                "start": 1780658058.9150262,
+                "stop": 1780658058.9182632,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_csv_matches_json",
+                "status": "passed",
+                "duration": 0.006332879000012781,
+                "start": 1780658058.9185312,
+                "stop": 1780658058.925555,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_exceptions_json_only_flagged",
+                "status": "passed",
+                "duration": 0.002737429999967844,
+                "start": 1780658058.9258442,
+                "stop": 1780658058.929341,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_reconciliation_report",
+                "status": "passed",
+                "duration": 0.0023042899999836663,
+                "start": 1780658058.9296346,
+                "stop": 1780658058.9324265,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_duplicate_ledger_last_wins",
+                "status": "passed",
+                "duration": 0.0049903479999784395,
+                "start": 1780658058.9326882,
+                "stop": 1780658058.9382925,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_ignores_decoy_ledger_section",
+                "status": "passed",
+                "duration": 0.002315082999984952,
+                "start": 1780658058.9386792,
+                "stop": 1780658058.9415255,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_requires_sent_line",
+                "status": "passed",
+                "duration": 0.01299923999999919,
+                "start": 1780658058.9417539,
+                "stop": 1780658058.9554827,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_retroactive_review_on_status_correction",
+                "status": "skipped",
+                "duration": 0.00279202200005102,
+                "start": 1780658058.955741,
+                "stop": 1780658058.9592023,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "('/tests/test_outputs.py', 471, 'Skipped: no retroactive_review rows in fixture')"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_without_sent_applies_status",
+                "status": "passed",
+                "duration": 0.037361191000002236,
+                "start": 1780658058.9594479,
+                "stop": 1780658059.0013654,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_sent_date_gate",
+                "status": "passed",
+                "duration": 0.021769869000024755,
+                "start": 1780658059.001679,
+                "stop": 1780658059.0244396,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_deterministic_rerun",
+                "status": "passed",
+                "duration": 0.27621239500001593,
+                "start": 1780658059.0247478,
+                "stop": 1780658059.307133,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_correction_effective_date_from_handbook",
+                "status": "passed",
+                "duration": 0.034539693999988685,
+                "start": 1780658059.3074813,
+                "stop": 1780658059.344807,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_meeting_signed_owner_override",
+                "status": "passed",
+                "duration": 0.014038683000023866,
+                "start": 1780658059.3453,
+                "stop": 1780658059.4326885,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

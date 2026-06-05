@@ -1,0 +1,252 @@
+New Terminal Output:
+
+root@379c90bd96b9:/app# grep -n "^## Reconciliation and Exception Policy" -n /app/data/audit_archive.md
+5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+root@379c90bd96b9:/app# grep -n "^## " /app/data/audit_archive.md | head -n 50
+5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+63:## Meeting Notes
+2084:## Supplemental Policy Clarifications (FY24 Addendum)
+2091:## Email Excerpts
+5316:## Policy Exceptions
+5333:## Correction Notices
+5365:## Transaction Ledger (working copy)
+5373:## Transaction Ledger
+root@379c90bd96b9:/app# policy_start=$(grep -n "^## Reconciliation and Exception Policy" /app/data/audit_archive.md | cut -d: -f1); next_h2=$(grep -n "^## " /ap
+p/data/audit_archive.md | awk -F: -v s="$policy_start" '$1>s{print $1; exit}'); echo "policy_start=$policy_start next_h2=$next_h2"; sed -n "${policy_start},$((n
+ext_h2-1))p" /app/data/audit_archive.md
+policy_start=5 next_h2=63
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+root@379c90bd96b9:/app# sed -n '1,220p' /app/audit-extractor/src/lib/handbook.js
+const fs = require("node:fs");
+const path = require("node:path");
+
+function loadDefaults() {
+  const file = path.join(__dirname, "..", "..", "config", "defaults.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+module.exports = { loadDefaults };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId
+[... output limited to 10000 bytes; 69 interior bytes omitted ...]
+on_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@379c90bd96b9:/app# sed -n '1,220p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@379c90bd96b9:/app#

@@ -1,6 +1,0 @@
-{
-  "analysis": "All required outputs are being generated and pass local sanity checks: transactions.json/exceptions.json use {\"items\": [...]}, transactions.csv has the correct header and order, reconciliation_report.jsonl contains one object per winning correction notice and is sorted by notice_id, and the correction notice field mapping (date->effective_date) now produces correct previous_value/new_value. The CLI already exits 1 with stderr when missing args. No further changes appear necessary.",
-  "plan": "Mark the task as complete for grading.",
-  "commands": [],
-  "task_complete": true
-}

@@ -1,0 +1,35 @@
+{
+  "analysis": "Current implementation violates the handbook in multiple places: it uses indexOf to locate sections (explicitly forbidden, and will match decoys), ledger parser keeps first occurrence per id instead of last non-provisional block, doesn’t ignore provisional blocks, doesn’t restrict to exact heading line for ## Transaction Ledger. Emails parser ignores sent: and doesn’t enforce compliance@ From qualification during reconcile. Reconcile applies emails blindly and doesn’t enforce status precedence or sent>=ledger date. Corrections parser uses indexOf boundaries and will stop at first ## Transaction Ledger (could be working copy), doesn’t implement per-field lexicographically greatest effective date winner, and reconcile applies all notices in order without previous_value calculation and without sorting report by notice_id. effective_date logic isn’t implemented (uses row.date always). exceptions.js doesn’t implement any exception policy. sort comparator is unstable for equals and doesn’t return 0, can cause drift. Need to rework parsers to use regex anchored headings, implement correct ledger selection, deterministic ordering, apply amendments/emails with rules, apply winning corrections last, compute effective_date and exception_reason per policy, and output artifacts accordingly.",
+  "plan": "1) Inspect remaining code: parsers for sections/meetings/policy exceptions, index.js and writers to see expected output filenames/formats. 2) Implement robust section extraction using regex anchored to heading lines (line start) per handbook; ideally centralize in parser/sections.js and update parsers to use it. 3) Fix ledger parsing: only exact '## Transaction Ledger' heading, parse all ledger blocks, ignore blocks marked provisional: true, and for duplicate transaction ids pick last non-provisional in file order. 4) Fix email parsing and application: capture sent date if present; during reconcile only consider from_addr containing 'compliance@'; apply status change only if sent>=ledger date when sent present; otherwise only if precedence allows relative to current status. 5) Fix meeting amendments: only signed true (case-insensitive), and effective>=ledger date when effective present. 6) Fix corrections: parse all notices under exact Correction Notices section; for each (txn,field) pick lexicographically greatest effective date; apply those winners sorted by notice_id ascending for report generation (but winners determined by effective). Track previous_value from state immediately before applying each winner. If notice modifies status or date, effective_date becomes notice effective; otherwise keep ledger date. 7) Implement exception_reason rules and join multiple reasons sorted lexically. 8) Fix sorting comparator to return 0 on equality for deterministic output. 9) Run extractor with required args writing to /app/output and verify files exist and are stable on rerun.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,187 @@
+New Terminal Output:
+
+root@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown, extractH2Section) {
+>   const section = extractH2Section
+>     ? extractH2Section(markdown, "Transaction Ledger")
+>     : "";
+>   if (!section) return [];
+>
+>   // Ledger blocks are introduced by ### TXN-...
+>   const blocks = section.split(/^###\s+/m).slice(1);
+>
+>   // Keep last non-provisional row in file order for each transaction_id.
+>   const byId = new Map();
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     let provisional = false;
+>     const row = { transaction_id: transactionId };
+>
+>     for (const line of lines.slice(1)) {
+>       const trimmed = line.trim();
+>       if (!trimmed) continue;
+>
+>       if (/^provisional\s*:/i.test(trimmed)) {
+>         const v = trimmed.split(":")[1];
+>         provisional = String(v || "").trim().toLowerCase() === "true";
+>       } else if (/^amount\s*:/i.test(trimmed)) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (/^owner\s*:/i.test(trimmed)) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (/^status\s*:/i.test(trimmed)) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (/^date\s*:/i.test(trimmed)) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (provisional) continue;
+>     byId.set(transactionId, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(markdown, extractH2Section) {
+>   const section = extractH2Section
+>     ? extractH2Section(markdown, "Email Excerpts")
+>     : "";
+>   if (!section) return [];
+>
+>   const emails = [];
+>   const blocks = section.split(/\n\n+/);
+>
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)\b/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)\s*$/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1].trim(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>       sent: sentMatch ? sentMatch[1].trim() : null,
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(markdown, extractH2Section) {
+>   const section = extractH2Section
+>     ? extractH2Section(markdown, "Correction Notices")
+>     : "";
+>   if (!section) return [];
+>
+>   const notices = [];
+>   const blocks = section.split(/^###\s+/m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = (lines[0] || "").trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId, transaction_id: null, field: null, value: null, effective: null };
+>
+>     for (const line of lines.slice(1)) {
+>       const trimmed = line.trim();
+>       if (!trimmed) continue;
+>       if (/^targets\s*:/i.test(trimmed)) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (/^field\s*:/i.test(trimmed)) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (/^value\s*:/i.test(trimmed)) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (/^effective\s*:/i.test(trimmed)) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> function parsePolicyExceptions(markdown, extractH2Section) {
+>   const section = extractH2Section
+>     ? extractH2Section(markdown, "Policy Exceptions")
+>     : "";
+>   if (!section) return [];
+>
+>   const exceptions = [];
+>   const blocks = section.split(/^###\s+/m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     let transaction_id = null;
+>     let approved_by = null;
+>
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (/^transaction\s*:/i.test(trimmed)) {
+>         transaction_id = trimmed.split(":")[1].trim();
+>       } else if (/^approved_by\s*:/i.test(trimmed)) {
+>         approved_by = trimmed.split(":")[1].trim().toLowerCase();
+>       }
+>     }
+>
+>     if (transaction_id) {
+>       exceptions.push({ transaction_id, approved_by });
+>     }
+>   }
+>
+>   return exceptions;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'
+> function parseMeetings(markdown) {
+>   const meetings = [];
+>   const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>
+>   while ((match = re.exec(markdown)) !== null) {
+>     // Grab a reasonable window; amendments are short.
+>     const block = markdown.slice(match.index, match.index + 600);
+>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     meetings.push({
+>       transaction_id: match[1],
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed: signedMatch
+>         ? String(signedMatch[1]).trim().toLowerCase() === "true"
+>         : false,
+>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+>     });
+>   }
+>
+>   return meetings;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@379c90bd96b9:/app# node -c /app/audit-extractor/src/parser/ledger.js && node -c /app/audit-extractor/src/parser/emails.js && node -c /app/audit-extractor/s
+rc/parser/corrections.js && node -c /app/audit-extractor/src/parser/policy.js && node -c /app/audit-extractor/src/parser/meetings.js
+root@379c90bd96b9:/app#

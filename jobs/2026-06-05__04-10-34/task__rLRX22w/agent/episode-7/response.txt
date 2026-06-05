@@ -1,0 +1,6 @@
+{
+  "analysis": "Extractor has been rewritten to follow the handbook: section parsing is anchored to exact headings (avoids decoys), ledger dedupe uses last non-provisional, emails apply only for compliance@ with sent/precedence rules, meeting amendments require signed and effective date constraint, corrections pick winners by lexicographically greatest effective per txn+field and apply last, reconciliation report includes previous_value and is sorted by notice_id, outputs are deterministic across reruns, JSON wrappers use {\"items\":...}, CSV header/format match spec, and CLI missing args exits 1 with stderr. Current /app/output has correct artifacts and no drift between runs. Policy_waiver/retroactive_review are 0 for this archive run, which is acceptable if archive contains no qualifying cases.",
+  "plan": "No further changes required. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

@@ -1,0 +1,35 @@
+{
+  "analysis": "Found multiple handbook violations in current code: (1) Uses indexOf slicing for sections (ledger/emails/policy), explicitly disallowed and causes decoy headings to be matched; must use regex anchored to whole heading lines. (2) Ledger parser incorrectly dedupes by first seen id; handbook says last non-provisional block in file order wins. Also must ignore any ledger-like sections except exact heading '## Transaction Ledger' and ignore provisional:true blocks. (3) Emails parser ignores sent: date and compliance@ qualification rules; also uses indexOf boundaries. (4) Meetings amendments ignore effective: date and do not require signed true case-insensitively already ok but missing effective constraint. (5) Policy exception parser returns just ids; handbook requires approved_by: compliance and ties into policy_waiver rule. (6) Corrections parser exists but we didn’t view fully; reconciliation needs “lexicographically greatest effective date per txn+field wins”, and report needs previous_value at time of application, sorted by notice_id ascending. (7) sortByTransactionId comparator is unstable for equality and mutates input; also need stable deterministic ordering everywhere. (8) CLI missing-args test used '|| true' causing exit=0; but CLI itself looks correct (exit 1). Need to re-test without masking. Next: open remaining source files (normalize/reconcile, exceptions, writers, corrections parser) and then implement full handbook logic.",
+  "plan": "1) View remaining sources: normalize/reconcile.js, normalize/exceptions.js, output writers, parser/corrections.js, lib/handbook.js to see existing structure. 2) Fix CLI test and if needed adjust CLI to ensure exit codes correct. 3) Rewrite parser/sections.js and individual parsers to locate sections using anchored heading regex and extract only the intended sections. 4) Implement correct parsing for: ledger blocks (handle multiple blocks, provisional true), emails (from, sent, status, txn ref), meetings amendments (signed, owner, effective), policy exceptions (transaction + approved_by), corrections (notice_id, txn, field, new_value, effective). 5) Rewrite normalize/reconcile.js to follow the exact precedence and effective_date rules, and produce reconciliation report entries for winning notices with correct previous_value/new_value/effective. 6) Rewrite normalize/exceptions.js to compute exception_reason per rules and lexical order join. 7) Ensure output JSON shapes ({\"items\": [...]}) and sorting requirements. 8) Run extractor twice and diff, then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract 2>/tmp/cli_noargs.err; echo \"exit=$?\"; cat /tmp/cli_noargs.err\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

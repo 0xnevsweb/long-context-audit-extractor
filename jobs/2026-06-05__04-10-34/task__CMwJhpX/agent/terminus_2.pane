@@ -1,0 +1,1325 @@
+[?2004hroot@379c90bd96b9:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@379c90bd96b9:/app# clear
+[?2004l[H[J[3J[?2004hroot@379c90bd96b9:/app# ls -la /app
+[?2004ltotal 16
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:10 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+[?2004hroot@379c90bd96b9:/app# ls -la /app/audit-extractor
+[?2004ltotal 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+[?2004hroot@379c90bd96b9:/app# find /app/audit-extractor/src -maxdepth 3 -type f -print
+[?2004l/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+[?2004hroot@379c90bd96b9:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+[?2004l#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+[?2004hroot@379c90bd96b9:/app# node /app/audit-extractor/src/cli.js --help
+[?2004lusage: node src/cli.js extract --input <path> --outdir <dir>
+[?2004hroot@379c90bd96b9:/app# sed -n '1,200p' /app/data/audit_archive.md
+[?2004l# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+## Meeting Notes
+
+[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0033: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0034: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0035: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0036: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+
+[?2004hroot@379c90bd96b9:/app# rg -n "Reconciliation and Exception Policy" /app/data/audit_archive.md
+[?2004lbash: rg: command not found
+[?2004hroot@379c90bd96b9:/app# rg -n "^## " /app/data/audit_archive.md | head
+[?2004lbash: rg: command not found
+[?2004hroot@379c90bd96b9:/app# grep -n "^## Reconciliation and Exception Policy" -n /app/data/audit_archive.md
+[?2004l5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+[?2004hroot@379c90bd96b9:/app# grep -n "^## " /app/data/audit_archive.md | head -n 50
+[?2004l5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+63:## Meeting Notes
+2084:## Supplemental Policy Clarifications (FY24 Addendum)
+2091:## Email Excerpts
+5316:## Policy Exceptions
+5333:## Correction Notices
+5365:## Transaction Ledger (working copy)
+5373:## Transaction Ledger
+[?2004hroot@379c90bd96b9:/app# policy_start=$(grep -n "^## Reconciliation and Exception Policy" /app/data/audit_archive.md | cut -d: -f1); next_h2=$(grep -n "^## " /app/data/audit_archive.md | awk -F: -v s="$policy_start" '$1>s{print $1; exit}'); echo "policy_start=$policy_start next_h2=$next_h2"; sed -n "${policy_start},$((next_h2-1))p" /app/data/audit_archive.md
+[?2004lpolicy_start=5 next_h2=63
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+[?2004hroot@379c90bd96b9:/app# sed -n '1,220p' /app/audit-extractor/src/lib/handbook.js
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+
+function loadDefaults() {
+  const file = path.join(__dirname, "..", "..", "config", "defaults.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+module.exports = { loadDefaults };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+[?2004lconst { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+[?2004lfunction buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js
+[?2004lfunction parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+[?2004lfunction parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+[?2004lfunction parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,220p' /app/audit-extractor/src/utils/sort.js
+[?2004lfunction sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+[?2004lconst { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+[?2004lfunction parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+[?2004lfunction parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/schema/validate.js
+[?2004lfunction validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+[?2004hroot@379c90bd96b9:/app# sed -n '1,260p' /app/audit-extractor/src/utils/date.js
+[?2004lfunction isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+module.exports = { isIsoDate };
+[?2004hroot@379c90bd96b9:/app# apply_patch<<'PATCH'
+[?2004l[?2004h> *** Begin Patch
+[?2004l[?2004h> *** Update File: /app/audit-extractor/src/utils/sort.js
+[?2004l[?2004h> @@
+[?2004l[?2004h>  function sortByTransactionId(items) {
+[?2004l[?2004h> -  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+[?2004l[?2004h> +  return items.sort((a, b) => {
+[?2004l[?2004h> +    if (a.transaction_id < b.transaction_id) return -1;
+[?2004l[?2004h> +    if (a.transaction_id > b.transaction_id) return 1;
+[?2004l[?2004h> +    return 0;
+[?2004l[?2004h> +  });
+[?2004l[?2004h>  }
+[?2004l[?2004h> *** End Patch
+[?2004l[?2004h> PATCH
+[?2004lbash: apply_patch: command not found
+[?2004hroot@379c90bd96b9:/app# apply_patch<<'PATCH'
+[?2004l[?2004h> *** Begin Patch
+[?2004l[?2004h> *** Delete File: /app/audit-extractor/src/parser/sections.js
+[?2004l[?2004h> *** End Patch
+[?2004l[?2004h> PATCH
+[?2004lbash: apply_patch: command not found
+[?2004hroot@379c90bd96b9:/app# apply_patch<<'PATCH'
+[?2004l[?2004h> *** Begin Patch
+[?2004l[?2004h> *** Add File: /app/audit-extractor/src/parser/sections.js
+[?2004l[?2004h> +const { parseLedger } = require("./ledger");
+[?2004l[?2004h> +const { parseMeetings } = require("./meetings");
+[?2004l[?2004h> +const { parseEmails } = require("./emails");
+[?2004l[?2004h> +const { parseCorrections } = require("./corrections");
+[?2004l[?2004h> +const { parsePolicyExceptions } = require("./policy");
+[?2004l[?2004h> +
+[?2004l[?2004h> +// Extract a markdown section by an exact H2 heading line.
+[?2004l[?2004h> +// Must be anchored at start of line to avoid decoy mentions in prose.
+[?2004l[?2004h> +function extractH2Section(markdown, headingText) {
+[?2004l[?2004h> +  const startRe = new RegExp(`^## ${headingText}\\s*$`, "m");
+[?2004l[?2004h> +  const startMatch = markdown.match(startRe);
+[?2004l[?2004h> +  if (!startMatch || startMatch.index == null) return "";
+[?2004l[?2004h> +
+[?2004l[?2004h> +  const startIdx = startMatch.index;
+[?2004l[?2004h> +  const afterStart = markdown.slice(startIdx);
+[?2004l[?2004h> +
+[?2004l[?2004h> +  // Find next H2 after this section.
+[?2004l[?2004h> +  const nextRe = /^##\s+/m;
+[?2004l[?2004h> +  const nextMatch = afterStart.slice(startMatch[0].length).match(nextRe);
+[?2004l[?2004h> +  if (!nextMatch || nextMatch.index == null) {
+[?2004l[?2004h> +    return afterStart;
+[?2004l[?2004h> +  }
+[?2004l[?2004h> +  const endIdx = startMatch[0].length + nextMatch.index;
+[?2004l[?2004h> +  return afterStart.slice(0, endIdx);
+[?2004l[?2004h> +}
+[?2004l[?2004h> +
+[?2004l[?2004h> +function parseArchive(markdown) {
+[?2004l[?2004h> +  return {
+[?2004l[?2004h> +    ledger: parseLedger(markdown, extractH2Section),
+[?2004l[?2004h> +    meetings: parseMeetings(markdown),
+[?2004l[?2004h> +    emails: parseEmails(markdown, extractH2Section),
+[?2004l[?2004h> +    corrections: parseCorrections(markdown, extractH2Section),
+[?2004l[?2004h> +    policyExceptions: parsePolicyExceptions(markdown, extractH2Section),
+[?2004l[?2004h> +  };
+[?2004l[?2004h> +}
+[?2004l[?2004h> +
+[?2004l[?2004h> +module.exports = { parseArchive, extractH2Section };
+[?2004l[?2004h> +
+[?2004l[?2004h> *** End Patch
+[?2004l[?2004h> PATCH
+[?2004lbash: apply_patch: command not found
+[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+[?2004l[?2004h> function sortByTransactionId(items) {
+[?2004l[?2004h>   return items.sort((a, b) => {
+[?2004l[?2004h>     if (a.transaction_id < b.transaction_id) return -1;
+[?2004l[?2004h>     if (a.transaction_id > b.transaction_id) return 1;
+[?2004l[?2004h>     return 0;
+[?2004l[?2004h>   });
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { sortByTransactionId };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+[?2004l[?2004h> const { parseLedger } = require("./ledger");
+[?2004l[?2004h> const { parseMeetings } = require("./meetings");
+[?2004l[?2004h> const { parseEmails } = require("./emails");
+[?2004l[?2004h> const { parseCorrections } = require("./corrections");
+[?2004l[?2004h> const { parsePolicyExceptions } = require("./policy");
+[?2004l[?2004h> 
+[?2004l[?2004h> // Extract a markdown section by an exact H2 heading line.
+[?2004l[?2004h> // Must be anchored at start of line to avoid decoy mentions in prose.
+[?2004l[?2004h> function extractH2Section(markdown, headingText) {
+[?2004l[?2004h>   const startRe = new RegExp(`^## ${headingText}\\s*$`, "m");
+[?2004l[?2004h>   const startMatch = markdown.match(startRe);
+[?2004l[?2004h>   if (!startMatch || startMatch.index == null) return "";
+[?2004l[?2004h> 
+[?2004l[?2004h>   const startIdx = startMatch.index;
+[?2004l[?2004h>   const afterStart = markdown.slice(startIdx);
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Find next H2 after this section (excluding the first line itself).
+[?2004l[?2004h>   const rest = afterStart.slice(startMatch[0].length);
+[?2004l[?2004h>   const nextMatch = rest.match(/^##\s+/m);
+[?2004l[?2004h>   if (!nextMatch || nextMatch.index == null) return afterStart;
+[?2004l[?2004h> 
+[?2004l[?2004h>   const endIdx = startMatch[0].length + nextMatch.index;
+[?2004l[?2004h>   return afterStart.slice(0, endIdx);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function parseArchive(markdown) {
+[?2004l[?2004h>   return {
+[?2004l[?2004h>     ledger: parseLedger(markdown, extractH2Section),
+[?2004l[?2004h>     meetings: parseMeetings(markdown),
+[?2004l[?2004h>     emails: parseEmails(markdown, extractH2Section),
+[?2004l[?2004h>     corrections: parseCorrections(markdown, extractH2Section),
+[?2004l[?2004h>     policyExceptions: parsePolicyExceptions(markdown, extractH2Section),
+[?2004l[?2004h>   };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseArchive, extractH2Section };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# node -c /app/audit-extractor/src/parser/sections.js
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+[?2004l[?2004h> function parseLedger(markdown, extractH2Section) {
+[?2004l[?2004h>   const section = extractH2Section
+[?2004l[?2004h>     ? extractH2Section(markdown, "Transaction Ledger")
+[?2004l[?2004h>     : "";
+[?2004l[?2004h>   if (!section) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Ledger blocks are introduced by ### TXN-...
+[?2004l[?2004h>   const blocks = section.split(/^###\s+/m).slice(1);
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Keep last non-provisional row in file order for each transaction_id.
+[?2004l[?2004h>   const byId = new Map();
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const lines = block.split("\n");
+[?2004l[?2004h>     const transactionId = (lines[0] || "").trim();
+[?2004l[?2004h>     if (!transactionId.startsWith("TXN-")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     let provisional = false;
+[?2004l[?2004h>     const row = { transaction_id: transactionId };
+[?2004l[?2004h> 
+[?2004l[?2004h>     for (const line of lines.slice(1)) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (!trimmed) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>       if (/^provisional\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         const v = trimmed.split(":")[1];
+[?2004l[?2004h>         provisional = String(v || "").trim().toLowerCase() === "true";
+[?2004l[?2004h>       } else if (/^amount\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         row.amount = Number(trimmed.split(":")[1].trim());
+[?2004l[?2004h>       } else if (/^owner\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         row.owner = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^status\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         row.status = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^date\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         row.date = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (provisional) continue;
+[?2004l[?2004h>     byId.set(transactionId, row);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return [...byId.values()];
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseLedger };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+[?2004l[?2004h> function parseEmails(markdown, extractH2Section) {
+[?2004l[?2004h>   const section = extractH2Section
+[?2004l[?2004h>     ? extractH2Section(markdown, "Email Excerpts")
+[?2004l[?2004h>     : "";
+[?2004l[?2004h>   if (!section) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const emails = [];
+[?2004l[?2004h>   const blocks = section.split(/\n\n+/);
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+[?2004l[?2004h>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)\b/im);
+[?2004l[?2004h>     const statusMatch = block.match(/^status:\s*(\w+)\s*$/im);
+[?2004l[?2004h>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     emails.push({
+[?2004l[?2004h>       from_addr: fromMatch[1].trim(),
+[?2004l[?2004h>       transaction_id: subjectMatch[1].trim(),
+[?2004l[?2004h>       status: statusMatch[1].trim().toLowerCase(),
+[?2004l[?2004h>       sent: sentMatch ? sentMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return emails;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseEmails };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+[?2004l[?2004h> function parseCorrections(markdown, extractH2Section) {
+[?2004l[?2004h>   const section = extractH2Section
+[?2004l[?2004h>     ? extractH2Section(markdown, "Correction Notices")
+[?2004l[?2004h>     : "";
+[?2004l[?2004h>   if (!section) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const notices = [];
+[?2004l[?2004h>   const blocks = section.split(/^###\s+/m).slice(1);
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const lines = block.split("\n");
+[?2004l[?2004h>     const noticeId = (lines[0] || "").trim();
+[?2004l[?2004h>     if (!noticeId.startsWith("CORR-")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const entry = { notice_id: noticeId, transaction_id: null, field: null, value: null, effective: null };
+[?2004l[?2004h> 
+[?2004l[?2004h>     for (const line of lines.slice(1)) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (!trimmed) continue;
+[?2004l[?2004h>       if (/^targets\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         entry.transaction_id = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^field\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         entry.field = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^value\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         entry.value = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^effective\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         entry.effective = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {
+[?2004l[?2004h>       notices.push(entry);
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return notices;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseCorrections };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+[?2004l[?2004h> function parsePolicyExceptions(markdown, extractH2Section) {
+[?2004l[?2004h>   const section = extractH2Section
+[?2004l[?2004h>     ? extractH2Section(markdown, "Policy Exceptions")
+[?2004l[?2004h>     : "";
+[?2004l[?2004h>   if (!section) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const exceptions = [];
+[?2004l[?2004h>   const blocks = section.split(/^###\s+/m).slice(1);
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const lines = block.split("\n");
+[?2004l[?2004h>     let transaction_id = null;
+[?2004l[?2004h>     let approved_by = null;
+[?2004l[?2004h> 
+[?2004l[?2004h>     for (const line of lines) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (/^transaction\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         transaction_id = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (/^approved_by\s*:/i.test(trimmed)) {
+[?2004l[?2004h>         approved_by = trimmed.split(":")[1].trim().toLowerCase();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (transaction_id) {
+[?2004l[?2004h>       exceptions.push({ transaction_id, approved_by });
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return exceptions;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parsePolicyExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'
+[?2004l[?2004h> function parseMeetings(markdown) {
+[?2004l[?2004h>   const meetings = [];
+[?2004l[?2004h>   const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+[?2004l[?2004h>   let match;
+[?2004l[?2004h> 
+[?2004l[?2004h>   while ((match = re.exec(markdown)) !== null) {
+[?2004l[?2004h>     // Grab a reasonable window; amendments are short.
+[?2004l[?2004h>     const block = markdown.slice(match.index, match.index + 600);
+[?2004l[?2004h>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+[?2004l[?2004h>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+[?2004l[?2004h>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+[?2004l[?2004h> 
+[?2004l[?2004h>     meetings.push({
+[?2004l[?2004h>       transaction_id: match[1],
+[?2004l[?2004h>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+[?2004l[?2004h>       signed: signedMatch
+[?2004l[?2004h>         ? String(signedMatch[1]).trim().toLowerCase() === "true"
+[?2004l[?2004h>         : false,
+[?2004l[?2004h>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return meetings;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseMeetings };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# node -c /app/audit-extractor/src/parser/ledger.js && node -c /app/audit-extractor/src/parser/emails.js && node -c /app/audit-extractor/src/parser/corrections.js && node -c /app/audit-extractor/src/parser/policy.js && node -c /app/audit-extractor/src/parser/meetings.js
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'
+[?2004l[?2004h> const { sortByTransactionId } = require("../utils/sort");
+[?2004l[?2004h> 
+[?2004l[?2004h> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+[?2004l[?2004h> 
+[?2004l[?2004h> function canPromoteStatus(current, incoming) {
+[?2004l[?2004h>   const c = STATUS_ORDER[String(current || "").toLowerCase()] ?? -1;
+[?2004l[?2004h>   const n = STATUS_ORDER[String(incoming || "").toLowerCase()] ?? -1;
+[?2004l[?2004h>   return n >= c;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function reconcileTransactions(parsed) {
+[?2004l[?2004h>   const byId = new Map();
+[?2004l[?2004h>   for (const row of parsed.ledger || []) {
+[?2004l[?2004h>     byId.set(row.transaction_id, {
+[?2004l[?2004h>       transaction_id: row.transaction_id,
+[?2004l[?2004h>       owner: row.owner,
+[?2004l[?2004h>       status: String(row.status || "").toLowerCase(),
+[?2004l[?2004h>       date: row.date,
+[?2004l[?2004h>       amount: Number(row.amount),
+[?2004l[?2004h>       effective_date: row.date,
+[?2004l[?2004h>       _correctionChangedStatusOrDate: false,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Meeting amendments: replace owner only when signed: true, and if effective present, effective >= ledger date.
+[?2004l[?2004h>   for (const amend of parsed.meetings || []) {
+[?2004l[?2004h>     if (!amend || !amend.transaction_id) continue;
+[?2004l[?2004h>     if (!amend.signed) continue;
+[?2004l[?2004h>     const target = byId.get(amend.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h>     if (amend.effective && String(amend.effective) < String(target.date)) continue;
+[?2004l[?2004h>     if (amend.owner) target.owner = amend.owner;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Emails: only compliance@ can change status.
+[?2004l[?2004h>   // If sent present: apply only if sent >= ledger date. If no sent: apply if precedence allows.
+[?2004l[?2004h>   for (const email of parsed.emails || []) {
+[?2004l[?2004h>     const target = byId.get(email.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const from = String(email.from_addr || "").toLowerCase();
+[?2004l[?2004h>     if (!from.includes("compliance@")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const incomingStatus = String(email.status || "").toLowerCase();
+[?2004l[?2004h>     if (email.sent) {
+[?2004l[?2004h>       if (String(email.sent) >= String(target.date)) {
+[?2004l[?2004h>         target.status = incomingStatus;
+[?2004l[?2004h>       }
+[?2004l[?2004h>     } else {
+[?2004l[?2004h>       if (canPromoteStatus(target.status, incomingStatus)) {
+[?2004l[?2004h>         target.status = incomingStatus;
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Corrections: pick winner per (txn,field) by lexicographically greatest effective.
+[?2004l[?2004h>   const winnersByKey = new Map();
+[?2004l[?2004h>   for (const notice of parsed.corrections || []) {
+[?2004l[?2004h>     const key = `${notice.transaction_id}::${notice.field}`;
+[?2004l[?2004h>     const existing = winnersByKey.get(key);
+[?2004l[?2004h>     if (!existing || String(notice.effective) > String(existing.effective)) {
+[?2004l[?2004h>       winnersByKey.set(key, notice);
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   const winners = [...winnersByKey.values()];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Apply winners but generate report sorted by notice_id ascending.
+[?2004l[?2004h>   winners.sort((a, b) => {
+[?2004l[?2004h>     if (a.notice_id < b.notice_id) return -1;
+[?2004l[?2004h>     if (a.notice_id > b.notice_id) return 1;
+[?2004l[?2004h>     return 0;
+[?2004l[?2004h>   });
+[?2004l[?2004h> 
+[?2004l[?2004h>   const report = [];
+[?2004l[?2004h>   for (const notice of winners) {
+[?2004l[?2004h>     const target = byId.get(notice.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     let fieldName = notice.field;
+[?2004l[?2004h>     let prev;
+[?2004l[?2004h>     if (fieldName === "owner") {
+[?2004l[?2004h>       prev = target.owner;
+[?2004l[?2004h>       target.owner = notice.value;
+[?2004l[?2004h>     } else if (fieldName === "status") {
+[?2004l[?2004h>       prev = target.status;
+[?2004l[?2004h>       target.status = String(notice.value || "").toLowerCase();
+[?2004l[?2004h>       target._correctionChangedStatusOrDate = true;
+[?2004l[?2004h>       target.effective_date = notice.effective;
+[?2004l[?2004h>     } else if (fieldName === "date") {
+[?2004l[?2004h>       prev = target.date;
+[?2004l[?2004h>       target.date = notice.value;
+[?2004l[?2004h>       target._correctionChangedStatusOrDate = true;
+[?2004l[?2004h>       target.effective_date = notice.effective;
+[?2004l[?2004h>     } else {
+[?2004l[?2004h>       // Unknown field: skip
+[?2004l[?2004h>       continue;
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     // Only change effective_date for corrections that modified status or date;
+[?2004l[?2004h>     // owner-only corrections keep existing effective_date.
+[?2004l[?2004h>     if (fieldName !== "status" && fieldName !== "date") {
+[?2004l[?2004h>       // keep
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     report.push({
+[?2004l[?2004h>       notice_id: notice.notice_id,
+[?2004l[?2004h>       transaction_id: notice.transaction_id,
+[?2004l[?2004h>       field: fieldName,
+[?2004l[?2004h>       previous_value: prev == null ? "" : String(prev),
+[?2004l[?2004h>       new_value: notice.value,
+[?2004l[?2004h>       effective: notice.effective,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const items = sortByTransactionId(
+[?2004l[?2004h>     [...byId.values()].map((row) => ({
+[?2004l[?2004h>       transaction_id: row.transaction_id,
+[?2004l[?2004h>       owner: row.owner,
+[?2004l[?2004h>       status: String(row.status || "").toLowerCase(),
+[?2004l[?2004h>       effective_date: row.effective_date,
+[?2004l[?2004h>       amount_usd: Number(Number(row.amount).toFixed(2)),
+[?2004l[?2004h>       exception_reason: null, // computed later
+[?2004l[?2004h>       _ledger_date: row.date,
+[?2004l[?2004h>     })),
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   return { items, report };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+[?2004l[?2004h> function buildExceptionReason(row, context) {
+[?2004l[?2004h>   const reasons = [];
+[?2004l[?2004h>   const amount = Number(row.amount_usd);
+[?2004l[?2004h>   const status = String(row.status || "").toLowerCase();
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (amount > 10000) reasons.push("over_limit");
+[?2004l[?2004h> 
+[?2004l[?2004h>   // compliance_hold: final status rejected, qualifying compliance@ email referenced txn, and that email block includes sent:
+[?2004l[?2004h>   if (status === "rejected" && context.txnHasComplianceSentEmail(row.transaction_id)) {
+[?2004l[?2004h>     reasons.push("compliance_hold");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // policy_waiver: final status approved, amount_usd > 10000, and Policy Exception block exists for txn with approved_by: compliance
+[?2004l[?2004h>   if (
+[?2004l[?2004h>     status === "approved" &&
+[?2004l[?2004h>     amount > 10000 &&
+[?2004l[?2004h>     context.txnHasCompliancePolicyWaiver(row.transaction_id)
+[?2004l[?2004h>   ) {
+[?2004l[?2004h>     reasons.push("policy_waiver");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // retroactive_review: final status reversed, amount_usd > 5000, and a winning correction notice changed status for that txn.
+[?2004l[?2004h>   if (
+[?2004l[?2004h>     status === "reversed" &&
+[?2004l[?2004h>     amount > 5000 &&
+[?2004l[?2004h>     context.txnHadWinningStatusCorrection(row.transaction_id)
+[?2004l[?2004h>   ) {
+[?2004l[?2004h>     reasons.push("retroactive_review");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   reasons.sort();
+[?2004l[?2004h>   return reasons.length ? reasons.join(";") : null;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function buildExceptions(items, parsed, report) {
+[?2004l[?2004h>   const emails = parsed.emails || [];
+[?2004l[?2004h>   const policy = parsed.policyExceptions || [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const complianceSentEmailTxn = new Set(
+[?2004l[?2004h>     emails
+[?2004l[?2004h>       .filter(
+[?2004l[?2004h>         (e) =>
+[?2004l[?2004h>           String(e.from_addr || "").toLowerCase().includes("compliance@") &&
+[?2004l[?2004h>           !!e.sent,
+[?2004l[?2004h>       )
+[?2004l[?2004h>       .map((e) => e.transaction_id),
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   const compliancePolicyTxn = new Set(
+[?2004l[?2004h>     policy
+[?2004l[?2004h>       .filter((p) => String(p.approved_by || "").toLowerCase() === "compliance")
+[?2004l[?2004h>       .map((p) => p.transaction_id),
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   const winningStatusCorrectionTxn = new Set(
+[?2004l[?2004h>     (report || [])
+[?2004l[?2004h>       .filter((r) => r.field === "status")
+[?2004l[?2004h>       .map((r) => r.transaction_id),
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   const context = {
+[?2004l[?2004h>     txnHasComplianceSentEmail: (id) => complianceSentEmailTxn.has(id),
+[?2004l[?2004h>     txnHasCompliancePolicyWaiver: (id) => compliancePolicyTxn.has(id),
+[?2004l[?2004h>     txnHadWinningStatusCorrection: (id) => winningStatusCorrectionTxn.has(id),
+[?2004l[?2004h>   };
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const row of items) {
+[?2004l[?2004h>     row.exception_reason = buildExceptionReason(row, context);
+[?2004l[?2004h>     delete row._ledger_date;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return items.filter((row) => row.exception_reason);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { buildExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeExceptionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function esc(v) {
+[?2004l[?2004h>   const s = String(v ?? "");
+[?2004l[?2004h>   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+[?2004l[?2004h>   return s;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsCsv(filePath, items) {
+[?2004l[?2004h>   const header =
+[?2004l[?2004h>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+[?2004l[?2004h>   const lines = items.map((row) => {
+[?2004l[?2004h>     const amt = Number(row.amount_usd).toFixed(2);
+[?2004l[?2004h>     const reason = row.exception_reason == null ? "" : row.exception_reason;
+[?2004l[?2004h>     return [
+[?2004l[?2004h>       esc(row.transaction_id),
+[?2004l[?2004h>       esc(row.owner),
+[?2004l[?2004h>       esc(row.status),
+[?2004l[?2004h>       esc(row.effective_date),
+[?2004l[?2004h>       esc(amt),
+[?2004l[?2004h>       esc(reason),
+[?2004l[?2004h>     ].join(",");
+[?2004l[?2004h>   });
+[?2004l[?2004h>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsCsv };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# cat > /app/audit-extractor/src/index.js <<'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> const path = require("node:path");
+[?2004l[?2004h> const { parseArchive } = require("./parser/sections");
+[?2004l[?2004h> const { reconcileTransactions } = require("./normalize/reconcile");
+[?2004l[?2004h> const { buildExceptions } = require("./normalize/exceptions");
+[?2004l[?2004h> const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+[?2004l[?2004h> const { writeTransactionsCsv } = require("./output/csvWriter");
+[?2004l[?2004h> const { writeReconciliationReport } = require("./output/reportWriter");
+[?2004l[?2004h> const { validateOutputs } = require("./schema/validate");
+[?2004l[?2004h> 
+[?2004l[?2004h> async function runExtract(inputPath, outputDir) {
+[?2004l[?2004h>   const markdown = fs.readFileSync(inputPath, "utf8");
+[?2004l[?2004h>   const parsed = parseArchive(markdown);
+[?2004l[?2004h>   const { items, report } = reconcileTransactions(parsed);
+[?2004l[?2004h>   const exceptions = buildExceptions(items, parsed, report);
+[?2004l[?2004h> 
+[?2004l[?2004h>   fs.mkdirSync(outputDir, { recursive: true });
+[?2004l[?2004h>   writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+[?2004l[?2004h>   writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+[?2004l[?2004h>   writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Report must be sorted by notice_id ascending (already sorted in reconcile)
+[?2004l[?2004h>   writeReconciliationReport(
+[?2004l[?2004h>     path.join(outputDir, "reconciliation_report.jsonl"),
+[?2004l[?2004h>     report,
+[?2004l[?2004h>   );
+[?2004l[?2004h>   validateOutputs(items, exceptions, report);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { runExtract };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@379c90bd96b9:/app# node -c /app/audit-extractor/src/normalize/reconcile.js && node -c /app/audit-extractor/src/normalize/exceptions.js && node -c /app/audit-extractor/src/output/jsonWriter.js && node -c /app/audit-extractor/src/output/csvWriter.js && node -c /app/audit-extractor/src/index.js
+[?2004lrm -rf /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+[?2004hroot@379c90bd96b9:/app# rm -rf /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+[?2004l[?2004hroot@379c90bd96b9:/app# ls -la /app/output
+[?2004ltotal 32
+drwxr-xr-x 2 root root 4096 Jun  5 11:13 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:13 ..
+-rw-r--r-- 1 root root 3864 Jun  5 11:13 exceptions.json
+-rw-r--r-- 1 root root  543 Jun  5 11:13 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2681 Jun  5 11:13 transactions.csv
+-rw-r--r-- 1 root root 7549 Jun  5 11:13 transactions.json
+[?2004hroot@379c90bd96b9:/app# head -n 5 /app/output/transactions.csv
+[?2004ltransaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94,over_limit
+[?2004hroot@379c90bd96b9:/app# head -n 20 /app/output/reconciliation_report.jsonl
+[?2004l{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","effective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective":"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","effective":"2024-08-01"}
+[?2004hroot@379c90bd96b9:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output && sha256sum /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconciliation_report.jsonl
+[?2004l429a904f367b911df2ec825f635b9f421207a209c5e1a35aa0a3e1ef9f3f7d4b  /app/output/transactions.json
+22902ad258e4aba7a07e0059dfa4e14fa15f2ff9118154fc1e018aafb111baf4  /app/output/transactions.csv
+42868ce0e5ca9e372c5198ce86ca8957fac92cbd848facba4e9949fc22c25517  /app/output/exceptions.json
+310ab38c80b0d1b8ce7d4eec5a1154a6f1336d59221900348615fdcedeb43b3f  /app/output/reconciliation_report.jsonl
+[?2004hroot@379c90bd96b9:/app# head -n 5 /app/output/transactions.json
+[?2004l{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+[?2004hroot@379c90bd96b9:/app# head -n 5 /app/output/exceptions.json
+[?2004l{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+[?2004hroot@379c90bd96b9:/app# node -e 'const t=require("/app/output/transactions.json"); const e=require("/app/output/exceptions.json"); console.log(Object.keys(t), Array.isArray(t.items), t.items.length); console.log(Object.keys(e), Array.isArray(e.items), e.items.length);'
+[?2004l[ [32m'items'[39m ] [33mtrue[39m [33m32[39m
+[ [32m'items'[39m ] [33mtrue[39m [33m16[39m
+[?2004hroot@379c90bd96b9:/app# sed -n '1,160p' /app/audit-extractor/src/parser/sections.js
+[?2004lconst { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+// Extract a markdown section by an exact H2 heading line.
+// Must be anchored at start of line to avoid decoy mentions in prose.
+function extractH2Section(markdown, headingText) {
+  const startRe = new RegExp(`^## ${headingText}\\s*$`, "m");
+  const startMatch = markdown.match(startRe);
+  if (!startMatch || startMatch.index == null) return "";
+
+  const startIdx = startMatch.index;
+  const afterStart = markdown.slice(startIdx);
+
+  // Find next H2 after this section (excluding the first line itself).
+  const rest = afterStart.slice(startMatch[0].length);
+  const nextMatch = rest.match(/^##\s+/m);
+  if (!nextMatch || nextMatch.index == null) return afterStart;
+
+  const endIdx = startMatch[0].length + nextMatch.index;
+  return afterStart.slice(0, endIdx);
+}
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown, extractH2Section),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown, extractH2Section),
+    corrections: parseCorrections(markdown, extractH2Section),
+    policyExceptions: parsePolicyExceptions(markdown, extractH2Section),
+  };
+}
+
+module.exports = { parseArchive, extractH2Section };
+[?2004hroot@379c90bd96b9:/app# 

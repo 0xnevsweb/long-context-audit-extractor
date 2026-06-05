@@ -1,0 +1,257 @@
+New Terminal Output:
+root@379c90bd96b9:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:10 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+root@379c90bd96b9:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@379c90bd96b9:/app# find /app/audit-extractor/src -maxdepth 3 -type f -print
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@379c90bd96b9:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@379c90bd96b9:/app# node /app/audit-extractor/src/cli.js --help
+usage: node src/cli.js extract --input <path> --outdir <dir>
+root@379c90bd96b9:/app# sed -n '1,200p' /app/data/audit_archive.md
+# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroac
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+24-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0033: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0034: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0035: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0036: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+
+root@379c90bd96b9:/app# rg -n "Reconciliation and Exception Policy" /app/data/audit_archive.md
+bash: rg: command not found
+root@379c90bd96b9:/app# rg -n "^## " /app/data/audit_archive.md | head
+bash: rg: command not found
+root@379c90bd96b9:/app#

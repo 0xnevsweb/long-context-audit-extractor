@@ -1,0 +1,4 @@
+Previous response had parsing errors:
+ERROR: Invalid JSON: Invalid \escape: line 2 column 780 (char 781) | Content preview: '{\n  "analysis": "Extractor now produces the required artifacts in /app/output with corrected JSON to'...
+
+Please fix these issues and provide a proper JSON response.

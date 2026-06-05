@@ -1,0 +1,265 @@
+New Terminal Output:
+
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function csvEscape(value) {
+>   const s = value == null ? "" : String(value);
+>   if (/[\n",]/.test(s)) {
+>     return `"${s.replace(/"/g, '""')}"`;
+>   }
+>   return s;
+> }
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const amount = Number(row.amount_usd);
+>     const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : "";
+>     return [
+>       csvEscape(row.transaction_id),
+>       csvEscape(row.owner),
+>       csvEscape(row.status),
+>       csvEscape(row.effective_date),
+>       csvEscape(amountStr),
+>       csvEscape(row.exception_reason == null ? "" : row.exception_reason),
+>     ].join(",");
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+> const { parseLedger } = require("./ledger");
+> const { parseMeetings } = require("./meetings");
+> const { parseEmails } = require("./emails");
+> const { parseCorrections } = require("./corrections");
+> const { parsePolicyExceptions } = require("./policy");
+>
+> function escapeRegex(s) {
+>   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> }
+>
+> function extractSection(markdown, headingText) {
+>   // Headings must match whole line at start, per handbook.
+>   const headingRe = new RegExp(`^##\\s+${escapeRegex(headingText)}\\s*$`, "m");
+>   const m = markdown.match(headingRe);
+>   if (!m || m.index == null) return "";
+>   const startIdx = m.index;
+>   const afterHeadingIdx = startIdx + m[0].length;
+>
+>   // Find next level-2 heading
+>   const rest = markdown.slice(afterHeadingIdx);
+>   const nextRe = /^##\s+.+\s*$/m;
+>   const next = rest.match(nextRe);
+>   const endIdx = next && next.index != null ? afterHeadingIdx + next.index : markdown.length;
+>   return markdown.slice(startIdx, endIdx);
+> }
+>
+> function parseArchive(markdown) {
+>   const meetingsSection = extractSection(markdown, "Meeting Notes");
+>   const emailsSection = extractSection(markdown, "Email Excerpts");
+>   const policySection = extractSection(markdown, "Policy Exceptions");
+>   const correctionsSection = extractSection(markdown, "Correction Notices");
+>   const ledgerSection = extractSection(markdown, "Transaction Ledger");
+>
+>   return {
+>     ledger: parseLedger(ledgerSection),
+>     meetings: parseMeetings(meetingsSection),
+>     emails: parseEmails(emailsSection),
+>     corrections: parseCorrections(correctionsSection),
+>     policyExceptions: parsePolicyExceptions(policySection),
+>   };
+> }
+>
+> module.exports = { parseArchive, extractSection };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(ledgerSectionMarkdown) {
+>   if (!ledgerSectionMarkdown) return [];
+>
+>   // The ledger section contains one or more ledger blocks as ### <TXN-id>
+>   // Keep the last non-provisional block in file order for each id.
+>   const byId = new Map();
+>   const blocks = ledgerSectionMarkdown.split(/^###\s+/m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     const row = { transaction_id: transactionId };
+>     let provisional = false;
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (/^provisional:\s*true\s*$/i.test(trimmed)) {
+>         provisional = true;
+>       } else if (trimmed.startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (provisional) continue;
+>     byId.set(transactionId, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(emailsSectionMarkdown) {
+>   if (!emailsSectionMarkdown) return [];
+>
+>   const emails = [];
+>   // Split on blank lines; email excerpts are loosely structured.
+>   const blocks = emailsSectionMarkdown.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const txnMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)\s*$/im);
+>     if (!fromMatch || !txnMatch || !statusMatch) continue;
+>
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: txnMatch[1].trim(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>       sent: sentMatch ? sentMatch[1].trim() : null,
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'
+> function parseMeetings(meetingsSectionMarkdown) {
+>   if (!meetingsSectionMarkdown) return [];
+>
+>   const amendments = [];
+>
+>   // Capture each amendment block bounded by next #### heading (or end of section)
+>   const re = /^####\s+Amendment for\s+(TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(meetingsSectionMarkdown)) !== null) {
+>     const start = match.index;
+>     const afterHeading = start + match[0].length;
+>     const rest = meetingsSectionMarkdown.slice(afterHeading);
+>     const next = rest.match(/^####\s+/m);
+>     const end = next && next.index != null ? afterHeading + next.index : meetingsSectionMarkdown.length;
+>     const block = meetingsSectionMarkdown.slice(start, end);
+>
+>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     amendments.push({
+>       transaction_id: match[1],
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed: signedMatch ? String(signedMatch[1]).trim().toLowerCase() === "true" : false,
+>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+>     });
+>   }
+>
+>   return amendments;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> function parsePolicyExceptions(policySectionMarkdown) {
+>   if (!policySectionMarkdown) return new Set();
+>
+>   // Only count exceptions where approved_by: compliance
+>   const ids = new Set();
+>   const blocks = policySectionMarkdown.split(/^###\s+/m).slice(1);
+>   for (const block of blocks) {
+>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     if (!txnMatch) continue;
+>     const approvedByMatch = block.match(/^approved_by:\s*(.+)\s*$/im);
+>     const approvedBy = approvedByMatch ? approvedByMatch[1].trim().toLowerCase() : "";
+>     if (approvedBy === "compliance") {
+>       ids.add(txnMatch[1]);
+>     }
+>   }
+>
+>   return ids;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(correctionsSectionMarkdown) {
+>   if (!correctionsSectionMarkdown) return [];
+>
+>   const notices = [];
+>   const blocks = correctionsSectionMarkdown.split(/^###\s+/m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = (lines[0] || "").trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId, transaction_id: null, field: null, value: null, effective: null };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("targets:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     if (entry.transaction_id && entry.field && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@27d303bbd91a:/app#

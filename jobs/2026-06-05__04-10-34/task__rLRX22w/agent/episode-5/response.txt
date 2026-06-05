@@ -1,0 +1,31 @@
+{
+  "analysis": "Edits were applied by overwriting files. The current screen shows transactions.json now uses {\"items\": [...]} and exception_reason is being populated (e.g., over_limit and compliance_hold;over_limit), which is a major improvement. We still must verify remaining handbook requirements: ignore decoy/provisional ledgers (decoy TXN should be gone), effective_date rules for corrections (only override when correction changed status or date), email sent-date rule and precedence rule, policy_waiver and retroactive_review exceptions, correction notice winning by lexicographically greatest effective per txn+field, reconciliation_report.jsonl sorted by notice_id and includes correct previous_value. Also ensure CSV header includes exception_reason and amount has two decimals, and exceptions.json is {\"items\":...}. Finally ensure reruns are deterministic (diff between two runs is empty) and write to /app/output.",
+  "plan": "1) Confirm output file formats and presence/absence of decoy TXN. 2) Check that transactions.csv header and amount formatting are correct. 3) Inspect reconciliation_report.jsonl: must be sorted by notice_id, contain only winning corrections, and have non-empty previous_value. 4) Ensure exceptions.json wrapper is {\"items\":...} and includes only exception rows. 5) Re-run extractor twice and diff to confirm determinism. If any rule fails, adjust corresponding parser/reconcile logic and rerun.",
+  "commands": [
+    {
+      "keystrokes": "head -n 2 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/app/output/transactions.json'\nobj=json.load(open(p))\nprint('keys',obj.keys())\nitems=obj['items']\nprint('count',len(items))\n# ensure sorted\nprint('sorted', all(items[i]['transaction_id']<=items[i+1]['transaction_id'] for i in range(len(items)-1)))\n# check decoy\nprint('has_decoy', any(x['owner']=='decoy' or x['effective_date'].startswith('2020') for x in items))\n# sample exceptions counts\nprint('exceptions', sum(1 for x in items if x['exception_reason']))\nPY\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json, pathlib\np=pathlib.Path('/app/output/exceptions.json')\nobj=json.load(p.open())\nprint('keys',obj.keys())\nprint('count',len(obj['items']))\nPY\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nrp=Path('/app/output/reconciliation_report.jsonl')\nrows=[json.loads(l) for l in rp.read_text().splitlines() if l.strip()]\nprint('rows',len(rows))\nif rows:\n  print('sorted_by_notice_id', all(rows[i]['notice_id']<=rows[i+1]['notice_id'] for i in range(len(rows)-1)))\n  print('any_blank_previous', any(r.get('previous_value','')=='' for r in rows))\nPY\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out_a /tmp/audit_out_b && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_a && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_b && diff -ru /tmp/audit_out_a /tmp/audit_out_b || true\n",
+      "duration": 4.0
+    }
+  ],
+  "task_complete": false
+}

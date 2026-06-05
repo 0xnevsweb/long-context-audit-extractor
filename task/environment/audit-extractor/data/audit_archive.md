@@ -44,6 +44,22 @@ approved_by: compliance; set retroactive_review when final status is reversed,
 amount_usd > 5000, and a winning correction notice changed status for that txn.
 Multiple reasons join with semicolon in lexical order of the reason codes.
 
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
 ## Meeting Notes
 
 [2024-03-01] standup-0000: routine capacity review, no ledger impact.

@@ -1,0 +1,1937 @@
+[?2004hroot@27d303bbd91a:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004lclear
+[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@27d303bbd91a:/app# ls -la /app
+[?2004ltotal 16
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:10 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+[?2004hroot@27d303bbd91a:/app# ls -la /app/audit-extractor
+[?2004ltotal 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:09 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 11:09 data
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+[?2004hroot@27d303bbd91a:/app# find /app/audit-extractor -maxdepth 3 -type f -name "*.js" -o -name "package.json" -o -name "README*" | sed 's#^#/app#' >/dev/null || true
+[?2004l[?2004hroot@27d303bbd91a:/app# find /app/audit-extractor -maxdepth 3 -type f \( -name "*.js" -o -name "package.json" -o -name "README*" \) -print
+[?2004l/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+/app/audit-extractor/package.json
+[?2004hroot@27d303bbd91a:/app# sed -n '1,200p' /app/audit-extractor/package.json
+[?2004l{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+[?2004hroot@27d303bbd91a:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+[?2004l#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+[?2004hroot@27d303bbd91a:/app# find /app/audit-extractor/src -maxdepth 3 -type f -name "*.js" -print
+[?2004l/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+[?2004hroot@27d303bbd91a:/app# sed -n '1,200p' /app/audit-extractor/src/index.js 2>/dev/null || true
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+[?2004hroot@27d303bbd91a:/app# grep -RIn "extract" /app/audit-extractor/src | head
+[?2004l/app/audit-extractor/src/cli.js:18:  if (command !== "extract") {
+/app/audit-extractor/src/cli.js:19:    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+[?2004hroot@27d303bbd91a:/app# sed -n '1,120p' /app/data/audit_archive.md
+[?2004l# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+## Meeting Notes
+
+[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[?2004hroot@27d303bbd91a:/app# grep -n "Reconciliation and Exception Policy" -n /app/data/audit_archive.md
+[?2004l5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+[?2004hroot@27d303bbd91a:/app# awk 'NR>=1 && NR<=220 {print}' /app/data/audit_archive.md
+[?2004l# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+## Meeting Notes
+
+[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0033: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0034: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0035: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0036: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0068: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0069: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0070: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0071: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0072: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0073: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0074: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0075: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0076: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0077: routine capacity review, no ledger impact.
+
+[?2004hroot@27d303bbd91a:/app# mkdir -p /tmp/audit-out1 /tmp/audit-out2
+[?2004l[?2004hroot@27d303bbd91a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+[?2004l[?2004hroot@27d303bbd91a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+[?2004l[?2004hroot@27d303bbd91a:/app# diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -200
+[?2004l[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/data/audit_archive.md
+[?2004l# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+Output artifacts from extract --outdir: transactions.json is {"items":[...]}
+(not {"transactions":...}), sorted by transaction_id ascending; each row has
+transaction_id, owner, status (lowercase), effective_date (YYYY-MM-DD), amount_usd
+(JSON number, two decimal places), exception_reason (null or semicolon-joined
+codes). transactions.csv header is
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows and order; leave exception_reason blank when null. exceptions.json is
+{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+is set. reconciliation_report.jsonl is one JSON object per winning correction
+(notice_id, transaction_id, field, previous_value, new_value, effective), sorted
+by notice_id ascending.
+
+Parse markdown sections with regular expressions anchored to whole heading lines
+at line start. Do not locate sections with indexOf or substring search — this
+archive mentions section titles in prose and includes decoy ledger headings.
+
+## Meeting Notes
+
+[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0033: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0034: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0035: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0036: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0068: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0069: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0070: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0071: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0072: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0073: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0074: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0075: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0076: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0077: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0078: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0079: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0080: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0081: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0082: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0083: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0084: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0085: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0086: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0087: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0088: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0089: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0090: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0091: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0092: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0093: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0094: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0095: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0096: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0097: routine capacity review, no ledger impact.
+
+[?2004hroot@27d303bbd91a:/app# grep -nEi "compliance hold|hold|correction notice|correction|ledger|reconcile|exception" /app/data/audit_archive.md | head -200
+[?2004l3:Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+7:effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+8:When a correction notice sets field date or status, use the notice effective
+9:date as effective_date only if that correction modified status or date;
+10:otherwise keep ledger date.
+12:Use only the section whose heading is exactly ## Transaction Ledger.
+13:Ignore other ledger-like sections and any ledger block with provisional: true.
+15:If the same transaction id appears in more than one ledger block, the last
+19:Ledger provides base status (lowercase on output). Email excerpts may change
+22:change only if sent is greater than or equal to the ledger date. When no sent:
+24:Correction notices apply last; when multiple notices target the same
+28:notice applies (after ledger, amendments, and emails).
+30:Owner precedence: ledger owner is the default. Meeting note amendments under
+33:greater than or equal to the ledger date. Correction notices for field owner
+36:amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+38:exception_reason is null unless an exception applies: set over_limit when
+39:amount_usd strictly exceeds 10000; set compliance_hold when final status is
+42:amount_usd > 10000, and a Policy Exception block exists for that txn with
+44:amount_usd > 5000, and a winning correction notice changed status for that txn.
+50:(JSON number, two decimal places), exception_reason (null or semicolon-joined
+52:transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+53:same rows and order; leave exception_reason blank when null. exceptions.json is
+54:{"items":[...]} (not {"exceptions":...}) with only rows where exception_reason
+55:is set. reconciliation_report.jsonl is one JSON object per winning correction
+61:archive mentions section titles in prose and includes decoy ledger headings.
+65:[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+67:[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+69:[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+71:[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+73:[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+75:[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+77:[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+79:[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+81:[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+83:[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+85:[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+87:[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+89:[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+91:[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+93:[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+95:[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+97:[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+99:[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+101:[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+103:[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+105:[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+107:[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+109:[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+111:[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+113:[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+115:[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+117:[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+119:[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+121:[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+123:[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+125:[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+127:[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+129:[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+131:[2024-03-06] standup-0033: routine capacity review, no ledger impact.
+133:[2024-03-07] standup-0034: routine capacity review, no ledger impact.
+135:[2024-03-08] standup-0035: routine capacity review, no ledger impact.
+137:[2024-03-09] standup-0036: routine capacity review, no ledger impact.
+139:[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+141:[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+143:[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+145:[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+147:[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+149:[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+151:[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+153:[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+155:[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+157:[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+159:[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+161:[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+163:[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+165:[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+167:[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+169:[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+171:[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+173:[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+175:[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+177:[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+179:[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+181:[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+183:[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+185:[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+187:[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+189:[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+191:[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+193:[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+195:[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+197:[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+199:[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+201:[2024-03-13] standup-0068: routine capacity review, no ledger impact.
+203:[2024-03-14] standup-0069: routine capacity review, no ledger impact.
+205:[2024-03-15] standup-0070: routine capacity review, no ledger impact.
+207:[2024-03-16] standup-0071: routine capacity review, no ledger impact.
+209:[2024-03-17] standup-0072: routine capacity review, no ledger impact.
+211:[2024-03-18] standup-0073: routine capacity review, no ledger impact.
+213:[2024-03-19] standup-0074: routine capacity review, no ledger impact.
+215:[2024-03-20] standup-0075: routine capacity review, no ledger impact.
+217:[2024-03-21] standup-0076: routine capacity review, no ledger impact.
+219:[2024-03-22] standup-0077: routine capacity review, no ledger impact.
+221:[2024-03-23] standup-0078: routine capacity review, no ledger impact.
+223:[2024-03-24] standup-0079: routine capacity review, no ledger impact.
+225:[2024-03-25] standup-0080: routine capacity review, no ledger impact.
+227:[2024-03-26] standup-0081: routine capacity review, no ledger impact.
+229:[2024-03-27] standup-0082: routine capacity review, no ledger impact.
+231:[2024-03-28] standup-0083: routine capacity review, no ledger impact.
+233:[2024-03-01] standup-0084: routine capacity review, no ledger impact.
+235:[2024-03-02] standup-0085: routine capacity review, no ledger impact.
+237:[2024-03-03] standup-0086: routine capacity review, no ledger impact.
+239:[2024-03-04] standup-0087: routine capacity review, no ledger impact.
+241:[2024-03-05] standup-0088: routine capacity review, no ledger impact.
+243:[2024-03-06] standup-0089: routine capacity review, no ledger impact.
+245:[2024-03-07] standup-0090: routine capacity review, no ledger impact.
+247:[2024-03-08] standup-0091: routine capacity review, no ledger impact.
+249:[2024-03-09] standup-0092: routine capacity review, no ledger impact.
+251:[2024-03-10] standup-0093: routine capacity review, no ledger impact.
+253:[2024-03-11] standup-0094: routine capacity review, no ledger impact.
+255:[2024-03-12] standup-0095: routine capacity review, no ledger impact.
+257:[2024-03-13] standup-0096: routine capacity review, no ledger impact.
+259:[2024-03-14] standup-0097: routine capacity review, no ledger impact.
+261:[2024-03-15] standup-0098: routine capacity review, no ledger impact.
+263:[2024-03-16] standup-0099: routine capacity review, no ledger impact.
+265:[2024-03-17] standup-0100: routine capacity review, no ledger impact.
+267:[2024-03-18] standup-0101: routine capacity review, no ledger impact.
+269:[2024-03-19] standup-0102: routine capacity review, no ledger impact.
+271:[2024-03-20] standup-0103: routine capacity review, no ledger impact.
+273:[2024-03-21] standup-0104: routine capacity review, no ledger impact.
+275:[2024-03-22] standup-0105: routine capacity review, no ledger impact.
+277:[2024-03-23] standup-0106: routine capacity review, no ledger impact.
+279:[2024-03-24] standup-0107: routine capacity review, no ledger impact.
+281:[2024-03-25] standup-0108: routine capacity review, no ledger impact.
+283:[2024-03-26] standup-0109: routine capacity review, no ledger impact.
+285:[2024-03-27] standup-0110: routine capacity review, no ledger impact.
+287:[2024-03-28] standup-0111: routine capacity review, no ledger impact.
+289:[2024-03-01] standup-0112: routine capacity review, no ledger impact.
+291:[2024-03-02] standup-0113: routine capacity review, no ledger impact.
+293:[2024-03-03] standup-0114: routine capacity review, no ledger impact.
+295:[2024-03-04] standup-0115: routine capacity review, no ledger impact.
+297:[2024-03-05] standup-0116: routine capacity review, no ledger impact.
+299:[2024-03-06] standup-0117: routine capacity review, no ledger impact.
+301:[2024-03-07] standup-0118: routine capacity review, no ledger impact.
+303:[2024-03-08] standup-0119: routine capacity review, no ledger impact.
+305:[2024-03-09] standup-0120: routine capacity review, no ledger impact.
+307:[2024-03-10] standup-0121: routine capacity review, no ledger impact.
+309:[2024-03-11] standup-0122: routine capacity review, no ledger impact.
+311:[2024-03-12] standup-0123: routine capacity review, no ledger impact.
+313:[2024-03-13] standup-0124: routine capacity review, no ledger impact.
+315:[2024-03-14] standup-0125: routine capacity review, no ledger impact.
+317:[2024-03-15] standup-0126: routine capacity review, no ledger impact.
+319:[2024-03-16] standup-0127: routine capacity review, no ledger impact.
+321:[2024-03-17] standup-0128: routine capacity review, no ledger impact.
+323:[2024-03-18] standup-0129: routine capacity review, no ledger impact.
+325:[2024-03-19] standup-0130: routine capacity review, no ledger impact.
+327:[2024-03-20] standup-0131: routine capacity review, no ledger impact.
+329:[2024-03-21] standup-0132: routine capacity review, no ledger impact.
+331:[2024-03-22] standup-0133: routine capacity review, no ledger impact.
+333:[2024-03-23] standup-0134: routine capacity review, no ledger impact.
+335:[2024-03-24] standup-0135: routine capacity review, no ledger impact.
+337:[2024-03-25] standup-0136: routine capacity review, no ledger impact.
+339:[2024-03-26] standup-0137: routine capacity review, no ledger impact.
+341:[2024-03-27] standup-0138: routine capacity review, no ledger impact.
+343:[2024-03-28] standup-0139: routine capacity review, no ledger impact.
+345:[2024-03-01] standup-0140: routine capacity review, no ledger impact.
+347:[2024-03-02] standup-0141: routine capacity review, no ledger impact.
+349:[2024-03-03] standup-0142: routine capacity review, no ledger impact.
+351:[2024-03-04] standup-0143: routine capacity review, no ledger impact.
+353:[2024-03-05] standup-0144: routine capacity review, no ledger impact.
+355:[2024-03-06] standup-0145: routine capacity review, no ledger impact.
+357:[2024-03-07] standup-0146: routine capacity review, no ledger impact.
+359:[2024-03-08] standup-0147: routine capacity review, no ledger impact.
+361:[2024-03-09] standup-0148: routine capacity review, no ledger impact.
+363:[2024-03-10] standup-0149: routine capacity review, no ledger impact.
+365:[2024-03-11] standup-0150: routine capacity review, no ledger impact.
+367:[2024-03-12] standup-0151: routine capacity review, no ledger impact.
+369:[2024-03-13] standup-0152: routine capacity review, no ledger impact.
+371:[2024-03-14] standup-0153: routine capacity review, no ledger impact.
+373:[2024-03-15] standup-0154: routine capacity review, no ledger impact.
+375:[2024-03-16] standup-0155: routine capacity review, no ledger impact.
+377:[2024-03-17] standup-0156: routine capacity review, no ledger impact.
+379:[2024-03-18] standup-0157: routine capacity review, no ledger impact.
+381:[2024-03-19] standup-0158: routine capacity review, no ledger impact.
+383:[2024-03-20] standup-0159: routine capacity review, no ledger impact.
+385:[2024-03-21] standup-0160: routine capacity review, no ledger impact.
+387:[2024-03-22] standup-0161: routine capacity review, no ledger impact.
+389:[2024-03-23] standup-0162: routine capacity review, no ledger impact.
+391:[2024-03-24] standup-0163: routine capacity review, no ledger impact.
+393:[2024-03-25] standup-0164: routine capacity review, no ledger impact.
+395:[2024-03-26] standup-0165: routine capacity review, no ledger impact.
+397:[2024-03-27] standup-0166: routine capacity review, no ledger impact.
+399:[2024-03-28] standup-0167: routine capacity review, no ledger impact.
+401:[2024-03-01] standup-0168: routine capacity review, no ledger impact.
+403:[2024-03-02] standup-0169: routine capacity review, no ledger impact.
+405:[2024-03-03] standup-0170: routine capacity review, no ledger impact.
+407:[2024-03-04] standup-0171: routine capacity review, no ledger impact.
+409:[2024-03-05] standup-0172: routine capacity review, no ledger impact.
+411:[2024-03-06] standup-0173: routine capacity review, no ledger impact.
+grep: write error: Broken pipe
+[?2004hroot@27d303bbd91a:/app# sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js
+[?2004lconst { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,240p' /app/audit-extractor/src/parser/corrections.js
+[?2004lfunction parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,240p' /app/audit-extractor/src/parser/emails.js
+[?2004lfunction parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js
+[?2004lfunction parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,240p' /app/audit-extractor/src/normalize/exceptions.js
+[?2004lfunction buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+[?2004lfunction sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,220p' /app/audit-extractor/src/lib/handbook.js
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+
+function loadDefaults() {
+  const file = path.join(__dirname, "..", "..", "config", "defaults.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+module.exports = { loadDefaults };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+[?2004lconst { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+[?2004lfunction parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js
+[?2004lfunction parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,320p' /app/audit-extractor/src/output/reportWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/schema/validate.js
+[?2004lfunction validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+[?2004hroot@27d303bbd91a:/app# apply_patch<<'PATCH'
+[?2004l[?2004h> *** Begin Patch
+[?2004l[?2004h> *** Update File: /app/audit-extractor/src/utils/sort.js
+[?2004l[?2004h> @@
+[?2004l[?2004h>  function sortByTransactionId(items) {
+[?2004l[?2004h> -  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+[?2004l[?2004h> +  return items.sort((a, b) => {
+[?2004l[?2004h> +    if (a.transaction_id === b.transaction_id) return 0;
+[?2004l[?2004h> +    return a.transaction_id < b.transaction_id ? -1 : 1;
+[?2004l[?2004h> +  });
+[?2004l[?2004h>  }
+[?2004l[?2004h> +
+[?2004l[?2004h> +function sortByNoticeId(items) {
+[?2004l[?2004h> +  return items.sort((a, b) => {
+[?2004l[?2004h> +    if (a.notice_id === b.notice_id) return 0;
+[?2004l[?2004h> +    return a.notice_id < b.notice_id ? -1 : 1;
+[?2004l[?2004h> +  });
+[?2004l[?2004h> +}
+[?2004l[?2004h>  
+[?2004l[?2004h> -module.exports = { sortByTransactionId };
+[?2004l[?2004h> +module.exports = { sortByTransactionId, sortByNoticeId };
+[?2004l[?2004h> *** End Patch
+[?2004l[?2004h> PATCH
+[?2004lbash: apply_patch: command not found
+[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+[?2004l[?2004h> function sortByTransactionId(items) {
+[?2004l[?2004h>   return items.sort((a, b) => {
+[?2004l[?2004h>     if (a.transaction_id === b.transaction_id) return 0;
+[?2004l[?2004h>     return a.transaction_id < b.transaction_id ? -1 : 1;
+[?2004l[?2004h>   });
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function sortByNoticeId(items) {
+[?2004l[?2004h>   return items.sort((a, b) => {
+[?2004l[?2004h>     if (a.notice_id === b.notice_id) return 0;
+[?2004l[?2004h>     return a.notice_id < b.notice_id ? -1 : 1;
+[?2004l[?2004h>   });
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { sortByTransactionId, sortByNoticeId };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeExceptionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function csvEscape(value) {
+[?2004l[?2004h>   const s = value == null ? "" : String(value);
+[?2004l[?2004h>   if (/[\n",]/.test(s)) {
+[?2004l[?2004h>     return `"${s.replace(/"/g, '""')}"`;
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return s;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsCsv(filePath, items) {
+[?2004l[?2004h>   const header =
+[?2004l[?2004h>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+[?2004l[?2004h>   const lines = items.map((row) => {
+[?2004l[?2004h>     const amount = Number(row.amount_usd);
+[?2004l[?2004h>     const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : "";
+[?2004l[?2004h>     return [
+[?2004l[?2004h>       csvEscape(row.transaction_id),
+[?2004l[?2004h>       csvEscape(row.owner),
+[?2004l[?2004h>       csvEscape(row.status),
+[?2004l[?2004h>       csvEscape(row.effective_date),
+[?2004l[?2004h>       csvEscape(amountStr),
+[?2004l[?2004h>       csvEscape(row.exception_reason == null ? "" : row.exception_reason),
+[?2004l[?2004h>     ].join(",");
+[?2004l[?2004h>   });
+[?2004l[?2004h>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsCsv };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+[?2004l[?2004h> const { parseLedger } = require("./ledger");
+[?2004l[?2004h> const { parseMeetings } = require("./meetings");
+[?2004l[?2004h> const { parseEmails } = require("./emails");
+[?2004l[?2004h> const { parseCorrections } = require("./corrections");
+[?2004l[?2004h> const { parsePolicyExceptions } = require("./policy");
+[?2004l[?2004h> 
+[?2004l[?2004h> function escapeRegex(s) {
+[?2004l[?2004h>   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function extractSection(markdown, headingText) {
+[?2004l[?2004h>   // Headings must match whole line at start, per handbook.
+[?2004l[?2004h>   const headingRe = new RegExp(`^##\\s+${escapeRegex(headingText)}\\s*$`, "m");
+[?2004l[?2004h>   const m = markdown.match(headingRe);
+[?2004l[?2004h>   if (!m || m.index == null) return "";
+[?2004l[?2004h>   const startIdx = m.index;
+[?2004l[?2004h>   const afterHeadingIdx = startIdx + m[0].length;
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Find next level-2 heading
+[?2004l[?2004h>   const rest = markdown.slice(afterHeadingIdx);
+[?2004l[?2004h>   const nextRe = /^##\s+.+\s*$/m;
+[?2004l[?2004h>   const next = rest.match(nextRe);
+[?2004l[?2004h>   const endIdx = next && next.index != null ? afterHeadingIdx + next.index : markdown.length;
+[?2004l[?2004h>   return markdown.slice(startIdx, endIdx);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function parseArchive(markdown) {
+[?2004l[?2004h>   const meetingsSection = extractSection(markdown, "Meeting Notes");
+[?2004l[?2004h>   const emailsSection = extractSection(markdown, "Email Excerpts");
+[?2004l[?2004h>   const policySection = extractSection(markdown, "Policy Exceptions");
+[?2004l[?2004h>   const correctionsSection = extractSection(markdown, "Correction Notices");
+[?2004l[?2004h>   const ledgerSection = extractSection(markdown, "Transaction Ledger");
+[?2004l[?2004h> 
+[?2004l[?2004h>   return {
+[?2004l[?2004h>     ledger: parseLedger(ledgerSection),
+[?2004l[?2004h>     meetings: parseMeetings(meetingsSection),
+[?2004l[?2004h>     emails: parseEmails(emailsSection),
+[?2004l[?2004h>     corrections: parseCorrections(correctionsSection),
+[?2004l[?2004h>     policyExceptions: parsePolicyExceptions(policySection),
+[?2004l[?2004h>   };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseArchive, extractSection };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+[?2004l[?2004h> function parseLedger(ledgerSectionMarkdown) {
+[?2004l[?2004h>   if (!ledgerSectionMarkdown) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // The ledger section contains one or more ledger blocks as ### <TXN-id>
+[?2004l[?2004h>   // Keep the last non-provisional block in file order for each id.
+[?2004l[?2004h>   const byId = new Map();
+[?2004l[?2004h>   const blocks = ledgerSectionMarkdown.split(/^###\s+/m).slice(1);
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const lines = block.split("\n");
+[?2004l[?2004h>     const transactionId = (lines[0] || "").trim();
+[?2004l[?2004h>     if (!transactionId.startsWith("TXN-")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const row = { transaction_id: transactionId };
+[?2004l[?2004h>     let provisional = false;
+[?2004l[?2004h>     for (const line of lines) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (/^provisional:\s*true\s*$/i.test(trimmed)) {
+[?2004l[?2004h>         provisional = true;
+[?2004l[?2004h>       } else if (trimmed.startsWith("amount:")) {
+[?2004l[?2004h>         row.amount = Number(trimmed.split(":")[1].trim());
+[?2004l[?2004h>       } else if (trimmed.startsWith("owner:")) {
+[?2004l[?2004h>         row.owner = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith("status:")) {
+[?2004l[?2004h>         row.status = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith("date:")) {
+[?2004l[?2004h>         row.date = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (provisional) continue;
+[?2004l[?2004h>     byId.set(transactionId, row);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return [...byId.values()];
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseLedger };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+[?2004l[?2004h> function parseEmails(emailsSectionMarkdown) {
+[?2004l[?2004h>   if (!emailsSectionMarkdown) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const emails = [];
+[?2004l[?2004h>   // Split on blank lines; email excerpts are loosely structured.
+[?2004l[?2004h>   const blocks = emailsSectionMarkdown.split(/\n\n+/);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+[?2004l[?2004h>     const txnMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)\s*$/im);
+[?2004l[?2004h>     const statusMatch = block.match(/^status:\s*(\w+)\s*$/im);
+[?2004l[?2004h>     if (!fromMatch || !txnMatch || !statusMatch) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+[?2004l[?2004h>     emails.push({
+[?2004l[?2004h>       from_addr: fromMatch[1].trim(),
+[?2004l[?2004h>       transaction_id: txnMatch[1].trim(),
+[?2004l[?2004h>       status: statusMatch[1].trim().toLowerCase(),
+[?2004l[?2004h>       sent: sentMatch ? sentMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return emails;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseEmails };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'
+[?2004l[?2004h> function parseMeetings(meetingsSectionMarkdown) {
+[?2004l[?2004h>   if (!meetingsSectionMarkdown) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const amendments = [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Capture each amendment block bounded by next #### heading (or end of section)
+[?2004l[?2004h>   const re = /^####\s+Amendment for\s+(TXN-[0-9a-f-]+)\s*$/gim;
+[?2004l[?2004h>   let match;
+[?2004l[?2004h>   while ((match = re.exec(meetingsSectionMarkdown)) !== null) {
+[?2004l[?2004h>     const start = match.index;
+[?2004l[?2004h>     const afterHeading = start + match[0].length;
+[?2004l[?2004h>     const rest = meetingsSectionMarkdown.slice(afterHeading);
+[?2004l[?2004h>     const next = rest.match(/^####\s+/m);
+[?2004l[?2004h>     const end = next && next.index != null ? afterHeading + next.index : meetingsSectionMarkdown.length;
+[?2004l[?2004h>     const block = meetingsSectionMarkdown.slice(start, end);
+[?2004l[?2004h> 
+[?2004l[?2004h>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+[?2004l[?2004h>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+[?2004l[?2004h>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+[?2004l[?2004h> 
+[?2004l[?2004h>     amendments.push({
+[?2004l[?2004h>       transaction_id: match[1],
+[?2004l[?2004h>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+[?2004l[?2004h>       signed: signedMatch ? String(signedMatch[1]).trim().toLowerCase() === "true" : false,
+[?2004l[?2004h>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return amendments;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseMeetings };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+[?2004l[?2004h> function parsePolicyExceptions(policySectionMarkdown) {
+[?2004l[?2004h>   if (!policySectionMarkdown) return new Set();
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Only count exceptions where approved_by: compliance
+[?2004l[?2004h>   const ids = new Set();
+[?2004l[?2004h>   const blocks = policySectionMarkdown.split(/^###\s+/m).slice(1);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
+[?2004l[?2004h>     if (!txnMatch) continue;
+[?2004l[?2004h>     const approvedByMatch = block.match(/^approved_by:\s*(.+)\s*$/im);
+[?2004l[?2004h>     const approvedBy = approvedByMatch ? approvedByMatch[1].trim().toLowerCase() : "";
+[?2004l[?2004h>     if (approvedBy === "compliance") {
+[?2004l[?2004h>       ids.add(txnMatch[1]);
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return ids;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parsePolicyExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+[?2004l[?2004h> function parseCorrections(correctionsSectionMarkdown) {
+[?2004l[?2004h>   if (!correctionsSectionMarkdown) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   const notices = [];
+[?2004l[?2004h>   const blocks = correctionsSectionMarkdown.split(/^###\s+/m).slice(1);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const lines = block.split("\n");
+[?2004l[?2004h>     const noticeId = (lines[0] || "").trim();
+[?2004l[?2004h>     if (!noticeId.startsWith("CORR-")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const entry = { notice_id: noticeId, transaction_id: null, field: null, value: null, effective: null };
+[?2004l[?2004h>     for (const line of lines) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (trimmed.startsWith("targets:")) {
+[?2004l[?2004h>         entry.transaction_id = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith("field:")) {
+[?2004l[?2004h>         entry.field = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith("value:")) {
+[?2004l[?2004h>         entry.value = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith("effective:")) {
+[?2004l[?2004h>         entry.effective = trimmed.split(":")[1].trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h>     if (entry.transaction_id && entry.field && entry.effective) {
+[?2004l[?2004h>       notices.push(entry);
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return notices;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseCorrections };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+[?2004lconst { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'
+[?2004l[?2004h> const { sortByTransactionId, sortByNoticeId } = require("../utils/sort");
+[?2004l[?2004h> 
+[?2004l[?2004h> const STATUS_ORDER = {
+[?2004l[?2004h>   pending: 0,
+[?2004l[?2004h>   approved: 1,
+[?2004l[?2004h>   rejected: 2,
+[?2004l[?2004h>   reversed: 3,
+[?2004l[?2004h> };
+[?2004l[?2004h> 
+[?2004l[?2004h> function statusRank(s) {
+[?2004l[?2004h>   const key = String(s || "").toLowerCase();
+[?2004l[?2004h>   return Object.prototype.hasOwnProperty.call(STATUS_ORDER, key)
+[?2004l[?2004h>     ? STATUS_ORDER[key]
+[?2004l[?2004h>     : -1;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function reconcileTransactions(parsed) {
+[?2004l[?2004h>   const ledgerRows = Array.isArray(parsed.ledger) ? parsed.ledger : [];
+[?2004l[?2004h>   const emails = Array.isArray(parsed.emails) ? parsed.emails : [];
+[?2004l[?2004h>   const meetings = Array.isArray(parsed.meetings) ? parsed.meetings : [];
+[?2004l[?2004h>   const corrections = Array.isArray(parsed.corrections) ? parsed.corrections : [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Base rows from ledger
+[?2004l[?2004h>   const byId = new Map();
+[?2004l[?2004h>   for (const row of ledgerRows) {
+[?2004l[?2004h>     if (!row || !row.transaction_id) continue;
+[?2004l[?2004h>     byId.set(row.transaction_id, {
+[?2004l[?2004h>       transaction_id: row.transaction_id,
+[?2004l[?2004h>       owner: row.owner || "",
+[?2004l[?2004h>       status: String(row.status || "").toLowerCase(),
+[?2004l[?2004h>       date: row.date || "",
+[?2004l[?2004h>       amount: Number(row.amount),
+[?2004l[?2004h>       // metadata for exception computation
+[?2004l[?2004h>       _ledger_date: row.date || "",
+[?2004l[?2004h>       _qualifying_compliance_email_with_sent: false,
+[?2004l[?2004h>       _policy_waiver_eligible: false,
+[?2004l[?2004h>       _winning_status_correction_applied: false,
+[?2004l[?2004h>       _effective_date_override: null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Meeting amendments: replace owner when signed:true (case-insensitive)
+[?2004l[?2004h>   // and (effective missing OR effective >= ledger date)
+[?2004l[?2004h>   for (const amend of meetings) {
+[?2004l[?2004h>     if (!amend || !amend.transaction_id) continue;
+[?2004l[?2004h>     const target = byId.get(amend.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h>     if (!amend.signed) continue;
+[?2004l[?2004h>     if (amend.effective && target._ledger_date && amend.effective < target._ledger_date) {
+[?2004l[?2004h>       continue;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     if (amend.owner) target.owner = amend.owner;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Emails: may change status only when From contains compliance@
+[?2004l[?2004h>   // If sent present, only apply if sent >= ledger date.
+[?2004l[?2004h>   // If no sent, apply only if precedence allows (new >= current)
+[?2004l[?2004h>   for (const email of emails) {
+[?2004l[?2004h>     if (!email || !email.transaction_id) continue;
+[?2004l[?2004h>     const target = byId.get(email.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const from = String(email.from_addr || "").toLowerCase();
+[?2004l[?2004h>     if (!from.includes("compliance@")) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const newStatus = String(email.status || "").toLowerCase();
+[?2004l[?2004h>     if (statusRank(newStatus) < 0) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (email.sent) {
+[?2004l[?2004h>       if (target._ledger_date && email.sent < target._ledger_date) {
+[?2004l[?2004h>         continue;
+[?2004l[?2004h>       }
+[?2004l[?2004h>       // sent present: apply regardless of precedence (handbook: apply status change only if sent>=ledger date)
+[?2004l[?2004h>       target.status = newStatus;
+[?2004l[?2004h>       target._qualifying_compliance_email_with_sent = true;
+[?2004l[?2004h>     } else {
+[?2004l[?2004h>       if (statusRank(newStatus) >= statusRank(target.status)) {
+[?2004l[?2004h>         target.status = newStatus;
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Policy exception IDs passed through for later (exception_reason computation)
+[?2004l[?2004h>   const policyIds = parsed.policyExceptions instanceof Set ? parsed.policyExceptions : new Set();
+[?2004l[?2004h>   for (const id of policyIds) {
+[?2004l[?2004h>     const target = byId.get(id);
+[?2004l[?2004h>     if (target) target._policy_waiver_eligible = true;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Correction notices: winning per (transaction, field) is lexicographically greatest effective date.
+[?2004l[?2004h>   const winnersByKey = new Map();
+[?2004l[?2004h>   for (const notice of corrections) {
+[?2004l[?2004h>     if (!notice || !notice.transaction_id || !notice.field || !notice.effective) continue;
+[?2004l[?2004h>     const key = `${notice.transaction_id}::${notice.field}`;
+[?2004l[?2004h>     const prev = winnersByKey.get(key);
+[?2004l[?2004h>     if (!prev || String(notice.effective) > String(prev.effective)) {
+[?2004l[?2004h>       winnersByKey.set(key, notice);
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const winningNotices = [...winnersByKey.values()];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Apply winning notices in increasing effective then notice_id to make previous_value meaningful deterministically
+[?2004l[?2004h>   winningNotices.sort((a, b) => {
+[?2004l[?2004h>     if (a.effective === b.effective) {
+[?2004l[?2004h>       if (a.notice_id === b.notice_id) return 0;
+[?2004l[?2004h>       return a.notice_id < b.notice_id ? -1 : 1;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     return a.effective < b.effective ? -1 : 1;
+[?2004l[?2004h>   });
+[?2004l[?2004h> 
+[?2004l[?2004h>   const report = [];
+[?2004l[?2004h>   for (const notice of winningNotices) {
+[?2004l[?2004h>     const target = byId.get(notice.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const field = String(notice.field).trim();
+[?2004l[?2004h>     let previousValue = "";
+[?2004l[?2004h>     let applied = false;
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (field === "owner") {
+[?2004l[?2004h>       previousValue = target.owner;
+[?2004l[?2004h>       target.owner = notice.value;
+[?2004l[?2004h>       applied = true;
+[?2004l[?2004h>     } else if (field === "status") {
+[?2004l[?2004h>       previousValue = target.status;
+[?2004l[?2004h>       target.status = String(notice.value || "").toLowerCase();
+[?2004l[?2004h>       target._winning_status_correction_applied = true;
+[?2004l[?2004h>       target._effective_date_override = notice.effective;
+[?2004l[?2004h>       applied = true;
+[?2004l[?2004h>     } else if (field === "date") {
+[?2004l[?2004h>       previousValue = target.date;
+[?2004l[?2004h>       target.date = notice.value;
+[?2004l[?2004h>       target._effective_date_override = notice.effective;
+[?2004l[?2004h>       applied = true;
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (applied) {
+[?2004l[?2004h>       report.push({
+[?2004l[?2004h>         notice_id: notice.notice_id,
+[?2004l[?2004h>         transaction_id: notice.transaction_id,
+[?2004l[?2004h>         field,
+[?2004l[?2004h>         previous_value: previousValue,
+[?2004l[?2004h>         new_value: notice.value,
+[?2004l[?2004h>         effective: notice.effective,
+[?2004l[?2004h>       });
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Build final items
+[?2004l[?2004h>   const items = sortByTransactionId(
+[?2004l[?2004h>     [...byId.values()].map((row) => {
+[?2004l[?2004h>       const effectiveDate = row._effective_date_override
+[?2004l[?2004h>         ? row._effective_date_override
+[?2004l[?2004h>         : row._ledger_date;
+[?2004l[?2004h>       return {
+[?2004l[?2004h>         transaction_id: row.transaction_id,
+[?2004l[?2004h>         owner: row.owner,
+[?2004l[?2004h>         status: String(row.status).toLowerCase(),
+[?2004l[?2004h>         effective_date: effectiveDate,
+[?2004l[?2004h>         amount_usd: Number(Number(row.amount).toFixed(2)),
+[?2004l[?2004h>         exception_reason: null,
+[?2004l[?2004h>         // internal metadata used by exceptions builder
+[?2004l[?2004h>         _meta: {
+[?2004l[?2004h>           ledger_date: row._ledger_date,
+[?2004l[?2004h>           qualifying_compliance_email_with_sent: row._qualifying_compliance_email_with_sent,
+[?2004l[?2004h>           policy_waiver_eligible: row._policy_waiver_eligible,
+[?2004l[?2004h>           winning_status_correction_applied: row._winning_status_correction_applied,
+[?2004l[?2004h>         },
+[?2004l[?2004h>       };
+[?2004l[?2004h>     }),
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Report must be sorted by notice_id ascending
+[?2004l[?2004h>   sortByNoticeId(report);
+[?2004l[?2004h> 
+[?2004l[?2004h>   return { items, report };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { reconcileTransactions, STATUS_ORDER, statusRank };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+[?2004l[?2004h> function buildExceptionReason(row) {
+[?2004l[?2004h>   const reasons = [];
+[?2004l[?2004h>   const amount = Number(row.amount_usd);
+[?2004l[?2004h>   const status = String(row.status || "").toLowerCase();
+[?2004l[?2004h>   const meta = row._meta || {};
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (Number.isFinite(amount) && amount > 10000) {
+[?2004l[?2004h>     reasons.push("over_limit");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (
+[?2004l[?2004h>     status === "rejected" &&
+[?2004l[?2004h>     meta.qualifying_compliance_email_with_sent
+[?2004l[?2004h>   ) {
+[?2004l[?2004h>     reasons.push("compliance_hold");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (
+[?2004l[?2004h>     status === "approved" &&
+[?2004l[?2004h>     Number.isFinite(amount) &&
+[?2004l[?2004h>     amount > 10000 &&
+[?2004l[?2004h>     meta.policy_waiver_eligible
+[?2004l[?2004h>   ) {
+[?2004l[?2004h>     reasons.push("policy_waiver");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (
+[?2004l[?2004h>     status === "reversed" &&
+[?2004l[?2004h>     Number.isFinite(amount) &&
+[?2004l[?2004h>     amount > 5000 &&
+[?2004l[?2004h>     meta.winning_status_correction_applied
+[?2004l[?2004h>   ) {
+[?2004l[?2004h>     reasons.push("retroactive_review");
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   if (reasons.length === 0) return null;
+[?2004l[?2004h>   reasons.sort();
+[?2004l[?2004h>   return reasons.join(";");
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function buildExceptions(items) {
+[?2004l[?2004h>   for (const row of items) {
+[?2004l[?2004h>     row.exception_reason = buildExceptionReason(row);
+[?2004l[?2004h>     // strip internal meta before output filtering
+[?2004l[?2004h>     delete row._meta;
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return items.filter((row) => row.exception_reason);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { buildExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@27d303bbd91a:/app# grep -n "nextRe" -n /app/audit-extractor/src/parser/sections.js
+[?2004l21:  const nextRe = /^##\s+.+\s*$/m;
+22:  const next = rest.match(nextRe);
+[?2004hroot@27d303bbd91a:/app# node -c /app/audit-extractor/src/parser/sections.js && node -c /app/audit-extractor/src/normalize/reconcile.js && node -c /app/audit-extractor/src/normalize/exceptions.js
+[?2004l[?2004hroot@27d303bbd91a:/app# rm -rf /app/output && mkdir -p /app/output
+[?2004l[?2004hroot@27d303bbd91a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+[?2004l[?2004hroot@27d303bbd91a:/app# ls -la /app/output
+[?2004ltotal 32
+drwxr-xr-x 2 root root 4096 Jun  5 11:13 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:13 ..
+-rw-r--r-- 1 root root 3848 Jun  5 11:13 exceptions.json
+-rw-r--r-- 1 root root  543 Jun  5 11:13 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2665 Jun  5 11:13 transactions.csv
+-rw-r--r-- 1 root root 7533 Jun  5 11:13 transactions.json
+[?2004hroot@27d303bbd91a:/app# head -50 /app/output/transactions.json
+[?2004l{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-16df04da-aef5-5537-ae87-993fc75b7be3",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-07-19",
+      "amount_usd": 5721.56,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+      "owner": "jdoe",
+      "status": "rejected",
+      "effective_date": "2024-08-08",
+      "amount_usd": 10113.94,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-20cd5f27-165a-55cf-90db-b472725bb03b",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-12-24",
+      "amount_usd": 12588.66,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0",
+      "owner": "frost",
+      "status": "pending",
+      "effective_date": "2024-09-21",
+      "amount_usd": 8468.4,
+      "exception_reason": null
+    },
+[?2004hroot@27d303bbd91a:/app# head -5 /app/output/transactions.csv
+[?2004ltransaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94,over_limit
+[?2004hroot@27d303bbd91a:/app# head -20 /app/output/reconciliation_report.jsonl
+[?2004l{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","effective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective":"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","effective":"2024-08-01"}
+[?2004hroot@27d303bbd91a:/app# head -40 /app/output/exceptions.json
+[?2004l{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+      "owner": "jdoe",
+      "status": "rejected",
+      "effective_date": "2024-08-08",
+      "amount_usd": 10113.94,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-20cd5f27-165a-55cf-90db-b472725bb03b",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-12-24",
+      "amount_usd": 12588.66,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-33c930a7-114e-50c1-b790-e26c53e5f025",
+      "owner": "ckim",
+      "status": "pending",
+      "effective_date": "2024-11-11",
+      "amount_usd": 14234.2,
+[?2004hroot@27d303bbd91a:/app# grep -R "_meta" -n /app/output || true
+[?2004l[?2004hroot@27d303bbd91a:/app# node -e 'const j=require("/app/output/transactions.json"); const ids=j.items.map(x=>x.transaction_id); const sorted=[...ids].sort(); console.log("txns_sorted", JSON.stringify(ids)===JSON.stringify(sorted)); console.log("count", ids.length);'
+[?2004ltxns_sorted [33mtrue[39m
+count [33m32[39m
+[?2004hroot@27d303bbd91a:/app# node -e 'const fs=require("fs"); const raw=fs.readFileSync("/app/output/reconciliation_report.jsonl","utf8").trim(); const lines=raw?raw.split(/\n+/).filter(Boolean).map(l=>JSON.parse(l)):[]; const ids=lines.map(x=>x.notice_id); const sorted=[...ids].sort(); console.log("report_sorted", JSON.stringify(ids)===JSON.stringify(sorted)); console.log("count", ids.length);'
+[?2004lreport_sorted [33mtrue[39m
+count [33m3[39m
+[?2004hroot@27d303bbd91a:/app# 
