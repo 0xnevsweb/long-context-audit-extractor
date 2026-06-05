@@ -1,0 +1,59 @@
+{
+  "analysis": "The perl edit corrupted src/normalize/reconcile.js, producing a SyntaxError: an illegal `continue` outside a loop (line ~55). Extraction now fails, and /app/output is empty. We need to restore reconcile.js to a valid state and then implement the intended correction-report fix safely (edit the file directly rather than fragile regex replacement).",
+  "plan": "1) Open reconcile.js around the reported line to see what got mangled. 2) Reconstruct the corrections-application section manually: iterate parsed.corrections, skip missing target via `if (!target) continue;` inside the loop, capture previous_value before updating, and push report entries. Ensure braces/structure are correct. 3) Syntax-check reconcile.js. 4) Rerun extractor to /tmp and /app/output to confirm it works again.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,140p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '140,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"parsed\\.corrections\" -n /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /tmp/reconcile.fixed.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\n// Used for deterministic pick when multiple sources touch a status.\nconst STATUS_ORDER = [\n  \"ok\",\n  \"review\",\n  \"compliance_hold\",\n  \"void\",\n];\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n\n  // base: ledger\n  for (const row of parsed.ledger || []) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // meetings (if present)\n  for (const note of parsed.meetings || []) {\n    const target = byId.get(note.transaction_id);\n    if (!target) continue;\n    if (note.owner) target.owner = note.owner;\n    if (note.status) target.status = note.status;\n    if (note.date) target.date = note.date;\n  }\n\n  // mail excerpts (if present)\n  for (const msg of parsed.emails || []) {\n    const target = byId.get(msg.transaction_id);\n    if (!target) continue;\n    if (msg.status) target.status = msg.status;\n    if (msg.owner) target.owner = msg.owner;\n  }\n\n  // corrections must apply last\n  const report = [];\n  for (const notice of parsed.corrections || []) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    let previous = \"\";\n    if (notice.field === \"owner\") {\n      previous = target.owner ?? \"\";\n      target.owner = notice.value;\n    } else if (notice.field === \"status\") {\n      previous = target.status ?? \"\";\n      target.status = notice.value;\n    } else if (notice.field === \"date\") {\n      previous = target.date ?? \"\";\n      target.date = notice.value;\n    } else {\n      continue;\n    }\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: String(previous),\n      new_value: notice.value,\n      effective: notice.effective,\n    });\n  }\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => ({\n      transaction_id: row.transaction_id,\n      owner: row.owner,\n      status: String(row.status).toLowerCase(),\n      effective_date: row.date,\n      amount_usd: Number(row.amount),\n      exception_reason: null,\n    })),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "mv /tmp/reconcile.fixed.js /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

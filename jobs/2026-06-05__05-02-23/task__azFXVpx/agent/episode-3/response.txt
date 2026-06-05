@@ -1,0 +1,35 @@
+{
+  "analysis": "Current implementation is simplistic and violates multiple archive rules: ledger parsing uses indexOf and then takes first occurrence per TXN id (it explicitly skips duplicates), but Brief 01 says last non-provisional block wins when same id appears multiple times, and must ignore blocks with 'provisional: true'. Corrections parsing also uses indexOf boundaries and has no precedence by effective date. Emails parser only matches Subject: Re: TXN-... and captures only status; no dates, so later mail cannot be compared, causing holds/status drift. There is no compliance_hold logic at all, and exceptions are always empty. Correction notices are applied in file order but report doesn't capture previous values and could be mis-targeting because corrections 'targets:' may include multiple ids or different syntax. Next we need to read authoritative briefs (esp. Brief 09 amendment) and the structured sections near end (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) to implement correct reconciliation and compliance_hold handling.",
+  "plan": "1) Locate and read Investigation Briefs 01–09 and the structured sections near file end to extract the actual rules for statuses, compliance_hold timing, and correction precedence. 2) Update parser to use anchored heading regex to slice sections exactly; ensure ledger parser only reads within the canonical '## Transaction Ledger' section (and stops at next '## ' heading). 3) Implement ledger block parsing that supports multiple ledger blocks and applies rules: ignore provisional blocks, and for duplicate transaction IDs, last block in file order wins. 4) Enhance email parsing to capture timestamp/date and any hold indicators per archive format; then implement compliance_hold logic per briefs (including Brief 09 amendment). 5) Fix correction notice parsing and application: parse targets robustly (possibly CSV/list), apply by effective date precedence, and record previous_value in report. 6) Ensure deterministic output ordering via stable sort. 7) Run extractor twice and diff outputs to confirm no drift; then run required command writing into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0\" -n /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger$\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 220 /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      ^^^^^^^^
+
+SyntaxError: Illegal continue statement: no surrounding iteration statement
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/index.js:4:35)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@5bc7934c2c61:/app# diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+/app/audit-extractor/src/normalize/reconcile.js:55
+      continue;
+      ^^^^^^^^
+
+SyntaxError: Illegal continue statement: no surrounding iteration statement
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/index.js:4:35)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@5bc7934c2c61:/app# wc -l /app/output/reconciliation_report.jsonl
+wc: /app/output/reconciliation_report.jsonl: No such file or directory
+root@5bc7934c2c61:/app# head -n 5 /app/output/reconciliation_report.jsonl
+head: cannot open '/app/output/reconciliation_report.jsonl' for reading: No such file or directory
+root@5bc7934c2c61:/app#

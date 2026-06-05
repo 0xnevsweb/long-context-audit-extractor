@@ -1,0 +1,43 @@
+{
+  "analysis": "emails.js updated and syntactically valid. Now we must update reconcile.js to enforce Brief 05 meeting rules and Brief 03/09 email timing rules. We still need the exact Brief 09 amendment text; but at minimum implement Brief 03: if sent exists, apply only if sent >= ledger date. We'll incorporate now; if Brief 09 changes comparison basis, we can adjust after reading it. Also must ensure deterministic ordering of emails: sort by sent then idx. Finally rerun extractor and verify outputs.",
+  "plan": "1) Update reconcile.js: apply meetings by filtering signed; if effective exists compare to ledger date; choose latest applicable amendment (prefer higher effective, then later file order). 2) Apply emails sorted by (sent||'9999-99-99', idx), and only apply when sent is null OR sent >= ledger date (Brief 03). 3) Rerun extractor to /tmp twice and diff, then to /app/output. 4) Check that some transactions now have updated owners/statuses and that reconciliation report remains sorted by notice_id.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\n// Used for deterministic pick when multiple sources touch a status.\nconst STATUS_ORDER = [\"ok\", \"review\", \"compliance_hold\", \"void\"];\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n\n  // base: ledger\n  for (const row of parsed.ledger || []) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // meetings: Brief 05\n  // Replace owner only when signed:true and, if effective exists, effective >= ledger date.\n  // If multiple applicable amendments exist for a transaction, choose the one with the\n  // greatest effective date; if effective missing, treat as applicable but lower priority.\n  const amendmentsByTxn = new Map();\n  for (const note of parsed.meetings || []) {\n    if (!amendmentsByTxn.has(note.transaction_id)) amendmentsByTxn.set(note.transaction_id, []);\n    amendmentsByTxn.get(note.transaction_id).push(note);\n  }\n\n  for (const [txnId, notes] of amendmentsByTxn.entries()) {\n    const target = byId.get(txnId);\n    if (!target) continue;\n\n    const ledgerDate = String(target.date || \"\");\n    const applicable = notes.filter((n) => {\n      if (!n || !n.signed) return false;\n      if (!n.owner) return false;\n      if (!n.effective) return true;\n      return String(n.effective) >= ledgerDate;\n    });\n    if (applicable.length === 0) continue;\n\n    applicable.sort((a, b) => {\n      const ea = a.effective || \"\";\n      const eb = b.effective || \"\";\n      if (ea < eb) return -1;\n      if (ea > eb) return 1;\n      // stable fallback: keep later items last (file order); parser preserves order\n      return 0;\n    });\n\n    const winner = applicable[applicable.length - 1];\n    target.owner = winner.owner;\n  }\n\n  // emails: Brief 03 timing\n  // When `sent: YYYY-MM-DD` exists, apply status change only if sent >= ledger date.\n  // When sent is missing, apply if precedence allows (we accept it here).\n  const emails = [...(parsed.emails || [])];\n  emails.sort((a, b) => {\n    const sa = a.sent || \"9999-99-99\";\n    const sb = b.sent || \"9999-99-99\";\n    if (sa < sb) return -1;\n    if (sa > sb) return 1;\n    return (a.idx ?? 0) - (b.idx ?? 0);\n  });\n\n  for (const msg of emails) {\n    const target = byId.get(msg.transaction_id);\n    if (!target) continue;\n\n    const ledgerDate = String(target.date || \"\");\n    if (msg.sent && String(msg.sent) < ledgerDate) {\n      continue;\n    }\n\n    if (msg.status) target.status = msg.status;\n    if (msg.owner) target.owner = msg.owner;\n  }\n\n  // corrections must apply last.\n  // Brief 08: reconciliation_report.jsonl is one object per winning correction,\n  // sorted by notice_id ascending.\n  const notices = [...(parsed.corrections || [])];\n  notices.sort((a, b) => {\n    const ea = a.effective || \"\";\n    const eb = b.effective || \"\";\n    if (ea < eb) return -1;\n    if (ea > eb) return 1;\n    return String(a.notice_id).localeCompare(String(b.notice_id));\n  });\n\n  // Track the last applied (winning) correction per (transaction_id, field)\n  const winners = new Map();\n  for (const notice of notices) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    const key = `${notice.transaction_id}::${notice.field}`;\n\n    let previous = \"\";\n    if (notice.field === \"owner\") {\n      previous = target.owner ?? \"\";\n      target.owner = notice.value;\n    } else if (notice.field === \"status\") {\n      previous = target.status ?? \"\";\n      target.status = notice.value;\n    } else if (notice.field === \"date\") {\n      previous = target.date ?? \"\";\n      target.date = notice.value;\n    } else {\n      continue;\n    }\n\n    winners.set(key, {\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: String(previous),\n      new_value: notice.value,\n      effective: notice.effective,\n    });\n  }\n\n  const report = [...winners.values()].sort((a, b) =>\n    String(a.notice_id).localeCompare(String(b.notice_id)),\n  );\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => ({\n      transaction_id: row.transaction_id,\n      owner: row.owner,\n      status: String(row.status).toLowerCase(),\n      effective_date: row.date,\n      amount_usd: Number(row.amount),\n      exception_reason: null,\n    })),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nwith open('/app/output/transactions.json') as f:\n  data=json.load(f)\nitems=data.get('items',data)\nprint('items',len(items))\n# show a few transactions known from meeting notes\nfor tid in [\n 'TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15',\n 'TXN-a4dc6038-0c06-5338-9a45-fccff83a6194',\n 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f',\n 'TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb']:\n  row=next((r for r in items if r['transaction_id']==tid),None)\n  print(tid, row['owner'] if row else None)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

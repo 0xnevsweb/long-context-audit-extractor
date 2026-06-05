@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    value: 'reversed',
+    effective: '2024-05-10'
+  },
+  {
+    notice_id: 'CORR-8e3b02cd',
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    field: 'status',
+    value: 'approved',
+    effective: '2024-06-01'
+  },
+  {
+    notice_id: 'CORR-9f4c13de',
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    field: 'status',
+    value: 'reversed',
+    effective: '2024-06-15'
+  },
+  {
+    notice_id: 'CORR-a05d24ef',
+    transaction_id: 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f',
+    field: 'owner',
+    value: 'dlee',
+    effective: '2024-04-20'
+  },
+  {
+    notice_id: 'CORR-b16e35f0',
+    transaction_id: 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f',
+    field: 'date',
+    value: '2024-08-01',
+    effective: '2024-08-01'
+  },
+  {
+    notice_id: 'CORR-c27e46a1',
+    transaction_id: 'TXN-1b083448-63e3-5527-a20a-edd71416341c',
+    field: 'date',
+    value: '2024-09-01',
+    effective: '2024-09-01'
+  }
+]
+root@71d69e2634da:/app#

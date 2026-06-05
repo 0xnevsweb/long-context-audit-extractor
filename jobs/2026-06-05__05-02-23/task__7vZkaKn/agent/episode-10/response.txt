@@ -1,0 +1,27 @@
+{
+  "analysis": "The terminal is again filled with narrative archive text; our intended outputs (node snippet, code listings, brief excerpts) are not visible—likely scrolled away due to large sed prints of the briefs that include lots of non-binding narrative. We need to re-run the node snippet and code listings but avoid printing large archive ranges. For briefs, we should extract only the binding bullet lines by grepping within narrow line windows and limiting output. We'll also redirect long brief slices to /tmp and grep for the specific rule markers within those slices.",
+  "plan": "1) Re-run the node snippet to get parsed counts and samples (small output). 2) Re-print emails.js and reconcile.js (small). 3) For archive rules: instead of sed ranges, grep within specific line windows around the brief headings for keywords and show only a few context lines, or dump those windows into /tmp and then grep for MUST/ORDER/precedence/compliance_hold/effective. This will let us implement correct reconciliation logic without flooding the terminal.",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconsole.log(JSON.stringify({ledger:p.ledger.length, meetings:p.meetings.length, emails:p.emails.length, corrections:p.corrections.length, policyExceptions:p.policyExceptions.length}, null, 2));\nconsole.log('emails_hold_count', p.emails.filter(e=>String(e.status).toLowerCase()==='compliance_hold').length);\nconsole.log('corrections_first', p.corrections[0]);\nconsole.log('corrections_last', p.corrections[p.corrections.length-1]);\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,240p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,320p' /app/data/audit_archive.md > /tmp/brief02.md\nsed -n '468,540p' /app/data/audit_archive.md > /tmp/brief03.md\nsed -n '685,760p' /app/data/audit_archive.md > /tmp/brief04.md\nsed -n '1670,1745p' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief02.md /tmp/brief03.md /tmp/brief04.md /tmp/brief09.md; do echo \"==== $f ====\"; grep -nEi \"must|order|precedence|supersed|compliance_hold|hold|effective|apply|override|tie\" \"$f\"; done | head -n 200\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

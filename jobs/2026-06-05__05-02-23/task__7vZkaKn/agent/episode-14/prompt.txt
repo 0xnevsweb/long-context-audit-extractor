@@ -1,0 +1,41 @@
+Current Terminal Screen:
+3867:
+3868: ### CORR-7f2a91bc
+3869: targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+3870: field: status
+3871: value: reversed
+3872: effective: 2024-05-10
+3873:
+3874: ### CORR-8e3b02cd
+3875: targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+3876: field: status
+3877: value: approved
+3878: effective: 2024-06-01
+3879:
+3880: ### CORR-9f4c13de
+3881: targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+3882: field: status
+3883: value: reversed
+3884: effective: 2024-06-15
+3885:
+3886: ### CORR-a05d24ef
+3887: targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+3888: field: owner
+3889: value: dlee
+3890: effective: 2024-04-20
+3891:
+3892: ### CORR-b16e35f0
+3893: targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+3894: field: date
+3895: value: 2024-08-01
+3896: effective: 2024-08-01
+3897:
+3898: ### CORR-c27e46a1
+3899: targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+3900: field: date
+3901: value: 2024-09-01
+3902: effective: 2024-09-01
+3903:
+root@796178391c5a:/app# grep -n "comparison used for" /app/data/audit_archive.md | head
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+root@796178391c5a:/app#

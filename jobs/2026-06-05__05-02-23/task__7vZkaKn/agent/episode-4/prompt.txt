@@ -1,0 +1,41 @@
+Current Terminal Screen:
+     4    let match;
+     5    while ((match = re.exec(markdown)) !== null) {
+     6      const block = markdown.slice(match.index, match.index + 400);
+     7      const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+     8      const signedMatch = block.match(/^signed:\s*(.+)$/im);
+     9      meetings.push({
+    10        transaction_id: match[1],
+    11        owner: ownerMatch ? ownerMatch[1].trim() : "",
+    12        signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    13      });
+    14    }
+    15    return meetings;
+    16  }
+    17
+    18  module.exports = { parseMeetings };
+root@796178391c5a:/app# nl -ba /app/audit-extractor/src/utils/sort.js | sed -n '1,220p'
+     1  function sortByTransactionId(items) {
+     2    return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+     3  }
+     4
+     5  module.exports = { sortByTransactionId };
+root@796178391c5a:/app# nl -ba /app/audit-extractor/src/utils/date.js | sed -n '1,220p'
+     1  function isIsoDate(value) {
+     2    return /^\d{4}-\d{2}-\d{2}$/.test(value);
+     3  }
+     4
+     5  module.exports = { isIsoDate };
+root@796178391c5a:/app# grep -n "^## Investigation Brief 02" -n /app/data/audit_archive.md
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+root@796178391c5a:/app# grep -n "^## Investigation Brief 03" -n /app/data/audit_archive.md
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+root@796178391c5a:/app# grep -n "^## Investigation Brief 04" -n /app/data/audit_archive.md
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+root@796178391c5a:/app# grep -n "^## Investigation Brief 09" -n /app/data/audit_archive.md
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@796178391c5a:/app#

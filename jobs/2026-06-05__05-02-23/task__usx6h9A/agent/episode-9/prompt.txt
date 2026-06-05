@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #134 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #521 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+ state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #638 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+## Case Study 07 — Capital Project Capitalization
+
+Risk assessment WP-3391 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+root@5e2242c073c7:/app#

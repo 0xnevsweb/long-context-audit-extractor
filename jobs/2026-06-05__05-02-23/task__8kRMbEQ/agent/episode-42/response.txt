@@ -1,0 +1,35 @@
+{
+  "analysis": "Policy Exceptions format is clear: repeated '### Policy Exception' blocks with fields transaction, approved_by, reason. Current parser/policy.js is wrong: uses indexOf slicing (decoy risk) and only returns a Set of transaction ids, losing reason codes. reconcile.js never sets exception_reason, so exceptions.json is empty though there are at least 3 policy exceptions. We need to rewrite parser/policy.js to anchored section parsing and return structured exceptions mapping txn->reasons (possibly multiple, joined with semicolon). Then update reconcile.js to set exception_reason for matching transactions. buildExceptions already filters items with exception_reason, which will then populate exceptions.json.",
+  "plan": "1) Rewrite src/parser/policy.js parsePolicyExceptions to extract Policy Exceptions section using anchored regex, parse each '### Policy Exception' block, and return array of {transaction_id, reason}. 2) Update parser/sections.js (parseArchive) to pass through these policy exceptions in parsed output (if it currently expects Set). 3) Update reconcile.js to attach exception_reason: for each transaction, collect reasons from policy exceptions (may be multiple) and set exception_reason as semicolon-joined unique reasons (Brief 08). 4) Rerun extractor and confirm exceptions.json has 3 items and transactions rows include exception_reason for those TXNs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  // Structured under `## Policy Exceptions`.\n  const headingRe = /^## Policy Exceptions\\s*$/m;\n  const m = headingRe.exec(markdown);\n  if (!m) return [];\n\n  const sectionStart = m.index + m[0].length;\n  const after = markdown.slice(sectionStart);\n  const nextH2Idx = after.search(/^##\\s+/m);\n  const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);\n\n  const exceptions = [];\n  const blocks = section.split(/^###\\s+/m).slice(1);\n  for (const block of blocks) {\n    const title = (block.split(\"\\n\")[0] || \"\").trim();\n    if (!/^Policy Exception\\s*$/i.test(title)) continue;\n\n    const txnMatch = block.match(/^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/im);\n    const reasonMatch = block.match(/^reason:\\s*(.+)\\s*$/im);\n    if (!txnMatch || !reasonMatch) continue;\n\n    exceptions.push({\n      transaction_id: txnMatch[1].trim(),\n      reason: reasonMatch[1].trim(),\n    });\n  }\n\n  return exceptions;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"policy\" -n /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

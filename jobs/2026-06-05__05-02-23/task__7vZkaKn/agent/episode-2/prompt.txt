@@ -1,0 +1,215 @@
+New Terminal Output:
+
+root@796178391c5a:/app# grep -n "Transaction Ledger" /app/data/audit_archive.md | head -n 50
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+17:line is exactly `## Transaction Ledger` as authoritative. The archive also
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@796178391c5a:/app# sed -n '1,220p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@796178391c5a:/app# sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@796178391c5a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@796178391c5a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+y blamed too
+ling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Follow-up #775 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Interview #913 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-6250 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Working paper WP-1770 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #134 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #521 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+ state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #638 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+## Case Study 07 — Capital Project Capitalization
+
+Risk assessment WP-3391 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Follow-up #634 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-5723 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+root@796178391c5a:/app#

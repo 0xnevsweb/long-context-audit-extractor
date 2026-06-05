@@ -1,0 +1,35 @@
+{
+  "analysis": "We successfully extracted and displayed the Correction Notices structured section (at least the tail shown), confirming multiple corrections targeting the same transaction with different effective dates—this requires precedence by effective date, not input order. However, the brief and email excerpt outputs are not visible in the current terminal view (likely scrolled). We still need to read Brief 02/03/04/05/09 and Email Excerpts format to implement proper logic. Current reconcile.js applies corrections in archive order and overwrites fields, without considering effective dates, and emails.js lacks timestamps. Next step: view the extracted /tmp/brief*_only.txt and /tmp/email_excerpts_only.txt files (they should be small) and then implement reconciliation: apply corrections sorted by effective date (and notice id tie-break), apply meeting owners only if signed, apply email status updates with precedence and compliance_hold timing per Brief 09. Also ensure correction report includes previous_value.",
+  "plan": "1) Print the extracted brief-only files and email excerpts file, but limit to first ~200 lines each. 2) Based on those binding rules, patch emails.js to parse date/timestamp from email blocks. 3) Patch reconcile.js to:\n   - Build event timelines per transaction.\n   - Apply signed meeting owner changes.\n   - Apply corrections sorted by effective date.\n   - Apply status updates from emails with precedence ordering and compliance_hold timing comparison per Brief 09.\n   - Record previous_value in report.\n4) Rerun extractor twice and diff outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/brief02_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief03_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,280p' /tmp/brief04_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,280p' /tmp/brief05_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /tmp/brief09_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/email_excerpts_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\ns=open('/tmp/email_excerpts_only.txt','r',encoding='utf-8').read()\n# show distinct header keys used in excerpts\nkeys=set(re.findall(r'(?m)^[0-9]+: ([A-Za-z-]+):', s))\nprint('email_header_keys', sorted(keys))\n# show a few lines that look like dates\nfor m in re.finditer(r'(?mi)^[0-9]+: (Date|Sent|Received):\\s*(.+)$', s):\n    print('date_line', m.group(1), m.group(2))\n    break\nPY\n",
+      "duration": 0.5
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,51 @@
+{
+  "analysis": "Our greps are returning many narrative memo lines, not the binding brief clauses. We still haven’t successfully captured emails.js/corrections.js output (it likely scrolled off due to large grep outputs). We should focus on: (a) fixing obvious code bugs already identified (canonical ledger heading parsing; stable sort comparator) and (b) extracting binding rules by limiting searches to the brief line ranges instead of the whole file. Next, we’ll dump the brief sections into temporary files and then grep within those small files for the actual rule statements. Also re-open the JS sources directly with cat to ensure we have them visible.",
+  "plan": "1) Save bounded slices of the archive for Briefs 01–05 and 09 into /tmp files using sed line ranges, then grep within those for key rule keywords, avoiding narrative spam. 2) Re-display emails.js and corrections.js and, if needed, search within them for 'date', 'timestamp', 'effective', 'hold'. 3) Implement immediate fixes: parseLedger should match exact heading line `## Transaction Ledger` (not the working copy); sort comparator should return 0 when equal and handle missing ids. Then rerun extractor twice to check deterministic outputs; then iterate on compliance hold/corrections logic if still failing.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,980p' /app/data/audit_archive.md > /tmp/briefs_01_04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1000p' /app/data/audit_archive.md > /tmp/brief05.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1860p' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /tmp/briefs_01_04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"binding|rule|must|authoritative|precedence|override|apply\" /tmp/briefs_01_04.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"compliance_hold|hold|timestamp|date comparison|mail\" /tmp/briefs_01_04.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"correction|notice|effective\" /tmp/briefs_01_04.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"signed|meeting|owner\" /tmp/brief05.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"compliance_hold|hold|comparison|supersede|amend\" /tmp/brief09.md | head -n 160\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js | head -n 240\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | head -n 240\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

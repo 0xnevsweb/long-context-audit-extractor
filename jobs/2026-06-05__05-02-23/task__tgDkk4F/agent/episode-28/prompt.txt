@@ -1,0 +1,4 @@
+Previous response had parsing errors:
+ERROR: Invalid JSON: Expecting ',' delimiter: line 19 column 22 (char 8265) | Content preview: '{\n  "analysis": "We now have authoritative rules:\\n- Brief 03: If email block has `sent:`, apply sta'...
+
+Please fix these issues and provide a proper JSON response.

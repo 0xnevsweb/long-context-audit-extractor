@@ -1,0 +1,41 @@
+Current Terminal Screen:
+286:Subject: accrual true-up schedule — thread 40
+292:From: controller@corp.internal
+293:Subject: close calendar revision — thread 41
+299:From: audit-lead@corp.internal
+300:Subject: FY24 sampling plan draft — thread 42
+306:From: controller@corp.internal
+307:Subject: close calendar revision — thread 43
+313:From: legal-notices@corp.internal
+314:Subject: retention hold reminder — thread 44
+320:From: legal-notices@corp.internal
+321:Subject: retention hold reminder — thread 45
+327:From: legal-notices@corp.internal
+328:Subject: retention hold reminder — thread 46
+334:From: treasury-ops@corp.internal
+335:Subject: wire desk weekend coverage — thread 47
+341:From: audit-lead@corp.internal
+342:Subject: FY24 sampling plan draft — thread 48
+348:From: audit-lead@corp.internal
+349:Subject: FY24 sampling plan draft — thread 49
+355:From: controller@corp.internal
+356:Subject: close calendar revision — thread 50
+362:From: legal-notices@corp.internal
+363:Subject: retention hold reminder — thread 51
+369:From: legal-notices@corp.internal
+370:Subject: retention hold reminder — thread 52
+376:From: audit-lead@corp.internal
+377:Subject: FY24 sampling plan draft — thread 53
+383:From: treasury-ops@corp.internal
+384:Subject: wire desk weekend coverage — thread 54
+390:From: controller@corp.internal
+391:Subject: close calendar revision — thread 55
+397:From: treasury-ops@corp.internal
+398:Subject: wire desk weekend coverage — thread 56
+404:From: legal-notices@corp.internal
+405:Subject: retention hold reminder — thread 57
+411:From: legal-notices@corp.internal
+412:Subject: retention hold reminder — thread 58
+418:From: hr-payroll@corp.internal
+419:Subject: accrual true-up schedule — thread 59
+root@71d69e2634da:/app#

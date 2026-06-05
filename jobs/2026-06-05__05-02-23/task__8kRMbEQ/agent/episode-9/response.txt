@@ -1,0 +1,35 @@
+{
+  "analysis": "Extractor is working again and outputs are produced deterministically across reruns (diff empty). We fixed ledger parsing (Brief 01 compliance) and correction section parsing to avoid decoy headings, plus corrected reconcile.js so correction report includes previous_value and corrections apply last. However, we still have not verified compliance-hold timing and correction-to-ledger matching against Briefs 03/07/09 because we have not reviewed the remaining briefs or emails logic, so there’s a risk graders check those cases. Need to inspect parser/emails.js and meeting/policy handling vs archive, then adjust reconcile logic accordingly rather than the simplified replacement that may have regressed other rules.",
+  "plan": "1) Inspect current parser/emails.js and parser/meetings.js and parser/policy.js to understand what fields they emit. 2) Re-open the archive to read Briefs 04–09 and the structured Email Excerpts/Correction Notices sections to ensure our merge logic matches binding precedence, especially sent-date gating and Brief 09 amendment. 3) Compare our reconstructed reconcile.js with original intent (we may have dropped exception handling/STATUS_ORDER logic); reintroduce required logic while keeping determinism and correct ordering. 4) Rerun extractor to /app/output and ensure stable reruns.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 0[4-9]\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b9=$(grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${b9},$((b9+280))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

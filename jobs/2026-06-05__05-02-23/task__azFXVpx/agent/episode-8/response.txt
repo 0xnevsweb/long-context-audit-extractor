@@ -1,0 +1,55 @@
+{
+  "analysis": "We now have binding rules from Brief 08 and Brief 09 (shown). Brief 08 defines exception flags: policy_waiver and retroactive_review, plus output file formats and sorting requirements (transactions.json/exceptions.json wrapper {\"items\":...}, report sorted by notice_id). Brief 09 amends compliance_hold timing: compare qualifying email sent date against pre-correction ledger date (after ledger load + meeting amendments + email merges) but before correction notices that change date/status. Our current code violates output format (writes bare array for transactions.json likely), exceptions.json, and report sorting and previous_value. It also lacks any compliance_hold/policy_waiver/retroactive_review logic and does not parse sent: lines or policy exception approved_by: compliance. Next: capture Brief 02–07 rules, then implement fixes across parsers, reconcile pipeline, and writers.",
+  "plan": "1) Extract the authoritative text for Briefs 02–07 (status precedence, compliance mail timing, correction notice precedence, meeting amendments owners, effective dates output, exception flags part I). 2) Inspect writers to confirm current output format and adjust to match Brief 08. 3) Implement section-slicing via anchored headings and ensure we use the correct structured sections (not drafts/archived threads). 4) Update parsers: emails include sent date and qualifiers; policy exceptions include approved_by; corrections include effective date and robust targets. 5) Update reconcile: apply ledger load rules (exact Transaction Ledger heading; ignore provisional; last non-provisional wins), then meeting amendments (signed-only, per Brief 05), then email status precedence (per Brief 02/03), compute compliance_hold pre-correction per Brief 09, then apply winning corrections per Brief 04, compute effective_date per Brief 06, then exception_reason codes per Brief 07/08, and write outputs in required formats sorted deterministically.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,261p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,478p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,695p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,837p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1068p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1212p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1430p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1430,1439p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1681p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

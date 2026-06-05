@@ -1,0 +1,13 @@
+New Terminal Output:
+
+root@5bc7934c2c61:/app# printf '---VISIBLE---\n'
+bash: printf: --: invalid option
+printf: usage: printf [-v var] format [arguments]
+root@5bc7934c2c61:/app# ls -ლა /tmp | tail -n 20
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/parser/ledger.js && node -c /app/audit-extractor/src/parser/corrections.js && node -c /app/audit-extrac
+tor/src/normalize/reconcile.js
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@5bc7934c2c61:/app#

@@ -183,6 +183,8 @@ def _build_expected(markdown: str) -> tuple[list[TransactionRow], list[dict]]:
         if STATUS_ORDER.get(nxt, -1) > STATUS_ORDER.get(cur, -1):
             target["status"] = nxt
 
+    pre_correction_dates = {tid: row["date"] for tid, row in by_id.items()}
+
     report: list[dict] = []
     corr_by_txn: dict[str, list[dict]] = {}
     for notice in corrections:
@@ -240,11 +242,12 @@ def _build_expected(markdown: str) -> tuple[list[TransactionRow], list[dict]]:
         reasons: list[str] = []
         if amount > 10000:
             reasons.append("over_limit")
+        hold_compare_date = pre_correction_dates.get(tid, ledger_date)
         if status == "rejected" and any(
             "compliance@" in em["from_addr"].lower()
             and em["transaction_id"] == tid
             and em.get("sent")
-            and em["sent"] >= ledger_date
+            and em["sent"] >= hold_compare_date
             for em in emails
         ):
             reasons.append("compliance_hold")
@@ -305,6 +308,12 @@ def test_archive_is_long_context(archive_text: str) -> None:
     assert len(archive_text) >= 200_000, (
         f"archive too small for long-context task: {len(archive_text)} chars"
     )
+    assert "Investigation Brief 01" in archive_text
+    brief_09_heading = "## Investigation Brief 09 — Mid-Year Amendment"
+    assert brief_09_heading in archive_text
+    brief_09_at = archive_text.find(brief_09_heading)
+    assert brief_09_at >= 120_000, "policy amendment should be deep in the archive"
+    assert "weekly metrics" not in archive_text
 
 
 def test_cli_requires_arguments() -> None:
@@ -442,6 +451,31 @@ def test_ignores_decoy_ledger_section(
     assert all(row["owner"] != "decoy" for row in payload["items"])
 
 
+def test_compliance_hold_uses_pre_correction_ledger_date(
+    pipeline_output: Path,
+    archive_text: str,
+    expected: tuple[list[TransactionRow], list[dict]],
+) -> None:
+    """Verify compliance_hold compares sent against ledger date before corrections adjust date."""
+    tid = "TXN-1b083448-63e3-5527-a20a-edd71416341c"
+    exp_by_id = {r.transaction_id: r for r in expected[0]}
+    assert "compliance_hold" in (exp_by_id[tid].exception_reason or "")
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
+    assert "compliance_hold" in (out_by_id[tid].get("exception_reason") or "")
+    corrections = _parse_corrections(archive_text)
+    assert any(c["transaction_id"] == tid and c["field"] == "date" for c in corrections)
+    emails = _parse_emails(archive_text)
+    hold_email = next(
+        e
+        for e in emails
+        if e["transaction_id"] == tid and "compliance@" in e["from_addr"].lower() and e.get("sent")
+    )
+    ledger = _parse_ledger(archive_text)
+    assert hold_email["sent"] >= ledger[tid]["date"]
+    assert hold_email["sent"] < "2024-09-01"
+
+
 def test_compliance_hold_requires_sent_line(
     pipeline_output: Path,
     archive_text: str,
@@ -467,8 +501,7 @@ def test_retroactive_review_on_status_correction(
 ) -> None:
     """Verify retroactive_review is set when status was corrected to reversed above threshold."""
     flagged = [r for r in expected[0] if r.exception_reason and "retroactive_review" in r.exception_reason]
-    if not flagged:
-        pytest.skip("no retroactive_review rows in fixture")
+    assert flagged, "fixture must include at least one retroactive_review row"
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     out_by_id = {r["transaction_id"]: r for r in payload["items"]}
     for exp in flagged:

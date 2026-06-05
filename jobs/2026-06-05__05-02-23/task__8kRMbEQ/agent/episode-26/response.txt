@@ -1,0 +1,27 @@
+{
+  "analysis": "emails.js is clearly insufficient vs archive policy: it uses indexOf slicing (decoy heading risk), requires Subject 'Re: TXN-' only (may miss other valid subjects), ignores 'sent: YYYY-MM-DD' required for gating, ignores 'To:'/compliance-addressed requirement, and only extracts status (not owner). This explains missed later mail and incorrect hold timing. We must rewrite emails parser to anchored section extraction and parse structured email blocks (likely separated by 'From:' headers), extracting transaction_id from subject lines containing TXN-, detect compliance-addressed (e.g., To: compliance@...), parse sent date if present, and parse status updates. Then reconcile.js must apply emails in correct precedence, using sent-date gating vs ledger date per Brief 03 and Brief 09 amendment.\n\nWe still need Brief 09 exact language (in /tmp/brief09.txt). We'll parse it next. But we can start improving emails parsing now: be permissive on subject matching for TXN id; capture sent; capture to_addr and require it contains 'compliance' per archive text.",
+  "plan": "1) Read relevant parts of /tmp/brief09.txt and /tmp/brief05.txt for binding rules (mail timing and signed amendments). 2) Rewrite src/parser/emails.js: anchored section '^## Email Excerpts$' to '^## Policy Exceptions$' or next H2; split messages by /^From:/m blocks; extract From, To (optional), Subject, sent (optional), TXN id anywhere in subject, status line, owner line if present; include an 'is_compliance' boolean based on To containing 'compliance' or Subject containing 'compliance' per archive. Only include messages with TXN id, status/owner change, and compliance-addressed. Preserve file order index for deterministic tie-breaking. 3) Update reconcile.js email application: sort emails by sent date (missing sent last) then by original index; apply change only if sent >= ledger date when sent exists (Brief 03), with Brief 09 modifications once read; allow later emails to override earlier. 4) Update meetings.js: parse effective and signed; apply only signed true (Brief 05) and choose latest effective if multiple. 5) Rerun extractor and validate output stability.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Extract policy\" -n /tmp/brief09.txt | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"compliance\" /tmp/brief09.txt | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /tmp/brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Extract policy\" -n /tmp/brief05.txt | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"signed\" /tmp/brief05.txt | head -n 80\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

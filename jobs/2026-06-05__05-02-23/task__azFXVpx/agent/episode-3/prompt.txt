@@ -1,0 +1,224 @@
+New Terminal Output:
+
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@64435c900e2e:/app# sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@64435c900e2e:/app# sed -n '1,240p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@64435c900e2e:/app# grep -RInE "compliance_hold|hold" /app/audit-extractor/src
+root@64435c900e2e:/app# grep -RInE "correction|notice" /app/audit-extractor/src
+/app/audit-extractor/src/normalize/reconcile.js:26:  for (const notice of parsed.corrections) {
+/app/audit-extractor/src/normalize/reconcile.js:27:    const target = byId.get(notice.transaction_id);
+/app/audit-extractor/src/normalize/reconcile.js:31:    if (notice.field === "owner") {
+/app/audit-extractor/src/normalize/reconcile.js:32:      target.owner = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:33:    } else if (notice.field === "status") {
+/app/audit-extractor/src/normalize/reconcile.js:34:      target.status = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:35:    } else if (notice.field === "date") {
+/app/audit-extractor/src/normalize/reconcile.js:36:      target.date = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:39:      notice_id: notice.notice_id,
+/app/audit-extractor/src/normalize/reconcile.js:40:      transaction_id: notice.transaction_id,
+/app/audit-extractor/src/normalize/reconcile.js:41:      field: notice.field,
+/app/audit-extractor/src/normalize/reconcile.js:43:      new_value: notice.value,
+/app/audit-extractor/src/normalize/reconcile.js:44:      effective: notice.effective,
+/app/audit-extractor/src/parser/sections.js:4:const { parseCorrections } = require("./corrections");
+/app/audit-extractor/src/parser/sections.js:12:    corrections: parseCorrections(markdown),
+/app/audit-extractor/src/parser/corrections.js:6:  const notices = [];
+/app/audit-extractor/src/parser/corrections.js:10:    const noticeId = lines[0].trim();
+/app/audit-extractor/src/parser/corrections.js:11:    if (!noticeId.startsWith("CORR-")) {
+/app/audit-extractor/src/parser/corrections.js:14:    const entry = { notice_id: noticeId };
+/app/audit-extractor/src/parser/corrections.js:27:    notices.push(entry);
+/app/audit-extractor/src/parser/corrections.js:29:  return notices;
+root@64435c900e2e:/app#

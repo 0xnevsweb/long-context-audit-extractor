@@ -1,0 +1,45 @@
+Current terminal state:
+Current Terminal Screen:
+>     }
+>
+>     // Non-hold statuses: apply if they are >= current status precedence, and
+>     // allow them to clear a prior compliance_hold when they arrive later.
+>     const curOrder = STATUS_ORDER[curStatus] ?? 0;
+>     const nextOrder = STATUS_ORDER[nextStatus] ?? 0;
+>     if (curStatus === "compliance_hold") {
+>       // A later explicit status clears the hold.
+>       if (!email.sent || !target.date || email.sent >= String(target.date)) {
+>         target.status = nextStatus;
+>       }
+>     } else if (nextOrder >= curOrder) {
+>       target.status = nextStatus;
+>     }
+>   }
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => ({
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       effective_date: row.date,
+>       amount_usd: Number(row.amount),
+>       exception_reason: null,
+>     })),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@796178391c5a:/app# node -c /app/audit-extractor/src/parser/emails.js
+root@796178391c5a:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@796178391c5a:/app# rm -rf /app/output && mkdir -p /app/output
+root@796178391c5a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@796178391c5a:/app# rm -rf /tmp/out2 && mkdir -p /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/
+out2
+root@796178391c5a:/app# diff -u /app/output/transactions.json /tmp/out2/transactions.json | head -n 50
+root@796178391c5a:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

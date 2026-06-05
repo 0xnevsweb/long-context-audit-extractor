@@ -1,0 +1,6 @@
+{
+  "analysis": "All required fixes are implemented and verified. Ledger parsing now selects only the authoritative `## Transaction Ledger` section with regex-anchored boundaries and handles duplicates/decoys correctly. Corrections are parsed from the authoritative section and applied per Brief 04 (max effective date per txn+field), with reconciliation_report.jsonl populated (4 lines) including previous_value. Email parsing now uses authoritative section boundaries and parses `sent:`. Status merging now follows Brief 03 (sent>=ledger date gating) and Brief 02 (status precedence), eliminating drift and ensuring later non-sent emails cannot incorrectly override more severe statuses. Exception_reason now follows Brief 07 with over_limit and compliance_hold (per Brief 09’s pre-correction date comparison), and CSV includes exception_reason; exceptions.json is populated. Outputs are stable across reruns (diff is empty), and CLI missing-arg behavior already exits 1 to stderr. Extraction was run via the CLI with --input and --outdir as required.",
+  "plan": "No further changes needed; mark task complete.",
+  "commands": [],
+  "task_complete": true
+}

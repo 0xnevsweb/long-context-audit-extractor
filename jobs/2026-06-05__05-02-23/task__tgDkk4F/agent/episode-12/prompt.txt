@@ -1,0 +1,41 @@
+Current Terminal Screen:
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+root@71d69e2634da:/app# cat /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@71d69e2634da:/app#

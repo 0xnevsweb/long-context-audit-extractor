@@ -1,0 +1,47 @@
+{
+  "analysis": "We have the binding policy text for Brief 03/07/09 and the structured email blocks (From/Subject Re: TXN/sent/status). The extractor still doesn’t implement the mail timing rule (Brief 03) nor exception_reason flags (Brief 07), and CSV output doesn’t include exception_reason. We need to update reconcile.js to apply emails with sent>=ledger-date gating, compute exception_reason including over_limit and compliance_hold per Brief 07/09, and update csvWriter/header accordingly. Also verify schema/validate.js accepts the new CSV header/field.",
+  "plan": "1) Update csvWriter.js to add exception_reason column.\n2) Update reconcile.js: apply email status changes per Brief 03 (if sent present, only when sent >= current ledger date; if no sent, allow), capture pre-correction date for Brief 09 hold comparisons, keep Brief 04 correction precedence logic, then compute exception_reason per Brief 07 using final status and qualifying compliance@ emails with sent and sent>=preCorrectionDate.\n3) Inspect schema/validate.js and adjust if it enforces a strict CSV header or item keys.\n4) Re-run extraction and inspect transactions.csv header, exceptions.json content, and a known txn with a compliance email (TXN-f4d...) to confirm flags.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header = \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map(\n    (row) =>\n      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${row.exception_reason ?? \"\"}`,\n  );\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\"));\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\nconst STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n  for (const row of parsed.ledger) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // Meeting minutes may amend owner (subject to later correction precedence).\n  for (const meeting of parsed.meetings) {\n    const target = byId.get(meeting.transaction_id);\n    if (target) target.owner = meeting.owner;\n  }\n\n  // Mail-driven status changes (Brief 03).\n  for (const email of parsed.emails) {\n    const target = byId.get(email.transaction_id);\n    if (!target) continue;\n\n    const ledgerDate = String(target.date || \"\");\n    if (email.sent) {\n      if (ledgerDate && String(email.sent) < ledgerDate) continue;\n    }\n    target.status = email.status;\n  }\n\n  // Pre-correction date snapshot (Brief 09 compares hold email `sent` to this date)\n  const preCorrectionDateById = new Map();\n  for (const [id, row] of byId.entries()) preCorrectionDateById.set(id, row.date);\n\n  // Brief 04: for each (transaction_id, field), max effective wins.\n  const winners = new Map();\n  for (const notice of parsed.corrections) {\n    if (!notice.transaction_id || !notice.field || !notice.effective) continue;\n    const key = `${notice.transaction_id}::${notice.field}`;\n    const cur = winners.get(key);\n    if (!cur || String(notice.effective) > String(cur.effective)) winners.set(key, notice);\n  }\n\n  const winningNotices = [...winners.values()].sort((a, b) => {\n    if (a.transaction_id !== b.transaction_id) return a.transaction_id.localeCompare(b.transaction_id);\n    if (a.field !== b.field) return a.field.localeCompare(b.field);\n    if (a.effective !== b.effective) return String(a.effective).localeCompare(String(b.effective));\n    return String(a.notice_id).localeCompare(String(b.notice_id));\n  });\n\n  const report = [];\n  for (const notice of winningNotices) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    const field = notice.field;\n    let previous;\n    if (field === \"owner\") previous = target.owner;\n    else if (field === \"status\") previous = target.status;\n    else if (field === \"date\") previous = target.date;\n    else previous = target[field];\n\n    if (field === \"owner\") target.owner = notice.value;\n    else if (field === \"status\") target.status = notice.value;\n    else if (field === \"date\") target.date = notice.value;\n    else target[field] = notice.value;\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: previous == null ? \"\" : String(previous),\n      new_value: notice.value,\n      effective: notice.effective,\n    });\n  }\n\n  // Exception flags (Brief 07)\n  const emailsByTxn = new Map();\n  for (const e of parsed.emails) {\n    if (!emailsByTxn.has(e.transaction_id)) emailsByTxn.set(e.transaction_id, []);\n    emailsByTxn.get(e.transaction_id).push(e);\n  }\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => {\n      const status = String(row.status).toLowerCase();\n      const amount = Number(row.amount);\n      const reasons = [];\n\n      if (amount > 10000) reasons.push(\"over_limit\");\n\n      if (status === \"rejected\") {\n        const preDate = String(preCorrectionDateById.get(row.transaction_id) || \"\");\n        const emails = emailsByTxn.get(row.transaction_id) || [];\n        const hasQualifyingCompliance = emails.some(\n          (e) =>\n            e.sent &&\n            String(e.from_addr || \"\").startsWith(\"compliance@\") &&\n            (!preDate || String(e.sent) >= preDate),\n        );\n        if (hasQualifyingCompliance) reasons.push(\"compliance_hold\");\n      }\n\n      reasons.sort();\n      return {\n        transaction_id: row.transaction_id,\n        owner: row.owner,\n        status,\n        effective_date: row.date,\n        amount_usd: amount,\n        exception_reason: reasons.length ? reasons.join(\";\") : null,\n      };\n    }),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 3 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/output/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

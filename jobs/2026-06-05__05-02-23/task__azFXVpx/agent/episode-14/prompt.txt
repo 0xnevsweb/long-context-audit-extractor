@@ -1,0 +1,41 @@
+Current Terminal Screen:
+mentary as authoritative transaction sources.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against a
+mendment minutes before accepting any owner change.
+
+Interview #952 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+Interview #820 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-3660 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different
+status columns for the same transaction id.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+ so auditors can explain why a given transaction received compliance_hold.
+
+During Q1 close, A. Ndiaye circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state;
+ QA reproduced the drift on a cold run the next morning.
+
+Site visit #394 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers f
+lagged the gap because effective-date logic must honor notice precedence.
+
+Working paper WP-6026 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different
+status columns for the same transaction id.
+root@64435c900e2e:/app# sed -n '1,260p' /app/audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@64435c900e2e:/app#

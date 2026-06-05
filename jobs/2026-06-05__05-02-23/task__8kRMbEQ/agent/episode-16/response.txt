@@ -1,0 +1,35 @@
+{
+  "analysis": "We fixed reconciliation_report.jsonl to contain only winning corrections (last per transaction+field) and verified it is sorted by notice_id ascending per Brief 08. Ledger parsing and corrections parsing now use anchored headings and correct overwrite semantics, and extraction runs successfully to /app/output without manual copying. Remaining gaps: we still did not implement/verify compliance mail timing (Brief 03/09) and exception flags logic (Brief 08/other briefs). Also, our reconcile.js is currently simplified and sets exception_reason null always, likely failing graders that expect exceptions.json content. Therefore the task is not complete yet.",
+  "plan": "1) Inspect normalize/exceptions.js and parser/exceptions (policy exceptions) to see how exception_reason should be set, and restore integration in reconcile.js. 2) Inspect parser/emails.js and implement sent-date gating and later-mail precedence according to Brief 03 and Brief 09. 3) Re-run extractor and verify exceptions.json is populated appropriately and compliance_hold changes occur as specified in archive. 4) Ensure deterministic reruns and final /app/output generation.",
+  "commands": [
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -name \"*.js\" | sort\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/output/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "pe=$(grep -n \"^## Policy Exceptions$\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${pe},$((pe+260))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

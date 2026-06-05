@@ -1,0 +1,43 @@
+{
+  "analysis": "We updated meetings.js but the terminal output shown is from archive narrative, not the requested brief excerpts—likely the sed ranges landed in field notes/decoy areas. Need to precisely extract the committee ruling paragraphs from Briefs 02–05, 07, 09 to implement status precedence, compliance hold timing, correction precedence, meeting amendment rules. Also need to confirm TXN-885 row values from /tmp/audit_out_fix3 (not shown due to scroll). Next, implement reconcile logic based on those rulings and then run final extract to /app/output.",
+  "plan": "1) Re-print the TXN-885... row to confirm canonical ledger values. 2) Extract the exact committee ruling blocks by targeting headings and a small window after them: Brief 02, 03, 04, 05, 07, 08, 09. Use grep to get line numbers then sed those windows. 3) After rules are visible, modify normalize/reconcile.js accordingly and include policy exceptions usage. 4) Re-run extractor twice and diff for determinism; then run final extract to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nwith open('/tmp/audit_out_fix3/transactions.json') as f:\n    tx=json.load(f)['transactions']\nrow=next(x for x in tx if x['transaction_id']=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25')\nprint(row)\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 02\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 04\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 05\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 08\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\ntext=open(p).read().splitlines()\nheads=[\n  '## Investigation Brief 02',\n  '## Investigation Brief 03',\n  '## Investigation Brief 04',\n  '## Investigation Brief 05',\n  '## Investigation Brief 07',\n  '## Investigation Brief 08',\n  '## Investigation Brief 09',\n]\nidxs=[]\nfor i,line in enumerate(text,1):\n  for h in heads:\n    if line.startswith(h+' ' ) or line==h:\n      idxs.append((h,i))\nfor h,i in idxs:\n  print(h, i)\nPY\n",
+      "duration": 0.5
+    }
+  ],
+  "task_complete": false
+}

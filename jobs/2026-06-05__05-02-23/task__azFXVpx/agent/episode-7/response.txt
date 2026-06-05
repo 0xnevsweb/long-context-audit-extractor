@@ -1,0 +1,23 @@
+{
+  "analysis": "Only three 'Committee ruling' markers exist at lines 13 (Brief 01), 830 (Brief 05), and 1672 (Brief 09). That means other briefs likely encode binding rules without that exact phrase (different wording). We must extract binding instructions from each brief by reading the brief sections directly (excluding field notes), using exact line ranges between the brief heading and its '— field notes' heading. We'll capture those ranges for Briefs 02–04 and 06–08, plus the ruling text in Brief 05 and 09. Then implement required logic changes in code.",
+  "plan": "1) Print each brief's authoritative portion by slicing from its heading line to just before its field notes heading. 2) Do this for Briefs 02–09. 3) With rules visible, start coding: implement regex-anchored section slicer and fix ledger/email/corrections/policy parsing and reconcile rules accordingly.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,261p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,262p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,262p' /app/data/audit_archive.md | cat\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,261p' /app/data/audit_archive.md && sed -n '468,478p' /app/data/audit_archive.md && sed -n '685,695p' /app/data/audit_archive.md && sed -n '828,837p' /app/data/audit_archive.md && sed -n '1058,1068p' /app/data/audit_archive.md && sed -n '1201,1212p' /app/data/audit_archive.md && sed -n '1419,1439p' /app/data/audit_archive.md && sed -n '1670,1681p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

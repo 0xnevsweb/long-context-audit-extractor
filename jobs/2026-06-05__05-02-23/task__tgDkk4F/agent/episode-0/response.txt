@@ -1,0 +1,67 @@
+{
+  "analysis": "We are at /app with no prior commands run. The task is to fix the Node.js audit extractor at /app/audit-extractor so that extracting from /app/data/audit_archive.md produces stable, correct reconciliation per the authoritative rules in the archive (Investigation Briefs 01–09, especially Brief 09 amendments), and fixes issues: drifting statuses between reruns, compliance holds missing later mail, and correction notices applied to wrong ledger rows. We must not hand-copy outputs; we must run the CLI with --input and --outdir. Also, missing --input or --outdir must exit 1 and print to stderr. Next we need to inspect repo, read the archive/spec, reproduce current behavior, then locate/fix parser and reconciliation logic, add deterministic ordering, correct state machine for holds/mail, correct correction notice matching to ledger rows, and ensure CLI arg validation.",
+  "plan": "1) Inspect /app/audit-extractor structure and existing CLI behavior. 2) Run extractor against the provided archive into /app/output to reproduce issues and see current output and logs. 3) Read /app/data/audit_archive.md to understand authoritative rules and locate Briefs 01–09, correction notice format, and canonical ledger section. 4) Search Node sources for reconciliation logic, status assignment, mail/hold parsing, and correction application; identify nondeterminism (object iteration, unstable sorting, random IDs, Date.now). 5) Implement fixes: deterministic parsing/order, accumulate compliance-hold evidence including later mail, and apply correction notices by canonical transaction IDs/keys rather than row index or fuzzy match. 6) Add/confirm CLI arg validation for --input and --outdir. 7) Re-run extractor twice and diff outputs to confirm stability, then ensure outputs match policy rules as described in archive.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor -maxdepth 3 -type f -print\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -v\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/package.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "find /app/output -maxdepth 2 -type f -print -exec wc -l {} \\;\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output_run2 && mkdir -p /app/output_run2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output_run2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /app/output /app/output_run2 || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Investigation Brief|Brief 0[1-9]|Brief 09|Correction Notice|Canonical|Ledger|Transaction Ledger\" /app/data/audit_archive.md | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

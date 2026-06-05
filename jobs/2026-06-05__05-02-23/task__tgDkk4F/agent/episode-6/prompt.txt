@@ -1,0 +1,174 @@
+New Terminal Output:
+
+root@71d69e2634da:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@71d69e2634da:/app# sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@71d69e2634da:/app# grep -RIn "writeReconciliationReport" /app/audit-extractor/src
+/app/audit-extractor/src/output/reportWriter.js:3:function writeReconciliationReport(filePath, report) {
+/app/audit-extractor/src/output/reportWriter.js:8:module.exports = { writeReconciliationReport };
+/app/audit-extractor/src/index.js:8:const { writeReconciliationReport } = require("./output/reportWriter");
+/app/audit-extractor/src/index.js:21:  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+root@71d69e2634da:/app# sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@71d69e2634da:/app# sed -n '685,730p' /app/data/audit_archive.md
+## Investigation Brief 04 — Correction Notice Precedence
+
+Controller memo (binding reconciliation rule):
+
+The corrections desk ships multiple notices per field. When several notices
+target the same transaction and field, the notice with the lexicographically
+greatest `effective` date wins. For each winning notice, `previous_value` in
+`reconciliation_report.jsonl` is the field value immediately before that notice
+applies (after ledger, amendments, and emails). Owner corrections override
+both ledger owners and signed meeting amendments when applied in this step.
+
+## Investigation Brief 04 — Correction Notice Precedence — field notes
+
+Site visit #195 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+During April settlement, R. Okonkwo circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient
+cache state; QA reproduced the drift on a cold run the next morning.
+
+During April settlement, S. Patel circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient ca
+che state; QA reproduced the drift on a cold run the next morning.
+
+During April settlement, S. Patel circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient ca
+che state; QA reproduced the drift on a cold run the next morning.
+
+Interview #629 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Lead reviewer L. Bergstrom noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially
+ blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+In April settlement, external advisors reviewed intercompany netting dispute and asked for a machine-readable reconciliation trace. The archive preserves narrat
+ive context so auditors can explain why a given transaction received compliance_hold.
+
+In April settlement, external advisors reviewed intercompany netting dispute and asked for a machine-readable reconciliation trace. The archive preserves narrat
+ive context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #197 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agains
+t amendment minutes before accepting any owner change.
+
+Lead reviewer S. Patel noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially bla
+med tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+In April settlement, external advisors reviewed intercompany netting dispute and asked for a machine-readable reconciliation trace. The archive preserves narrat
+ive context so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Site visit #732 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-3639 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+commentary as authoritative transaction sources.
+
+Lead reviewer S. Patel noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially bla
+med tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+root@71d69e2634da:/app#

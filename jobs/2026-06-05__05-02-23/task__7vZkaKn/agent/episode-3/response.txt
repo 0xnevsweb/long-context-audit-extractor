@@ -1,0 +1,43 @@
+{
+  "analysis": "The previous sed/print of parser/emails.js produced a huge, incorrect-looking output (narrative from the archive), suggesting the terminal got flooded/truncated and we didn’t actually capture the source files/brief text needed. We need to re-run the intended inspections with more controlled commands (e.g., cat with line numbers, head/tail) to view the actual JS files for emails/corrections/meetings and then read the specific brief sections from the archive. Key confirmed issue remains: parseLedger starts at the wrong heading due to substring match with the working copy, which can cause wrong ledger rows and drift.",
+  "plan": "1) Re-display the JS source files with line numbers and bounded ranges to ensure we’re looking at code, not archive text. 2) Extract the authoritative rules from the archive with bounded ranges around the relevant brief headings using grep to find exact line ranges, then sed those ranges. 3) After confirming rules and current implementation, implement fixes starting with parseLedger heading anchoring and section bounding, then adjust reconcile logic.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/meetings.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/utils/sort.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/utils/date.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 02\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 04\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

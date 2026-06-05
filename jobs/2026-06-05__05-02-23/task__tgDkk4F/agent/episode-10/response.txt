@@ -1,0 +1,35 @@
+{
+  "analysis": "The displayed archive portion is still narrative email-like text without structured TXN references; we haven’t yet captured the structured \"## Email Excerpts\" section near the end (where TXN subjects and status/hold fields likely exist). We also still need the line numbers from greps for Brief 03/07/09 and Email Excerpts/Policy Exceptions to jump to the binding rules and structured data. Next we should rerun those grep commands (they didn’t appear in output) and then print the exact ranges around the structured Email Excerpts section and Brief rules.",
+  "plan": "1) Run grep for headings to get exact line numbers (Brief 03/07/09, Email Excerpts, Policy Exceptions). 2) Use sed to print around Email Excerpts start to see the structured format and fields. 3) Print Brief 03 and Brief 07 rule paragraphs fully. Then we can implement email parsing and hold logic.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,6 @@
+{
+  "analysis": "Extractor now runs successfully with the required command and writes outputs into /app/output (no manual copying). Outputs match Brief 08 structure: transactions.json has {items:[...]}, CSV header includes exception_reason and amount_usd is formatted to two decimals, reconciliation_report.jsonl has per-winning-correction objects with previous_value/new_value/effective and appears sorted by notice_id. We fixed key spec issues causing drift/wrong reconciliation: exact section slicing by anchored headings (avoids working copy/draft/archived threads), ledger provisional filtering + last-non-provisional-wins, compliance@ email qualification with sent-date gating, meeting amendments signed+effective gating, correction precedence by effective date, compliance_hold timing per Brief 09, and exception code generation. One minor hiccup occurred in a check command due to a mistyped 'ls -لا' flag, but it didn’t affect extractor behavior. Ready to grade.",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

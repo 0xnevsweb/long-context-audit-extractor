@@ -1,0 +1,43 @@
+{
+  "analysis": "We found immediate spec violations: parser/ledger.js and parser/corrections.js use markdown.indexOf(\"## Transaction Ledger\"), but Brief 01 requires section boundaries via regex anchored to whole heading lines and only the heading exactly '## Transaction Ledger' is authoritative. No provisional handling exists in source (grep found none). Also our greps for corrections/holds returned nothing because the grep pattern was quoted incorrectly (regex alternation not enabled in basic grep). Next: inspect parser/sections.js, parser/ledger.js, parser/corrections.js, emails/policy, and reconcile logic to see how holds and corrections are applied and where drift can arise (likely picking wrong ledger slice, and possibly unstable ordering when duplicate transaction IDs exist).",
+  "plan": "1) Open the section parsers (sections.js, ledger.js, corrections.js, emails.js, policy.js) to understand current parsing strategy and fix it to use anchored heading regex and proper boundaries. 2) Inspect reconcile.js and exceptions.js for hold/correction mapping and ordering logic. 3) Use ripgrep/grep -E to properly locate compliance_hold and correction notice logic. 4) After code understanding, implement: a robust section slicer that finds headings by /^##\\s+...$/m, parses only canonical ledger section, ignores provisional blocks, and applies last-non-provisional-block-wins per transaction id. Then ensure corrections are parsed from the right section (before ledger) using anchored boundaries, and applied by stable key (transaction id + maybe date/amount) not array index. Finally, add deterministic sorting.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -RInE \"compliance_hold|hold\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RInE \"correction|notice\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

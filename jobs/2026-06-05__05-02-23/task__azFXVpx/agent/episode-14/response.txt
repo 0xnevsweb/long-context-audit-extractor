@@ -1,0 +1,31 @@
+{
+  "analysis": "We still aren't seeing Brief 02–07 rulings due to terminal buffer being filled with narrative; but validate.js is minimal and fine. Next, instead of dumping large sed ranges, we should extract only the binding rule paragraphs by searching within each brief section for distinctive phrases like 'binding', 'rule', 'Set `', '`compliance_hold`', 'Winning correction', etc., or by printing only a small window after each brief heading. We'll use grep with -n and -A to capture a few lines after each heading. Then implement reconcile.js and meetings.js changes accordingly. We already have Brief 08/09; we must obtain Brief 02/03/04/05/06/07 to finish.",
+  "plan": "1) Use grep -n with context (-A) on each brief heading to show the first ~40-80 lines of the brief (authoritative part) without field notes. 2) Specifically capture the binding rules for status precedence, compliance mail timing/qualifying conditions, correction notice precedence ('winning correction'), meeting amendments signed/effective, effective_date output rule, and exception flags part I (compliance_hold and any other codes). 3) Then implement: update meetings parser to capture effective date and signed; update reconcile.js to apply meeting amendments only if signed and with effective-date rules; parse emails to include sent date and ensure qualifying compliance@ emails; implement correction precedence and report sorting; compute compliance_hold pre-correction per Brief 09; implement exception_reason semicolon lexical sort; adjust exceptions builder to return wrapped items already done by writer. 4) Final run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "grep -n -A60 \"^## Investigation Brief 02\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n -A80 \"^## Investigation Brief 03\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n -A90 \"^## Investigation Brief 04\" /app/data/audit_archive.md | head -n 140\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n -A90 \"^## Investigation Brief 05\" /app/data/audit_archive.md | head -n 140\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n -A90 \"^## Investigation Brief 06\" /app/data/audit_archive.md | head -n 140\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n -A140 \"^## Investigation Brief 07\" /app/data/audit_archive.md | head -n 220\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

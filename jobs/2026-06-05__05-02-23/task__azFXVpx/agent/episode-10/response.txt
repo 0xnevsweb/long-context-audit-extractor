@@ -1,0 +1,39 @@
+{
+  "analysis": "Our awk/sed approach is still producing messy output (prefixed with extra counters) and not reliably showing the brief rulings; the terminal is displaying unrelated mid-file narrative lines around ~1300 rather than the brief windows we intended. We need a cleaner extraction: use sed for exact known line ranges between each brief heading and its field notes heading, and immediately pipe through head/tail to ensure we see the right part. We already know the exact line numbers for each heading and field-notes start from earlier grep. We'll now print those exact ranges with sed and include only ~60-120 lines each so it fits on screen.",
+  "plan": "Use sed -n '<start>,<end>p' for each brief: 02 is 252-261, 03 is 468-478, 04 is 685-695, 05 is 828-837, 06 is 1058-1068, 07 is 1201-1212, 08 is 1419-1439, 09 is 1670-1681 (we already saw 08/09). Then implement code fixes starting with parsers/writers. Next batch will focus on editing sources (likely with cat > file via heredoc) to add a section utility and update ledger parsing and json/csv output formats.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,261p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,478p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,695p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,837p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1068p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1212p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1439p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1681p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

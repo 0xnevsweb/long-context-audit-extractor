@@ -1,0 +1,27 @@
+{
+  "analysis": "Corrections parsing now works and returns 6 notices. Therefore reconciliation_report.jsonl being empty is not due to missing corrections; it’s likely because index.js/reportWriter isn’t writing the report returned by reconcileTransactions, or reconcileTransactions isn’t being invoked as expected. Also status for TXN-88519... is 'reversed' after reconciliation, meaning an email excerpt likely set it to reversed; we need Brief rules for status/hold derivation and correction precedence. Next step is to inspect src/index.js and the extraction pipeline to ensure report is written, then fix reconcile.js to produce meaningful report with previous values and deterministic application order per Brief 04/09.",
+  "plan": "1) Open src/index.js to see how parsed data flows into reconcileTransactions and writers; fix any wiring bug that drops report. 2) Locate where reconciliation_report.jsonl path is created and written; ensure reportWriter.writeReconciliationReport is called with report array. 3) Read Investigation Brief 04 text for correction notice precedence; implement in normalize/reconcile.js: sort corrections by effective date, apply after emails/meetings per policy, and record previous_value. 4) Re-run extractor and confirm reconciliation_report.jsonl has 6 lines and that status fields align with policy (especially compliance_hold timing from Brief 09).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -RIn \"writeReconciliationReport\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,730p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

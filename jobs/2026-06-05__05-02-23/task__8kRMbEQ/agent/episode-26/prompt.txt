@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Subject: retention hold reminder — thread 2
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 3
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+root@5bc7934c2c61:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@5bc7934c2c61:/app#

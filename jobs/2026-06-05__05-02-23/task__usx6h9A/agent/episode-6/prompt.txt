@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> function parsePolicyExceptions(markdown) {
+>   // Use only canonical section `## Policy Exceptions` (ignore drafts).
+>   const slice = sliceExactH2Section(markdown, "Policy Exceptions");
+>   const ids = new Set();
+>   const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(slice)) !== null) {
+>     ids.add(match[1]);
+>   }
+>   return ids;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@5e2242c073c7:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId };
+> EOF
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix2
+root@5e2242c073c7:/app# python3 - <<'PY'
+> import json
+> with open('/tmp/audit_out_fix2/transactions.json') as f:
+>     data=json.load(f)
+> print('type', type(data))
+> # handle both list and dict formats
+> if isinstance(data, dict):
+>     row=data.get('TXN-88519dfd-79ff-5de0-ae59-862ab932bc25')
+> else:
+>     row=next((x for x in data if x.get('transaction_id')=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25'), None)
+> print(row)
+> PY
+type <class 'dict'>
+None
+root@5e2242c073c7:/app#

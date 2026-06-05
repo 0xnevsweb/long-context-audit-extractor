@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Memo WP-7089 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-5420 ties year-end close checklist drift to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-2580 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+Working paper WP-4368 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Working paper WP-8280 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Lead reviewer S. Patel noted that year-end close checklist drift created reconciliation noise in controller during December freeze. Staff initially blamed tooli
+ng, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-3865 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Site visit #634 to controller captured mailbox exports showing how year-end close checklist drift correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+
+Controller memo (binding reconciliation rule):
+root@5bc7934c2c61:/app#

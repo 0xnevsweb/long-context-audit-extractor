@@ -1,0 +1,55 @@
+{
+  "analysis": "Project structure and CLI exist; CLI already enforces missing --input/--outdir with stderr + exit 1. Running extract twice into two different dirs produced identical output (no diff), so drift may depend on reading the wrong ledger slice or unstable mapping when corrections/holds are present; we need to read the authoritative rules in Briefs 01–09 and inspect extractor code that selects ledger sections, applies compliance hold timing, and applies correction notices to ledger rows. Need to locate parsing of `## Transaction Ledger`, ignoring provisional blocks, and ensuring last non-provisional block wins per txn id. Also need to find structured sections near end: Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger.",
+  "plan": "1) Open relevant Briefs (01–05 for ledger/corrections/holds) and Brief 09 amendment text to extract precise rules. 2) Jump to end-of-file structured sections (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) to see exact formatting the parser must handle. 3) Inspect source files for ledger selection and reconciliation logic; search for 'Transaction Ledger', 'provisional', 'Correction Notices', 'compliance_hold'. 4) After understanding rules/format, implement fixes and re-run extractor; then run final extract into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '240,360p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '450,560p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '660,780p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1600,1755p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "tail -n 260 /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger\" /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -RIn \"Transaction Ledger|provisional|Correction Notices|compliance_hold|hold\" /app/audit-extractor/src | head -n 200\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

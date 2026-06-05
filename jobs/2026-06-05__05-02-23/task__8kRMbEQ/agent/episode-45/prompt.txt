@@ -1,0 +1,69 @@
+New Terminal Output:
+
+root@5bc7934c2c61:/app# sed -n '1,200p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@5bc7934c2c61:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function esc(value) {
+>   const s = value == null ? "" : String(value);
+>   if (/[\n\r",]/.test(s)) {
+>     return '"' + s.replace(/"/g, '""') + '"';
+>   }
+>   return s;
+> }
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header = [
+>     "transaction_id",
+>     "owner",
+>     "status",
+>     "effective_date",
+>     "amount_usd",
+>     "exception_reason",
+>   ];
+>
+>   const lines = [header.join(",")];
+>   for (const row of items) {
+>     lines.push(
+>       [
+>         row.transaction_id,
+>         row.owner,
+>         row.status,
+>         row.effective_date,
+>         row.amount_usd,
+>         row.exception_reason || "",
+>       ]
+>         .map(esc)
+>         .join(","),
+>     );
+>   }
+>
+>   fs.writeFileSync(filePath, lines.join("\n") + "\n");
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/output/csvWriter.js
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@5bc7934c2c61:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,
+root@5bc7934c2c61:/app# grep -E "TXN-68b5423c-1abb-59e6-947e-7e56011cec58|TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0|TXN-c7416874-b91b-5c2d-92de-0098b1224d18" /ap
+p/output/transactions.csv
+TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0,frost,pending,2024-09-21,8468.4,executive waiver
+TXN-68b5423c-1abb-59e6-947e-7e56011cec58,frost,approved,2024-07-07,8740.52,executive waiver
+TXN-c7416874-b91b-5c2d-92de-0098b1224d18,asmith,rejected,2024-11-23,11215.24,executive waiver
+root@5bc7934c2c61:/app#

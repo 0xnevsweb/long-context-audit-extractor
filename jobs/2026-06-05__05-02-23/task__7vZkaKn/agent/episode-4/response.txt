@@ -1,0 +1,43 @@
+{
+  "analysis": "We successfully viewed meetings.js tail: it scrapes meeting blocks by regex, capturing owner and signed boolean. sortByTransactionId comparator is unstable for equality (returns -1 or 1 only; never 0), which can cause nondeterministic reordering across runs when ids equal or missing; also JS sort stability assumptions can vary. date.js only validates ISO date; no parsing helpers. We still need to view emails.js and corrections.js (they didn’t show in the latest screen, so rerun). Next, we must read briefs 02,03,04,05 and 09 text to implement correct precedence/timing rules. Then implement fixes: parseLedger must anchor to exact canonical heading, utilities for stable sorting, and reconcile.js must apply rules rather than naive overwrites.",
+  "plan": "1) Display full emails.js and corrections.js with line numbers to see what fields exist (date/timestamp/status types like compliance_hold). 2) Read the authoritative brief sections by printing their line ranges: Brief 02 (status precedence), Brief 03 (mail timing), Brief 04 (corrections), and Brief 09 (amendment). 3) Also read Brief 01 for ledger sourcing and Brief 05 for meeting owner rules if needed. Once rules are clear, we’ll patch parseLedger and reconcile.js and sorting utility.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,748p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,90p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 05\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,900p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

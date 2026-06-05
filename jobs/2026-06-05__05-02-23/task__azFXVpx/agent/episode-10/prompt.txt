@@ -1,0 +1,41 @@
+Current Terminal Screen:
+129-1308:
+130-1309:During November certification, S. Patel circulated a draft finding on grant compliance attestation. Finance operations pushed back, arguing the issue w
+as transient cache state; QA reproduced the drift on a cold run the next morning.
+131-1310:
+132-1311:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hold
+s. The mid-year amendment later in this archive supersedes that draft practice.
+133-1312:
+134-1313:The committee packet references grant compliance attestation as a contributing factor to late compliance holds. Investigators cross-checked mail excerp
+ts against amendment minutes before accepting any owner change.
+135-1314:
+136-1315:Working paper WP-5560 documents a three-way match failure tied to grant compliance attestation. The team escalated when repeated extractor runs produce
+d different status columns for the same transaction id.
+137-1316:
+138-1317:Follow-up #468 confirmed that compliance had been using an informal spreadsheet for grant compliance attestation. The formal extractor must instead der
+ive rows only from the canonical ledger and structured sections at file end.
+139-1318:
+140-1319:Follow-up #201 confirmed that compliance had been using an informal spreadsheet for grant compliance attestation. The formal extractor must instead der
+ive rows only from the canonical ledger and structured sections at file end.
+141-1320:
+142-1321:Interview #490 with compliance highlighted how grant compliance attestation statements were forwarded without the matching ledger row. Counsel advised
+preserving the full thread because downstream exception coding depends on mail timestamps.
+143-1322:
+144-1323:Interview #237 with compliance highlighted how grant compliance attestation statements were forwarded without the matching ledger row. Counsel advised
+preserving the full thread because downstream exception coding depends on mail timestamps.
+145-1324:
+146-1325:Working paper WP-7086 documents a three-way match failure tied to grant compliance attestation. The team escalated when repeated extractor runs produce
+d different status columns for the same transaction id.
+147-1326:
+148-1327:Risk assessment WP-2238 ties grant compliance attestation to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+appendix commentary as authoritative transaction sources.
+149-1328:
+150-1329:Follow-up #732 confirmed that compliance had been using an informal spreadsheet for grant compliance attestation. The formal extractor must instead der
+ive rows only from the canonical ledger and structured sections at file end.
+151-1330:
+152-1331:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hold
+s. The mid-year amendment later in this archive supersedes that draft practice.
+153-1332:
+154-1333:Risk assessment WP-9724 ties grant compliance attestation to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+appendix commentary as authoritative transaction sources.
+root@64435c900e2e:/app#

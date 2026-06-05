@@ -1,0 +1,23 @@
+{
+  "analysis": "We extracted key Brief 05 lines: owner overrides only when signed:true, and possibly depends on effective date (line 7 indicates an additional rule when effective included). We still need to view the top of /tmp/brief05.txt to get the full binding wording, and view /tmp/brief09.txt for mail timing amendment. Next, implement meetings parser to include effective and apply only signed amendments, selecting correct one using effective date rule. Also implement improved email parsing and sent-date gating.",
+  "plan": "1) Display the first ~40 lines of /tmp/brief05.txt to capture the exact binding rule including effective date handling. 2) Display the first ~120 lines of /tmp/brief09.txt to capture mail-timing amendment. 3) Patch meetings.js to parse effective date and signed, scoped to Meeting Notes section. 4) Patch emails.js to parse sent/to/subject/status robustly and filter to compliance-addressed TXN messages. 5) Patch reconcile.js to apply amendments and email timing rules deterministically, then rerun extractor.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,40p' /tmp/brief05.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '40,90p' /tmp/brief05.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /tmp/brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,200p' /tmp/brief09.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

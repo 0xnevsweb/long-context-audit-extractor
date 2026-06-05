@@ -1,0 +1,43 @@
+{
+  "analysis": "We confirmed the archive contains a decoy ledger working copy and the canonical ledger; our parser fixes should now ignore the working copy. The attempt to grep for rule markers in the brief slices returned nothing useful (and the output shows an unrelated 'asciinema' message), meaning our brief slices likely didn’t contain the rule lines we expected (or grep pattern/contents mismatch). We still need the actual binding rules from briefs to correctly implement compliance_hold timing and correction precedence; current reconcile.js is still naive and emails.js lacks timestamps. Next we should directly view the brief sections (but carefully, with small windows) and/or search within the entire archive for explicit rule markers like 'Committee Ruling:' or 'Binding ruling:' or enumerated rules, and specifically locate where Brief 09 defines the comparison used for compliance_hold (we saw earlier line ~1209 references it). We'll also locate the Email Excerpts section to see actual field format so we can parse timestamps.",
+  "plan": "1) Locate line numbers for '## Email Excerpts' and print a small excerpt to see actual email block format (including any Date/Sent/Received fields). 2) Print the actual text of Brief 02/03/04/09 sections directly using sed with tight ranges between their headings and the next heading; use awk to stop at the next '## Investigation Brief' to avoid narrative bloat. 3) Search the archive for 'Committee Ruling'/'Binding'/'status precedence'/'comparison used for `compliance_hold`' and print nearby lines. 4) After extracting the rule text, modify emails.js to parse timestamp and reconcile.js to apply rules deterministically.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nmd=open(path,'r',encoding='utf-8').read().splitlines()\n\ndef section(start_pat, stop_pat):\n    s=None\n    for i,l in enumerate(md,1):\n        if re.match(start_pat,l):\n            s=i\n            break\n    if not s:\n        return None\n    e=len(md)+1\n    for i in range(s+1,len(md)+1):\n        if re.match(stop_pat, md[i-1]):\n            e=i\n            break\n    return s,e\n\nfor name,sp in [('brief02',r'^## Investigation Brief 02'),('brief03',r'^## Investigation Brief 03'),('brief04',r'^## Investigation Brief 04'),('brief09',r'^## Investigation Brief 09')]:\n    s,e=section(sp, r'^## Investigation Brief (0[1-9]|10)')\n    print(name,s,e)\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nmd=open('/app/data/audit_archive.md','r',encoding='utf-8').read().splitlines()\n\ndef dump(start, end, out):\n    with open(out,'w',encoding='utf-8') as f:\n        for i in range(start-1,end-1):\n            f.write(f\"{i+1}: {md[i]}\\n\")\n\n# Hardcode the known ranges from earlier greps if present\nranges={'brief02':(252,468),'brief03':(468,685),'brief04':(685,828),'brief09':(1670,3866)}\nfor k,(s,e) in ranges.items():\n    dump(s,e,f'/tmp/{k}_full.txt')\n    print('wrote',k,s,e)\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "grep -nE \"(Committee|Ruling|Binding|MUST|must|shall|precedence|supersed|comparison|compliance_hold)\" /tmp/brief02_full.txt | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"(Committee|Ruling|Binding|MUST|must|shall|precedence|supersed|comparison|compliance_hold|mail|timestamp)\" /tmp/brief03_full.txt | head -n 160\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"(Committee|Ruling|Binding|MUST|must|shall|precedence|supersed|effective|correction|notice)\" /tmp/brief04_full.txt | head -n 160\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"(Committee|Ruling|Binding|MUST|must|shall|precedence|supersed|comparison|compliance_hold|date comparison)\" /tmp/brief09_full.txt | head -n 200\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"comparison used for `compliance_hold`\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

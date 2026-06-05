@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>
+>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     const reasonMatch = block.match(/^reason:\s*(.+)\s*$/im);
+>     if (!txnMatch || !reasonMatch) continue;
+>
+>     exceptions.push({
+>       transaction_id: txnMatch[1].trim(),
+>       reason: reasonMatch[1].trim(),
+>     });
+>   }
+>
+>   return exceptions;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/parser/policy.js
+root@5bc7934c2c61:/app# grep -n "policy" -n /app/audit-extractor/src/parser/sections.js
+5:const { parsePolicyExceptions } = require("./policy");
+13:    policyExceptions: parsePolicyExceptions(markdown),
+root@5bc7934c2c61:/app# sed -n '1,120p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@5bc7934c2c61:/app# sed -n '120,240p' /app/audit-extractor/src/parser/sections.js
+root@5bc7934c2c61:/app#

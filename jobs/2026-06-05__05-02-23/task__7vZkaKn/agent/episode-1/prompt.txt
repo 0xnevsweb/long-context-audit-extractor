@@ -1,0 +1,188 @@
+New Terminal Output:
+root@796178391c5a:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  5 11:46 .
+drwxr-xr-x 1 root root 4096 Jun  5 12:10 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  5 11:46 data
+root@796178391c5a:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:46 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 11:46 data
+drwxr-xr-x 2 root root 4096 Jun  5 11:32 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@796178391c5a:/app# find /app/audit-extractor -maxdepth 3 -type f -name "*.js" -o -name "*.cjs" -o -name "*.mjs" -o -name "package.json" | sed 's|^|FILE: |'
+FILE: /app/audit-extractor/src/lib/handbook.js
+FILE: /app/audit-extractor/src/lib/constants.js
+FILE: /app/audit-extractor/src/schema/validate.js
+FILE: /app/audit-extractor/src/cli.js
+FILE: /app/audit-extractor/src/output/jsonWriter.js
+FILE: /app/audit-extractor/src/output/csvWriter.js
+FILE: /app/audit-extractor/src/output/reportWriter.js
+FILE: /app/audit-extractor/src/utils/sort.js
+FILE: /app/audit-extractor/src/utils/date.js
+FILE: /app/audit-extractor/src/normalize/exceptions.js
+FILE: /app/audit-extractor/src/normalize/reconcile.js
+FILE: /app/audit-extractor/src/index.js
+FILE: /app/audit-extractor/src/parser/ledger.js
+FILE: /app/audit-extractor/src/parser/meetings.js
+FILE: /app/audit-extractor/src/parser/policy.js
+FILE: /app/audit-extractor/src/parser/sections.js
+FILE: /app/audit-extractor/src/parser/corrections.js
+FILE: /app/audit-extractor/src/parser/emails.js
+FILE: /app/audit-extractor/package.json
+root@796178391c5a:/app# node -v
+v20.11.1
+root@796178391c5a:/app# cat /app/audit-extractor/package.json
+{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+root@796178391c5a:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@796178391c5a:/app# sed -n '1,200p' /app/audit-extractor/src/index.js 2>/dev/null || true
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@796178391c5a:/app# sed -n '1,120p' /app/data/audit_archive.md
+# FY24 Internal Audit Archive
+
+Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across the
+ file.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative,
+decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Co
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+peated extractor runs produced different
+status columns for the same transaction id.
+
+Memo WP-3161 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-7474 ties vendor onboarding backlog to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix com
+mentary as authoritative transaction sources.
+
+Interview #571 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer S. Patel noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but tim
+eline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-3773 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different
+status columns for the same transaction id.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against a
+mendment minutes before accepting any owner change.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+ so auditors can explain why a given transaction received compliance_hold.
+
+Lead reviewer L. Bergstrom noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but
+ timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-2579 ties vendor onboarding backlog to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix com
+mentary as authoritative transaction sources.
+root@796178391c5a:/app# grep -n "Investigation Brief" -n /app/data/audit_archive.md | head
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+root@796178391c5a:/app# grep -n "Brief 09" /app/data/audit_archive.md | head -n 20
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@796178391c5a:/app# grep -n "Correction" /app/data/audit_archive.md | head -n 50
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+476:apply the status change if precedence allows. Correction notices always apply
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+3866:## Correction Notices
+root@796178391c5a:/app# grep -n "Canonical" /app/data/audit_archive.md | head -n 50
+root@796178391c5a:/app#

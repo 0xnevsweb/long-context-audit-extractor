@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     notices.push(entry);
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@796178391c5a:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     const at = String(a.transaction_id || "");
+>     const bt = String(b.transaction_id || "");
+>     if (at < bt) return -1;
+>     if (at > bt) return 1;
+>     return 0;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId };
+> EOF
+root@796178391c5a:/app# node -c /app/audit-extractor/src/parser/heading.js
+root@796178391c5a:/app# node -c /app/audit-extractor/src/parser/ledger.js
+root@796178391c5a:/app# node -c /app/audit-extractor/src/parser/corrections.js
+root@796178391c5a:/app# node -c /app/audit-extractor/src/utils/sort.js
+root@796178391c5a:/app# rm -rf /app/output && mkdir -p /app/output
+root@796178391c5a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@796178391c5a:/app# rm -rf /tmp/out2 && mkdir -p /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/
+out2
+root@796178391c5a:/app# diff -u /app/output/transactions.json /tmp/out2/transactions.json | head -n 50
+root@796178391c5a:/app#

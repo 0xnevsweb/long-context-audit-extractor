@@ -1,0 +1,55 @@
+{
+  "analysis": "corrections.js also violates Brief 01-style requirements: it uses indexOf to find sections and assumes Correction Notices always precede Transaction Ledger; it doesn’t use anchored whole-line heading regex or proper section boundary detection. This can mis-slice when decoy headings appear, and can shift which corrections get applied, leading to wrong ledger row updates. date.js is minimal and lacks compare logic needed for effective-date ordering. We need to fix corrections parsing to: locate '## Correction Notices' section via anchored regex, slice until next H2 heading, parse blocks, and return notices sorted deterministically (by effective date then notice_id) so application order is stable and policy-correct. Then fix reconcile.js to apply corrections in that sorted order and capture previous_value correctly.",
+  "plan": "1) Rewrite src/parser/corrections.js to use anchored regex for the exact heading line '^## Correction Notices$' and slice to next H2. 2) Ensure parsing is robust to spacing/case, and validate required fields exist. 3) Update src/normalize/reconcile.js to sort corrections deterministically before applying, and record previous_value from target row before mutation. 4) Rerun extractor twice and diff, then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  // Correction notices are structured source data; drafts/decoys exist elsewhere.\n  // Use anchored whole-heading regex and slice only this H2 section.\n  const headingRe = /^## Correction Notices\\s*$/m;\n  const m = headingRe.exec(markdown);\n  if (!m) return [];\n\n  const sectionStart = m.index + m[0].length;\n  const after = markdown.slice(sectionStart);\n  const nextH2Idx = after.search(/^##\\s+/m);\n  const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);\n\n  const notices = [];\n  const blocks = section.split(/^###\\s+/m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      const idx = trimmed.indexOf(\":\");\n      if (idx === -1) continue;\n      const key = trimmed.slice(0, idx).trim().toLowerCase();\n      const value = trimmed.slice(idx + 1).trim();\n\n      if (key === \"targets\") {\n        entry.transaction_id = value;\n      } else if (key === \"field\") {\n        entry.field = value;\n      } else if (key === \"value\") {\n        entry.value = value;\n      } else if (key === \"effective\") {\n        entry.effective = value;\n      }\n    }\n\n    // Only accept notices that have the minimum fields needed to apply.\n    if (!entry.transaction_id || !entry.field) continue;\n    notices.push(entry);\n  }\n\n  // Deterministic order: effective date, then notice id.\n  notices.sort((a, b) => {\n    const ea = a.effective || \"\";\n    const eb = b.effective || \"\";\n    if (ea < eb) return -1;\n    if (ea > eb) return 1;\n    return String(a.notice_id).localeCompare(String(b.notice_id));\n  });\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "perl -0777 -i -pe 's/for \\(const notice of parsed\\.corrections\\) \\{/for (const notice of parsed.corrections) {\\n    const target = byId.get(notice.transaction_id);\\n    if (!target) {\\n      continue;\\n    }\\n    let previous = \"\";\\n    if (notice.field === \"owner\") {\\n      previous = target.owner ?? \"\";\\n      target.owner = notice.value;\\n    } else if (notice.field === \"status\") {\\n      previous = target.status ?? \"\";\\n      target.status = notice.value;\\n    } else if (notice.field === \"date\") {\\n      previous = target.date ?? \"\";\\n      target.date = notice.value;\\n    }\\n    report.push({\\n      notice_id: notice.notice_id,\\n      transaction_id: notice.transaction_id,\\n      field: notice.field,\\n      previous_value: String(previous),\\n      new_value: notice.value,\\n      effective: notice.effective,\\n    });\\n  }\\n\\n  const items = sortByTransactionId/sg' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

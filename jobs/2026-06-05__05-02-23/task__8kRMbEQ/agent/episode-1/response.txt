@@ -1,0 +1,67 @@
+{
+  "analysis": "Repo is present at /app/audit-extractor with parsers for ledger/meetings/policy/corrections/emails and a normalize/reconcile.js. CLI already enforces extract command and missing --input/--outdir prints to stderr and exits 1 (meets requirement). We’ve only viewed the beginning of the archive; Brief 01 and Brief 03 key policies are visible (authoritative ledger section heading exactly '## Transaction Ledger', ignore provisional blocks, last non-provisional block wins per transaction id; mail timing compares sent date to ledger date; correction notices apply after merges). Next we need to read the rest of the archive including Briefs 04–09 (especially Brief 09 amendment), and then inspect current parser/reconcile code for nondeterminism and incorrect hold/correction application.",
+  "plan": "1) Continue reading audit_archive.md to capture all binding rulings, especially Brief 09. 2) Inspect key source files: parser/sections.js (heading boundary logic), parser/ledger.js (authoritative ledger selection + provisional handling), parser/emails.js (mail timing), parser/corrections.js, normalize/reconcile.js (merge order + status drift). 3) Run the extractor once into a temp dir and again to compare outputs for drift and identify nondeterministic ordering/ID generation. 4) Apply fixes: enforce anchored regex sectioning per Brief 01, stable sorting everywhere, correct compliance_hold timing per Brief 03/09, apply corrections after merge with correct row matching, then rerun to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '200,420p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '420,700p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '700,980p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 0\" -n /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Brief 09\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "find /tmp/audit-out1 -type f -maxdepth 2 -print\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,35 @@
+{
+  "analysis": "Ledger parser changes applied, but transactions.json output is a dict and the queried key wasn't found, suggesting writer stores as {items:[...]} or keys differ. Need to inspect transactions.json structure/keys to verify TXN-885... exists and its values. Also must still fix emails/corrections/meetings parsers to use canonical sections and implement reconciliation policies; currently only ledger/policy updated.",
+  "plan": "1) Inspect /tmp/audit_out_fix2/transactions.json top-level keys and sample contents to locate where transactions are stored. 2) Grep for TXN-885... in the output to verify presence and values. 3) Fix emails.js/corrections.js/meetings.js to use sliceExactH2Section with exact headings (Email Excerpts, Correction Notices, Meeting Minutes heading likely exact per archive). 4) Re-run extract and validate that decoy ledger row is gone (amount 500).",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/tmp/audit_out_fix2/transactions.json'\nwith open(p) as f:\n    data=json.load(f)\nprint('top type', type(data))\nif isinstance(data, dict):\n    print('top keys', list(data.keys())[:20])\n    # print a small sample for likely containers\n    for k in ['items','transactions','rows','data']:\n        if k in data:\n            v=data[k]\n            print(k,'type',type(v),'len',len(v) if hasattr(v,'__len__') else None)\n            break\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "grep -RIn \"TXN-88519dfd-79ff-5de0-ae59-862ab932bc25\" /tmp/audit_out_fix2/transactions.json || true\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "head -n 40 /tmp/audit_out_fix2/transactions.json\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Meeting\" -n /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

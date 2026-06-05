@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+root@5e2242c073c7:/app# grep -n "^## Investigation Brief 09" /app/data/audit_archive.md
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@5e2242c073c7:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> text=open(p).read().splitlines()
+> heads=[
+>   '## Investigation Brief 02',
+>   '## Investigation Brief 03',
+>   '## Investigation Brief 04',
+>   '## Investigation Brief 05',
+>   '## Investigation Brief 07',
+>   '## Investigation Brief 08',
+>   '## Investigation Brief 09',
+> ]
+> idxs=[]
+> for i,line in enumerate(text,1):
+>   for h in heads:
+>     if line.startswith(h+' ' ) or line==h:
+>       idxs.append((h,i))
+> for h,i in idxs:
+>   print(h, i)
+> PY
+## Investigation Brief 02 252
+## Investigation Brief 02 262
+## Investigation Brief 03 468
+## Investigation Brief 03 479
+## Investigation Brief 04 685
+## Investigation Brief 04 696
+## Investigation Brief 05 828
+## Investigation Brief 05 838
+## Investigation Brief 07 1201
+## Investigation Brief 07 1213
+## Investigation Brief 08 1419
+## Investigation Brief 08 1440
+## Investigation Brief 09 1670
+## Investigation Brief 09 1682
+root@5e2242c073c7:/app#

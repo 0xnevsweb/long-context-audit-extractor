@@ -1,0 +1,27 @@
+{
+  "analysis": "We found where TXN-referencing email subjects occur: at line 248 (early, likely decoy archived thread) and later at 2842/2847/3411/3415/3840/3845, which are within the authoritative structured sections near the end. So the authoritative Email Excerpts section does include TXN subjects, but not in the 1857–2350 window we previously searched; those TXN emails are later (e.g., 2842, 3411, 3840). We still need to find 'sent:' and 'status:' lines near those emails to parse correctly and implement compliance_hold per Brief 09. Next we should print context around those line numbers and search for 'sent:' within those contexts. Also we must update parseEmails: currently it slices from '^## Email Excerpts$' to '^## Policy Exceptions$' and splits by blank lines; that’s okay, but it only matches status lines starting with 'status:' and has optional Date:, while Brief 09 references 'sent:'. We need to adapt parsing to read 'sent:' and any compliance_hold indicator in those email blocks.",
+  "plan": "1) Print contexts around the TXN subject occurrences in the authoritative email section (2842, 3411, 3840, 3845) to see the actual block format (From/Subject/sent/status/hold). 2) Search the whole file for 'sent:' lines to confirm where they appear and the date format. 3) Read Brief 03 binding text (mail timing/status logic). 4) Update parser/emails.js to parse: transaction_id from Subject Re: TXN-..., sent date from 'sent:' (fallback Date:), status from 'status:' (or 'status_override:' if used), and whether email is qualifying for hold (likely 'compliance_hold: true' or 'flag: compliance_hold'). 5) Update reconcile.js to apply email status chronologically and compute compliance_hold by comparing qualifying email sent date to pre-correction effective_date per Brief 09. Add compliance_hold field to item outputs and ensure writers include it.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '2760,2895p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3340,3465p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3800,3860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"sent:\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

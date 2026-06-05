@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> PATCH
+bash: apply_patch: command not found
+root@64435c900e2e:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/output/jsonWriter.js
+> @@
+>  const fs = require("node:fs");
+>
+>  function writeTransactionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+>
+>  function writeExceptionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@64435c900e2e:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/output/csvWriter.js
+> @@
+>  function writeTransactionsCsv(filePath, items) {
+> -  const header = "transaction_id,owner,status,effective_date,amount_usd";
+> +  const header =
+> +    "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>    const lines = items.map(
+>      (row) =>
+> -      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+> +      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${row.exception_reason ?? ""}`,
+>    );
+> -  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> +  fs.writeFileSync(filePath, `${[header, ...lines].join("\n")}\n`);
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@64435c900e2e:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+mailbox ordering around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 15
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 16
+
+Internal coordination on inventory obsolescence reserve. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 17
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 18
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 19
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 20
+root@71d69e2634da:/app#

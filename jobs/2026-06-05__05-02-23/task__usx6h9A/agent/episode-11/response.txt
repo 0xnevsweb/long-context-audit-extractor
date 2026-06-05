@@ -1,0 +1,51 @@
+{
+  "analysis": "The sed outputs for briefs 02–08 were not captured on screen; only the tail end of Brief 09 ruling is visible, indicating Brief 09 clarifies compliance_hold comparison: compare compliance mail sent date to base effective_date after ledger load + meeting amendments + compliance mail merges, but before correction notice changes date/status. Need to re-run sed for briefs 02–08 and the beginning of brief 09 to capture full binding rules. Then implement reconcile logic including compliance_hold behavior and exception flags.",
+  "plan": "Re-run sed for each brief with smaller windows and ensure we capture the 'Committee ruling (binding for extract)' paragraphs. For Brief 09, include a bit earlier (1670-1695). After rules are visible, modify normalize/reconcile.js and normalize/exceptions.js accordingly. Also update output to include compliance_hold and exception_reason changes if required by schema.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,300p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '300,360p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '520,600p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '685,740p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '740,820p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '828,885p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '885,970p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1419,1485p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1670,1698p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    }
+  ],
+  "task_complete": false
+}

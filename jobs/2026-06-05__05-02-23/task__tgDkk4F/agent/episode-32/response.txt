@@ -1,0 +1,31 @@
+{
+  "analysis": "Brief 02 status precedence is now applied; TXN-f4d... is rejected and flagged compliance_hold in exceptions.json, satisfying Brief 07/09 logic. Outputs now include exception_reason and exceptions.json contains entries. We must ensure stability across reruns and that CLI requirements are still met (missing args exit 1 to stderr—already). Also ensure reconciliation_report.jsonl still correct and validateOutputs passes. Next: run extractor again into a second directory and diff, and quickly sanity-check reconciliation_report.jsonl line count and CSV header.",
+  "plan": "1) Run a second extraction to /app/output_run2 and diff against /app/output to confirm no drift.\n2) Confirm CSV header includes exception_reason.\n3) Check reconciliation_report.jsonl remains 4 lines.\n4) Optionally run a quick node snippet to ensure transactions.json parses and contains exception_reason fields.",
+  "commands": [
+    {
+      "keystrokes": "rm -rf /app/output_run2 && mkdir -p /app/output_run2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output_run2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /app/output /app/output_run2 || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 1 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('node:fs');\nconst j=JSON.parse(fs.readFileSync('/app/output/transactions.json','utf8'));\nconsole.log('txCount', j.transactions.length);\nconsole.log('hasExceptionReason', j.transactions.some(t=>t.exception_reason));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": true
+}

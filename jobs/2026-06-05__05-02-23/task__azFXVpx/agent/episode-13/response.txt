@@ -1,0 +1,35 @@
+{
+  "analysis": "Foundational fixes are in place: parsers now slice exact sections by anchored heading and ledger parser ignores provisional blocks and applies last-wins. Writers now output {items:[...]} and CSV includes exception_reason column. Running extract twice and diff produced no differences (good: drift likely addressed). Remaining work: implement the actual reconciliation policies: status precedence/compliance mail timing (Brief 02/03), correction notice precedence and 'winning' corrections + previous_value/report sorting (Brief 04), meeting amendments signed/effective (Brief 05), effective_date output rule (Brief 06), exception flags part I (Brief 07) plus part II (Brief 08), and compliance_hold timing amendment (Brief 09). Also adjust validate schema if needed. Finally run required command to /app/output.",
+  "plan": "1) Inspect schema/validate.js to see required fields and adjust to new output wrappers if necessary (though validation uses in-memory items). 2) Read Briefs 02–07 from archive using sed with confirmed ranges (now that terminal is stable) and/or search within those brief sections for keywords (binding, rule, must). 3) Implement reconcile.js overhaul: pipeline stages and deterministic sorting; compute preCorrection snapshot date/status for compliance_hold per Brief 09; apply corrections with precedence per Brief 04 generating report entries with previous_value and sorting by notice_id; compute effective_date per Brief 06; compute exception_reason codes and build exceptions.json correctly. 4) Update meetings parser to capture signed/effective and to only consider signed (per Brief 05) and apply by effective date if specified. 5) Update emails parser further if Brief 03 requires qualifying compliance@ emails etc. 6) Re-run extract to /app/output and inspect outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,300p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '828,900p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1058,1120p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

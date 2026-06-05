@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+## Meeting Notes
+
+Committee minutes include signed amendments affecting owner fields.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+effective: 2024-11-01
+
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing con
+text.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 0
+
+Internal coordination on vendor onboarding backlog. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 1
+
+root@5bc7934c2c61:/app#

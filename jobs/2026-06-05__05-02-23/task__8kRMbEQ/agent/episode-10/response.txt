@@ -1,0 +1,35 @@
+{
+  "analysis": "We’re mid-view of the Email Excerpts section; output shows many emails without transaction identifiers (should be ignored by extractor). We still need to inspect the actual emails parser implementation and ensure it: (a) extracts TXN ids reliably, (b) applies Brief 03 sent-date gating, and (c) later emails can update holds/statuses deterministically (likely via sorting by sent date then file order). Also, we overwrote reconcile.js with a simplified version that may have dropped existing exception normalization and status precedence logic; we must compare with the prior reconcile.js behavior (from git not available) by inspecting other modules and ensuring reconcile integrates exceptions/policy/meetings/emails/corrections per archive requirements.",
+  "plan": "1) Print current src/parser/emails.js to understand how it parses TXN IDs and sent dates. 2) Find the authoritative Brief 09 amendment text and any mentions of compliance_hold comparison rules. 3) Identify how parsed.emails objects look and how reconcile should apply them (ordering + gating). 4) Update reconcile.js to reintroduce any missing logic expected by downstream writers (exceptions, policy exceptions) while keeping ledger/correction fixes. 5) Rerun extractor and validate report/transactions outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"compliance_hold\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b9=$(grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${b9},$((b9+340))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Mid-Year Amendment\" -n /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,51 @@
+{
+  "analysis": "We found two ledger headings: a working copy at 3904 and the authoritative exact heading `## Transaction Ledger` at 3912. Current parseLedger uses markdown.indexOf(\"## Transaction Ledger\"), which will match the earlier working copy heading too (since it contains that substring), causing wrong/duplicate/decoy ledger ingestion and nondeterminism. reconcile.js is overly simplistic: it overwrites status from any email without precedence/time rules, overwrites owner from meetings without rules, and applies corrections without recording previous values or using effective-date precedence. Email parsing output was truncated, but likely missing date fields needed for Brief 03/09 timing logic. Correction misapplication likely due to wrong ledger source and/or mismatching by non-unique id; but reconcile uses Map by transaction_id, so primary issue may be parsing wrong ledger rows/duplicates or corrections referencing rows that only exist in canonical ledger. Next: inspect full emails.js and corrections.js; read relevant briefs for exact rules; then fix parseLedger to anchor to exact heading line and exclude working copy; add robust ordering and precedence logic in reconcile based on dates/effective timestamps and Brief 09 amendment; ensure deterministic processing by sorting inputs.",
+  "plan": "1) Inspect full parser/emails.js and parser/corrections.js to see available fields (timestamps, effective dates, notice ids). 2) Read the binding Investigation Briefs 01–05, 04, and 09 sections that define ledger sourcing (exact heading), status precedence, compliance mail timing, correction notice precedence, meeting amendments/owners, and mid-year amendment. 3) Fix parseLedger to only parse the canonical ledger section: match a line that is exactly `## Transaction Ledger` and start parsing after it; stop at next `## ` heading; ignore `## Transaction Ledger (working copy)`. 4) In reconcile.js: sort meetings/emails/corrections deterministically (by date/timestamp then by stable tie-breakers like notice_id/from_addr/subject order), apply precedence rules from briefs (including compliance_hold timing from Brief 09), and ensure corrections apply to the correct transaction and field with previous_value tracked. 5) Run extractor into /app/output twice and diff outputs to confirm determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1750p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

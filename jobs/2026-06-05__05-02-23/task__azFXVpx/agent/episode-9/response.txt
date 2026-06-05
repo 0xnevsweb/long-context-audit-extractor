@@ -1,0 +1,35 @@
+{
+  "analysis": "Writers do not match Brief 08: jsonWriter uses {transactions:...}/{exceptions:...} but must be {\"items\":[...]}. CSV header is missing exception_reason column and should leave exception_reason blank when null; also should end with newline likely. reportWriter doesn’t sort by notice_id; reconcile currently leaves previous_value blank and applies all corrections without determining 'winning' corrections (Brief 04). We still need Brief 02–07 exact rules; however we can already start fixing structural issues: implement correct output formats, deterministic sorting, and proper section parsing for ledger/corrections/emails/policy exceptions to avoid draft/working copy sections. Next: read brief excerpts precisely (02-07) using sed to small windows and/or awk with line numbers around headings.",
+  "plan": "1) Extract authoritative text for Briefs 02–07 using awk with line numbers and then sed specific ranges, to avoid buffer issues. 2) Begin code changes: create a shared section-slicing utility that finds exact heading lines and returns slice until next '## ' heading. Update parsers to use it and target the correct headings (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) and ignore draft/archived/working copy variants. 3) Update ledger parser for provisional + last-wins. 4) Update writers to match required schema. 5) Implement correction precedence and report sorting once Brief 04 is read; implement status precedence and compliance rules once Brief 02/03/09 are understood; implement effective_date and exceptions per Brief 06–08.",
+  "commands": [
+    {
+      "keystrokes": "awk 'NR>=240 && NR<=1300 {print NR\":\"$0}' /app/data/audit_archive.md | sed -n '1,160p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=240 && NR<=900 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 02\" -A40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=450 && NR<=720 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 03\" -A60\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=670 && NR<=840 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 04\" -A70\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=820 && NR<=1100 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 05\" -A70\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=1040 && NR<=1250 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 06\" -A70\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=1180 && NR<=1500 {print NR\":\"$0}' /app/data/audit_archive.md | grep -n \"Investigation Brief 07\" -A120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

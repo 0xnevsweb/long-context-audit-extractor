@@ -1,0 +1,35 @@
+{
+  "analysis": "We successfully implemented heading.js, updated ledger.js and corrections.js to use exact heading matching, and fixed sort.js comparator. Syntax checks passed. Running extractor twice produced identical transactions.json (diff empty), indicating determinism at least for that output. However, remaining reported issues include compliance holds missing later mail and correction notices applied to wrong ledger rows, which may still exist in reconcile.js/emails.js logic. Now that corrections and ledger sections are correctly sliced, we should verify corrections are being parsed (count) and check whether any transactions have compliance_hold status and whether it matches rules. Next: inspect emails.js fields (it currently lacks timestamps), inspect reconcile.js, and compare extracted counts of emails/corrections/ledger items to expected (from archive sections). Then implement rule-based reconciliation per briefs, especially compliance hold timing and correction precedence.",
+  "plan": "1) Quickly sanity-check parsed counts by writing a small node snippet to parse archive and print counts + sample records (ledger first/last, corrections, emails with status compliance_hold). 2) Read the binding brief text around compliance mail timing and mid-year amendment (Brief 03 and 09) and correction precedence (Brief 04) to implement correctly. 3) Update emails.js to capture a mail date/timestamp (likely ISO date) and any hold-specific fields. 4) Update reconcile.js to apply: status precedence with deterministic ordering, compliance_hold timing including later mail, and correction notices applied with previous_value and correct effective-date logic. 5) Rerun extractor and verify outputs, and rerun twice to confirm stability.",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconsole.log({ledger: p.ledger.length, meetings: p.meetings.length, emails: p.emails.length, corrections: p.corrections.length, policyExceptions: p.policyExceptions.length});\nconsole.log('ledger_sample_first', p.ledger.slice(0,2));\nconsole.log('corrections_sample_first', p.corrections.slice(0,3));\nconsole.log('emails_sample_first', p.emails.slice(0,3));\nconsole.log('emails_hold_count', p.emails.filter(e=>String(e.status).toLowerCase()==='compliance_hold').length);\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1745p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,115 @@
+New Terminal Output:
+
+root@5bc7934c2c61:/app# sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@5bc7934c2c61:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   // Investigation Brief 01 (binding):
+>   // - Treat only the markdown section whose heading line is exactly `## Transaction Ledger` as authoritative.
+>   // - Locate section boundaries with regular expressions anchored to whole heading lines.
+>   // - Ignore any ledger block that includes a line `provisional: true` (case insensitive).
+>   // - When the same transaction id appears in multiple non-provisional ledger blocks,
+>   //   the last such block in file order is the base row for that id.
+>
+>   const headingRe = /^## Transaction Ledger\s*$/m;
+>   const match = headingRe.exec(markdown);
+>   if (!match) return [];
+>
+>   const sectionStart = match.index + match[0].length;
+>   const after = markdown.slice(sectionStart);
+>
+>   // Section extends until the next H2 heading (or EOF).
+>   const nextH2Idx = after.search(/^##\s+/m);
+>   const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);
+>
+>   const byId = new Map();
+>   const blocks = section.split(/^###\s+/m).slice(1);
+>
+>   for (const block of blocks) {
+>     if (/^\s*provisional\s*:\s*true\s*$/im.test(block)) {
+>       continue;
+>     }
+>
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     const row = { transaction_id: transactionId };
+>
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       const idx = trimmed.indexOf(":");
+>       if (idx === -1) continue;
+>
+>       const key = trimmed.slice(0, idx).trim().toLowerCase();
+>       const value = trimmed.slice(idx + 1).trim();
+>
+>       if (key === "amount") {
+>         row.amount = Number(value);
+>       } else if (key === "owner") {
+>         row.owner = value;
+>       } else if (key === "status") {
+>         row.status = value;
+>       } else if (key === "date") {
+>         row.date = value;
+>       }
+>     }
+>
+>     // last-in-file-order wins
+>     byId.set(transactionId, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/parser/ledger.js
+root@5bc7934c2c61:/app# rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+root@5bc7934c2c61:/app# diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@5bc7934c2c61:/app# wc -l /app/output/reconciliation_report.jsonl /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json
+   0 /app/output/reconciliation_report.jsonl
+ 259 /app/output/transactions.json
+  32 /app/output/transactions.csv
+   2 /app/output/exceptions.json
+ 293 total
+root@5bc7934c2c61:/app#

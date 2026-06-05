@@ -1,0 +1,23 @@
+{
+  "analysis": "We can read the archive sections: Meeting Notes show amendments with signed flags (Brief 05 likely dictates unsigned amendments should not override owners). Email Excerpts section begins, with commentary that only compliance-addressed threads with transaction subjects affect merge logic. We still need to inspect index.js/exceptions.js/policy.js/emails.js outputs (not shown yet in capture), and implement: meeting amendments honoring signed/effective, email parsing applying only qualifying emails with TXN subjects and compliance-addressed, and sent-date gating per Brief 03/09. Current reconcile.js blindly applies all meetings/emails fields and ignores signed/effective and mail qualification, so it’s incorrect.",
+  "plan": "1) Print parser/meetings.js to see how it parses signed/effective. 2) Print parser/emails.js to see how it detects compliance-addressed, subjects, sent dates, and extracts status/owner changes. 3) Locate Brief 05 (unsigned amendments rule) and Brief 09 specifics, then update reconcile.js: apply only signed amendments, consider effective date ordering, apply emails only when compliant and when sent-date gating passes, and allow later mail updates. 4) Rerun extractor to /app/output and verify key transactions (those in meeting notes and corrections) reflect policy.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b5=$(grep -n \"^## Investigation Brief 05\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${b5},$((b5+180))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b9=$(grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${b9},$((b9+220))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

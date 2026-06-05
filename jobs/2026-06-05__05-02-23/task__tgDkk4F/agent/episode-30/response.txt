@@ -1,0 +1,23 @@
+{
+  "analysis": "The grep for status order returned nothing, and we didn’t see the grep output for 'precedence' (likely scrolled off); however it seems the archive uses 'notice precedence' in contexts unrelated to email precedence. We still need the binding rule that defines 'precedence allows' in Brief 03. Likely it’s another investigation brief (maybe Brief 02 or Brief 06) defining that when multiple emails set status, pick the most severe status by STATUS_ORDER, or prefer those with sent date, or prefer compliance@ over others. Next: locate all occurrences of 'apply the status change if precedence allows' and find a brief that defines precedence; search for 'precedence allows' phrase, 'mail precedence', 'compliance@', and 'status change' across archive.",
+  "plan": "Search the archive for the exact phrase 'precedence allows' and nearby binding rules. Also search for 'mail precedence' and for any brief mentioning how to resolve multiple emails per transaction. Once found, implement that rule in reconcile.js. If no explicit rule, implement a conservative deterministic precedence: emails with sent dates have priority over those without; among applicable emails, choose the one with the greatest sent date; if ties or missing sent, choose the status with greatest STATUS_ORDER (most severe) and prefer compliance@ sender. This will prevent compliance holds from being cleared by later non-sent mail.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"precedence allows\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"precedence allows\" /app/data/audit_archive.md | cut -d: -f1 | head -n 5 | xargs -I{} sh -lc 'echo \"--- context @{} ---\"; sed -n \"$(({}-20)),$(({}+40))p\" /app/data/audit_archive.md'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"mail precedence|email precedence|status precedence|multiple (emails|mail)|conflicting (emails|mail)\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"qualifying.*email|compliance@.*email\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

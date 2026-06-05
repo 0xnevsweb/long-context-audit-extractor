@@ -1,0 +1,19 @@
+{
+  "analysis": "meetings.js is now updated and syntactically valid. Next we must enforce Brief 05 in reconcile.js: apply only signed amendments, and if effective exists, only if effective >= ledger date. Also need to incorporate Brief 09/03 email timing, but first we must read Brief 09 binding rule (we printed it via nl/head earlier but output not shown; rerun). Then rewrite emails.js and reconcile.js accordingly, and rerun extractor.",
+  "plan": "1) Reprint Brief 09 (nl/head) to capture mail timing amendment. 2) Update reconcile.js meeting merge logic: group amendments per transaction, filter signed, and select applicable ones based on effective rule and file order. 3) Rewrite emails.js to parse To:/sent:/Subject containing TXN id (not only Re:), require compliance-addressed, and include sent date. 4) Update reconcile.js to apply emails in sent-date/file-order with gating (sent >= ledger date). 5) Rerun extractor to /app/output and diff reruns.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /tmp/brief09.txt | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // Email excerpts are structured under the `## Email Excerpts` section.\n  // Binding policy about which emails apply is in the archive; here we parse\n  // candidate compliance-related messages deterministically.\n  const headingRe = /^## Email Excerpts\\s*$/m;\n  const m = headingRe.exec(markdown);\n  if (!m) return [];\n\n  const sectionStart = m.index + m[0].length;\n  const after = markdown.slice(sectionStart);\n  const nextH2Idx = after.search(/^##\\s+/m);\n  const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);\n\n  // Split on \"From:\" lines (each message starts with From:)\n  const parts = section.split(/^From:\\s+/m).slice(1);\n  const emails = [];\n\n  for (let i = 0; i < parts.length; i += 1) {\n    const block = \"From: \" + parts[i];\n\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const toMatch = block.match(/^To:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*(.+)$/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n\n    const subject = subjectMatch ? subjectMatch[1].trim() : \"\";\n    const txnMatch = subject.match(/\\b(TXN-[0-9a-f-]+)\\b/i);\n\n    // Status changes are expressed as `status: <value>` in structured excerpts.\n    const statusMatch = block.match(/^status:\\s*(\\w+)\\s*$/im);\n    const ownerMatch = block.match(/^owner:\\s*(\\S+)\\s*$/im);\n\n    const transaction_id = txnMatch ? txnMatch[1] : null;\n    const status = statusMatch ? statusMatch[1].trim().toLowerCase() : null;\n    const owner = ownerMatch ? ownerMatch[1].trim() : null;\n\n    // Commentary says only compliance-addressed threads with transaction subjects apply.\n    const to = toMatch ? toMatch[1].trim().toLowerCase() : \"\";\n    const isCompliance = /compliance/.test(to);\n\n    if (!fromMatch || !transaction_id) continue;\n    if (!isCompliance) continue;\n    if (!status && !owner) continue;\n\n    emails.push({\n      idx: i,\n      from_addr: fromMatch[1].trim(),\n      to_addr: toMatch ? toMatch[1].trim() : \"\",\n      transaction_id,\n      sent: sentMatch ? sentMatch[1].trim() : null,\n      status,\n      owner,\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

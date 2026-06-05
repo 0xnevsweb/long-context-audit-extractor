@@ -1,0 +1,35 @@
+{
+  "analysis": "emails.js is very short (only ~24 lines) and appears to parse only From, Subject (Re: TXN-...), and status; it likely does NOT parse a timestamp/date, which is required for compliance mail timing rules, causing holds to miss later mail or apply inconsistently. corrections.js slices from '## Correction Notices' to the first occurrence of '## Transaction Ledger'—but due to the earlier '## Transaction Ledger (working copy)' containing that substring, end index may be wrong, truncating correction notices or including wrong content. Also parseLedger has the same substring issue and will start at the working copy heading. So core bugs: section boundary detection using indexOf substring rather than exact heading line. Additionally, sort comparator is flawed. Next: patch ledger.js and corrections.js (and any other parser using indexOf) to locate exact headings using regex match for whole line. Patch sort.js to be stable. Enhance emails.js to parse a Date/Received field if present in the archive’s Email Excerpts so we can apply Brief 03/09 rules. Then update reconcile.js to apply precedence rules deterministically using timestamps and effective dates.",
+  "plan": "1) Implement a shared helper to find section ranges by exact markdown heading line (e.g., /^## Transaction Ledger$/m) and optionally stop at next /^## /m. Use it in ledger.js, corrections.js, emails.js, policy.js if needed. 2) Fix ledger.js to start at exact canonical heading `## Transaction Ledger` and stop at next `## ` heading; ignore working copy. 3) Fix corrections.js end marker to exact canonical `## Transaction Ledger` heading (not substring), ensuring full correction notices parsed. 4) Update sort.js comparator to return 0 on equality and handle missing IDs to ensure deterministic ordering. 5) Update emails.js to also parse an ISO date/timestamp line (e.g., Date: YYYY-MM-DD or Sent:) and include it in parsed email objects. 6) Update reconcile.js: apply meeting owner changes only if signed=true per Brief 05; apply status updates with precedence per Brief 02 and compliance_hold timing rules per Brief 03/09 (compare mail timestamp vs effective date/effective correction date as specified). Apply corrections with proper previous_value and precedence per Brief 04. 7) Run extractor twice and diff outputs.",
+  "commands": [
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Add File: /app/audit-extractor/src/parser/heading.js\n+function findHeadingIndex(markdown, headingText) {\n+  // Find an H2 heading line that matches exactly `## ${headingText}`.\n+  // Returns the index in the markdown string or -1.\n+  const re = new RegExp(`^##\\\\s+${escapeRegExp(headingText)}\\\\s*$`, \"m\");\n+  const m = markdown.match(re);\n+  return m ? m.index : -1;\n+}\n+\n+function sliceSection(markdown, headingText) {\n+  const start = findHeadingIndex(markdown, headingText);\n+  if (start < 0) return \"\";\n+\n+  const afterStart = markdown.slice(start);\n+  // End at the next H2 heading (excluding the starting one)\n+  const next = afterStart.slice(1).match(/^##\\s+/m);\n+  const endOffset = next ? 1 + next.index : afterStart.length;\n+  return afterStart.slice(0, endOffset);\n+}\n+\n+function escapeRegExp(s) {\n+  return String(s).replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n+}\n+\n+module.exports = { findHeadingIndex, sliceSection };\n+\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/ledger.js\n@@\n+const { sliceSection } = require(\"./heading\");\n+\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  if (start < 0) {\n-    return [];\n-  }\n-  const slice = markdown.slice(start);\n+  // Must source from the canonical ledger whose heading line is exactly:\n+  // `## Transaction Ledger` (not the working copy heading).\n+  const slice = sliceSection(markdown, \"Transaction Ledger\");\n+  if (!slice) return [];\n   const rows = [];\n   const blocks = slice.split(/^### /m).slice(1);\n   for (const block of blocks) {\n@@\n   return rows;\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/corrections.js\n@@\n+const { findHeadingIndex, sliceSection } = require(\"./heading\");\n+\n function parseCorrections(markdown) {\n-  const start = markdown.indexOf(\"## Correction Notices\");\n-  const end = markdown.indexOf(\"## Transaction Ledger\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n+  const start = findHeadingIndex(markdown, \"Correction Notices\");\n+  if (start < 0) return [];\n+  const afterStart = markdown.slice(start);\n+  // End at the canonical ledger heading, not the working copy.\n+  const ledgerIdx = findHeadingIndex(afterStart, \"Transaction Ledger\");\n+  const slice = ledgerIdx >= 0 ? afterStart.slice(0, ledgerIdx) : afterStart;\n   const notices = [];\n   const blocks = slice.split(/^### /m).slice(1);\n   for (const block of blocks) {\n@@\n   return notices;\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/utils/sort.js\n@@\n function sortByTransactionId(items) {\n-  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));\n+  return items.sort((a, b) => {\n+    const at = String(a.transaction_id || \"\");\n+    const bt = String(b.transaction_id || \"\");\n+    if (at < bt) return -1;\n+    if (at > bt) return 1;\n+    return 0;\n+  });\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out2 && mkdir -p /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -u /app/output/transactions.json /tmp/out2/transactions.json | head\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

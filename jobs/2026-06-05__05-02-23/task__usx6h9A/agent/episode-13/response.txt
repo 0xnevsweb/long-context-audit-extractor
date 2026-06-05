@@ -1,0 +1,11 @@
+{
+  "analysis": "The attempt to print brief rulings still didn't show in terminal output (we only see narrative text, suggesting earlier commands scrolled past or were truncated). validate.js is minimal and doesn't constrain fields. We need to reliably extract the brief ruling text: best is to use a script to locate from the heading line until the next '## Investigation Brief XX — ... — field notes' heading and print that chunk. Then we can implement the reconciliation rules. We'll use python to slice by regex for each brief and print only the committee ruling section.",
+  "plan": "Write a python snippet that reads the archive, finds each brief's primary heading, then prints until the next blank line after 'Committee ruling' or until next '## Investigation Brief .. — field notes'. Use it for Briefs 02–05,07,08. Then implement reconcile.js changes. For now just extract text deterministically.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\ntext=open('/app/data/audit_archive.md').read().splitlines()\n\ndef grab(start_pat, end_pat):\n    s=None\n    for i,l in enumerate(text):\n        if re.match(start_pat,l):\n            s=i; break\n    if s is None:\n        return None\n    e=len(text)\n    for j in range(s+1,len(text)):\n        if re.match(end_pat,text[j]):\n            e=j; break\n    return '\\n'.join(text[s:e])\n\nbriefs=[\n  (r'^## Investigation Brief 02 .*$', r'^## Investigation Brief 02 .*field notes$'),\n  (r'^## Investigation Brief 03 .*$', r'^## Investigation Brief 03 .*field notes$'),\n  (r'^## Investigation Brief 04 .*$', r'^## Investigation Brief 04 .*field notes$'),\n  (r'^## Investigation Brief 05 .*$', r'^## Investigation Brief 05 .*field notes$'),\n  (r'^## Investigation Brief 07 .*$', r'^## Investigation Brief 07 .*field notes$'),\n  (r'^## Investigation Brief 08 .*$', r'^## Investigation Brief 08 .*field notes$'),\n]\n\nfor start,end in briefs:\n    chunk=grab(start,end)\n    print('\\n'+'='*80)\n    print(chunk)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

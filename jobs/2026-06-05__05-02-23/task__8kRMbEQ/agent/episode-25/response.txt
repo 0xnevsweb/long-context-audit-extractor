@@ -1,0 +1,27 @@
+{
+  "analysis": "We can now see meetings.js: it parses amendments but only captures owner and signed; it ignores effective date. Also it slices fixed 400 chars which may miss fields. It uses regex over full markdown (not restricted to Meeting Notes section), but okay if unique. We also have brief05/brief09 text saved in /tmp; need to read their binding rulings. Next: update parseMeetings to parse effective date and restrict to Meeting Notes section with anchored heading logic, plus apply Brief 05 rule (unsigned amendments should not override). Then examine emails.js and Brief 09 for mail timing amendments, and update reconcile.js accordingly.",
+  "plan": "1) Inspect /tmp/brief05.txt for the binding rule about signed amendments. 2) Inspect /tmp/brief09.txt for mail timing amendment. 3) Print emails.js to understand fields extracted. 4) Patch meetings.js to: locate '## Meeting Notes' section via anchored regex; parse each amendment block robustly until next '####' or next H2; include effective date. 5) Patch reconcile.js meeting application: apply owner change only if signed true; if multiple signed amendments exist, use effective date ordering (latest effective <=? maybe just latest in file order unless policy says). 6) Implement email sent-date gating and later mail precedence per briefs.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Committee ruling\" -n /tmp/brief05.txt | head -n 20\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /tmp/brief05.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,220p' /tmp/brief05.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

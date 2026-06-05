@@ -1,0 +1,137 @@
+New Terminal Output:
+
+root@5e2242c073c7:/app# sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@5e2242c073c7:/app# python3 - <<'PY'
+> import json
+> p='/tmp/audit_out_fix2/transactions.json'
+> with open(p) as f:
+>     data=json.load(f)
+> # print a couple values to see layout
+> if isinstance(data, dict):
+>     for k,v in list(data.items())[:5]:
+>         print('key',k,'type',type(v))
+> PY
+key transactions type <class 'list'>
+root@5e2242c073c7:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@5e2242c073c7:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@5e2242c073c7:/app# grep -n "^## Meeting" /app/data/audit_archive.md | head -n 30
+1834:## Meeting Notes
+root@5e2242c073c7:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> const { sliceExactH2Section } = require("./sectionSlice");
+>
+> function parseCorrections(markdown) {
+>   const slice = sliceExactH2Section(markdown, "Correction Notices");
+>   if (!slice) return [];
+>
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = lines[0].trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("targets:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     notices.push(entry);
+>   }
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@5e2242c073c7:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> const { sliceExactH2Section } = require("./sectionSlice");
+>
+> function parseEmails(markdown) {
+>   // Use only canonical `## Email Excerpts` section (ignore archived thread).
+>   const slice = sliceExactH2Section(markdown, "Email Excerpts");
+>   if (!slice) return [];
+>
+>   const emails = [];
+>   const blocks = slice.split(/^From:/m).slice(1);
+>   for (const block of blocks) {
+>     const match = block.match(/Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/i);
+>     if (!match) continue;
+>
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})$/im);
+>     const statusMatch = block.match(/^status:\s*(.+)$/im);
+>
+>     emails.push({
+>       transaction_id: match[1],
+>       sent: sentMatch ? sentMatch[1].trim() : "",
+>       status: statusMatch ? statusMatch[1].trim() : "",
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix3
+root@5e2242c073c7:/app# grep -RIn "88519dfd-79ff-5de0-ae59-862ab932bc25" /tmp/audit_out_fix3/transactions.json | head
+140:      "transaction_id": "TXN-88519dfd-79ff-5de0-ae59-862ab932bc25",
+root@5e2242c073c7:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "Email parser is still using indexOf for section boundaries (violates Brief 01-style guidance and may cause wrong slices), and it only parses From/Subject/status, with no timestamp or hold signals. The archive excerpt shown indicates we were near Policy Exceptions; we still need to locate and read Brief 07/09 and the Email Excerpts structured format to implement compliance_hold and later-mail logic. Next step: extract the Email Excerpts section and the relevant Briefs from the archive, then update parser/emails.js to use regex anchored headings and parse date/timestamp plus whether mail indicates compliance_hold/release/status. Then update reconcile.js accordingly.",
+  "plan": "1) Find exact location and format of \"## Email Excerpts\" in the archive and inspect a handful of email blocks to see available fields (Date:, Received:, status:, hold:, etc). 2) Read Investigation Briefs that define email precedence and compliance_hold timing, especially Brief 09 amendment. 3) Update parser/emails.js: locate section with /^## Email Excerpts$/m and end at /^## Policy Exceptions$/m; parse each email block into structured fields including transaction_id, status, mail_date, and any compliance hold markers. Ensure deterministic sorting by mail_date then stable tie-breaker. 4) Update reconcile.js to apply email-derived status/hold per policy (later mail can change hold), then apply correction winners (already done) after emails as required. 5) Re-run extraction and verify new fields and stable outputs.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3000,3405p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"## Investigation Brief 07|## Investigation Brief 08|## Investigation Brief 09\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1320,1560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

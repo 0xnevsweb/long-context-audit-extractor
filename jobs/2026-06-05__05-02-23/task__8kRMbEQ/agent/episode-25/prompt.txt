@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Access: 2026-06-05 12:11:29.895794919 +0000
+Modify: 2026-06-05 12:11:29.885794919 +0000
+Change: 2026-06-05 12:11:29.885794919 +0000
+ Birth: 2026-06-05 12:08:55.911261955 +0000
+  File: /tmp/brief05.txt
+  Size: 18638           Blocks: 40         IO Block: 4096   regular file
+Device: 0,89    Inode: 51769       Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2026-06-05 12:11:30.601794912 +0000
+Modify: 2026-06-05 12:11:30.597794912 +0000
+Change: 2026-06-05 12:11:30.597794912 +0000
+ Birth: 2026-06-05 12:11:30.593794912 +0000
+  File: /tmp/brief09.txt
+  Size: 20451           Blocks: 40         IO Block: 4096   regular file
+Device: 0,89    Inode: 93532       Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Access: 2026-06-05 12:11:31.543794903 +0000
+Modify: 2026-06-05 12:11:31.537794903 +0000
+Change: 2026-06-05 12:11:31.537794903 +0000
+ Birth: 2026-06-05 12:08:57.371261941 +0000
+root@5bc7934c2c61:/app# head -n 40 /tmp/meetings.js.txt 2>/dev/null || true
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@5bc7934c2c61:/app#

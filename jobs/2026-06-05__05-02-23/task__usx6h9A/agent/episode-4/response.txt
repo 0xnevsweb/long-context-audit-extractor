@@ -1,0 +1,39 @@
+{
+  "analysis": "parser/policy.js uses indexOf boundaries and will pick up `## Policy Exceptions (draft)` earlier, violating spec; same likely for emails/corrections/meetings. utils/sort has non-total comparator (never returns 0), which can cause unstable ordering when ids equal (rare) but more importantly is sloppy. Need to implement canonical section slicing via regex anchored to exact heading lines. Then fix ledger parser as previously identified. Also need to apply Brief policies in reconcile.js: currently it overwrites status with email status regardless of precedence and ignores compliance_hold logic and policy exceptions. Next implement proper parsers for canonical structured sections and reconciliation rules from briefs (need to review the earlier sed outputs for Briefs 02-09; not yet captured in this prompt).",
+  "plan": "1) Inspect emails.js and corrections.js to confirm section selection bugs. 2) Implement a shared helper to extract section content by exact heading line (e.g., /^## Email Excerpts$/m) and stop at next '## ' heading. 3) Update ledger.js/policy.js/emails.js/corrections.js/meetings.js to use canonical sections only (ignore archived thread/draft/working copy). 4) Update ledger parsing per Brief 01: ignore provisional blocks; last non-provisional wins. 5) Update reconcile.js to apply corrections deterministically and record previous_value; incorporate policyExceptions to suppress exceptions as required; implement compliance_hold timing once rules confirmed from Brief 03/07/09 (will read those sections next if needed). 6) Run extractor into /tmp and sanity-check that TXN-885... amount is 500 not 99999 and that corrected fields apply to correct txn. 7) Run final extract to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Add File: /app/audit-extractor/src/parser/sectionSlice.js\n+// Helpers for extracting canonical markdown sections.\n+//\n+// Policy: section boundaries must be located with regular expressions anchored\n+// to whole heading lines at line start (Investigation Brief 01).\n+\n+function escapeRegExp(str) {\n+  return str.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n+}\n+\n+/**\n+ * Returns the content belonging to a markdown section whose heading line is\n+ * exactly `## <heading>`.\n+ *\n+ * The returned string starts after the heading line and ends before the next\n+ * level-2 heading (\"## \") or end-of-file.\n+ */\n+function sliceExactH2Section(markdown, headingText) {\n+  const escaped = escapeRegExp(headingText);\n+  const startRe = new RegExp(`^## ${escaped}\\\\s*$`, \"m\");\n+  const startMatch = markdown.match(startRe);\n+  if (!startMatch || startMatch.index == null) return \"\";\n+\n+  const afterHeadingIdx = markdown.indexOf(\"\\n\", startMatch.index);\n+  if (afterHeadingIdx < 0) return \"\";\n+\n+  const rest = markdown.slice(afterHeadingIdx + 1);\n+  const nextRe = /^##\\s+/m;\n+  const nextMatch = rest.match(nextRe);\n+  if (!nextMatch || nextMatch.index == null) return rest;\n+  return rest.slice(0, nextMatch.index);\n+}\n+\n+module.exports = { sliceExactH2Section };\n+\n*** End Patch\nPATCH\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/ledger.js\n@@\n+const { sliceExactH2Section } = require(\"./sectionSlice\");\n+\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  if (start < 0) {\n-    return [];\n-  }\n-  const slice = markdown.slice(start);\n+  // Only the section whose heading line is exactly `## Transaction Ledger` is\n+  // authoritative (Brief 01). Do not match working-copy headings.\n+  const slice = sliceExactH2Section(markdown, \"Transaction Ledger\");\n+  if (!slice) return [];\n   const rows = [];\n   const blocks = slice.split(/^### /m).slice(1);\n   for (const block of blocks) {\n     const lines = block.split(\"\\n\");\n     const transactionId = lines[0].trim();\n     if (!transactionId.startsWith(\"TXN-\")) {\n       continue;\n     }\n-    if (rows.some((row) => row.transaction_id === transactionId)) {\n-      continue;\n-    }\n+\n+    // Ignore provisional blocks.\n+    if (/^provisional:\\s*true\\s*$/im.test(block)) continue;\n+\n     const row = { transaction_id: transactionId };\n     for (const line of lines) {\n       const trimmed = line.trim();\n       if (trimmed.startsWith(\"amount:\")) {\n         row.amount = Number(trimmed.split(\":\")[1].trim());\n@@\n       }\n     }\n-    rows.push(row);\n+\n+    // When duplicates appear, the last non-provisional block in file order wins.\n+    const existingIdx = rows.findIndex((r) => r.transaction_id === transactionId);\n+    if (existingIdx >= 0) rows.splice(existingIdx, 1);\n+    rows.push(row);\n   }\n   return rows;\n }\n*** End Patch\nPATCH\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/policy.js\n@@\n+const { sliceExactH2Section } = require(\"./sectionSlice\");\n+\n function parsePolicyExceptions(markdown) {\n-  const start = markdown.indexOf(\"## Policy Exceptions\");\n-  const end = markdown.indexOf(\"## Correction Notices\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n+  const slice = sliceExactH2Section(markdown, \"Policy Exceptions\");\n   const ids = new Set();\n   const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n   let match;\n   while ((match = re.exec(slice)) !== null) {\n     ids.add(match[1]);\n   }\n   return ids;\n }\n*** End Patch\nPATCH\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/utils/sort.js\n@@\n function sortByTransactionId(items) {\n-  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));\n+  return items.sort((a, b) => {\n+    if (a.transaction_id === b.transaction_id) return 0;\n+    return a.transaction_id < b.transaction_id ? -1 : 1;\n+  });\n }\n*** End Patch\nPATCH\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node -e 'const t=require(\"/tmp/audit_out_fix/transactions.json\"); console.log(t.find(x=>x.transaction_id===\"TXN-88519dfd-79ff-5de0-ae59-862ab932bc25\"))'\n",
+      "duration": 0.5
+    }
+  ],
+  "task_complete": false
+}

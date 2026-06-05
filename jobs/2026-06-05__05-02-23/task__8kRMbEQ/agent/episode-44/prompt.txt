@@ -1,0 +1,33 @@
+New Terminal Output:
+
+root@5bc7934c2c61:/app# perl -0777 -i -pe 's/exception_reason: null,/exception_reason: (exceptionReasons.get(row.transaction_id) || null),/g' /app/audit-extract
+or/src/normalize/reconcile.js
+root@5bc7934c2c61:/app# grep -n "exceptionReasons" /app/audit-extractor/src/normalize/reconcile.js || true
+130:      exception_reason: (exceptionReasons.get(row.transaction_id) || null),
+root@5bc7934c2c61:/app# perl -0777 -i -pe 's/const items = sortByTransactionId\(/const exceptionReasons = new Map();\n  for (const ex of parsed.policyExceptions
+ || []) {\n    if (!ex || !ex.transaction_id || !ex.reason) continue;\n    const k = ex.transaction_id;\n    const prev = exceptionReasons.get(k) || [];\n    pr
+ev.push(String(ex.reason).trim());\n    exceptionReasons.set(k, prev);\n  }\n  for (const \[k, v\] of exceptionReasons.entries()) {\n    const uniq = Array.from
+(new Set(v.filter(Boolean)));\n    exceptionReasons.set(k, uniq.join(";"));\n  }\n\n  const items = sortByTransactionId\(/s' /app/audit-extractor/src/normalize/
+reconcile.js
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@5bc7934c2c61:/app# python3 - <<'PY'
+> import json
+> ex=json.load(open('/app/output/exceptions.json'))['items']
+> print('exceptions',len(ex))
+> print(ex)
+> PY
+exceptions 3
+[{'transaction_id': 'TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0', 'owner': 'frost', 'status': 'pending', 'effective_date': '2024-09-21', 'amount_usd': 8468.4, 'ex
+ception_reason': 'executive waiver'}, {'transaction_id': 'TXN-68b5423c-1abb-59e6-947e-7e56011cec58', 'owner': 'frost', 'status': 'approved', 'effective_date': '
+2024-07-07', 'amount_usd': 8740.52, 'exception_reason': 'executive waiver'}, {'transaction_id': 'TXN-c7416874-b91b-5c2d-92de-0098b1224d18', 'owner': 'asmith', '
+status': 'rejected', 'effective_date': '2024-11-23', 'amount_usd': 11215.24, 'exception_reason': 'executive waiver'}]
+root@5bc7934c2c61:/app# csvcut -n /app/output/transactions.csv 2>/dev/null || head -n 1 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd
+root@5bc7934c2c61:/app# grep -E "TXN-68b5423c-1abb-59e6-947e-7e56011cec58|TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0|TXN-c7416874-b91b-5c2d-92de-0098b1224d18" /ap
+p/output/transactions.csv
+TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0,frost,pending,2024-09-21,8468.4
+TXN-68b5423c-1abb-59e6-947e-7e56011cec58,frost,approved,2024-07-07,8740.52
+TXN-c7416874-b91b-5c2d-92de-0098b1224d18,asmith,rejected,2024-11-23,11215.24
+root@5bc7934c2c61:/app#

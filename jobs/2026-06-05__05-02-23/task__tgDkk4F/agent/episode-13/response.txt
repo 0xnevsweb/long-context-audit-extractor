@@ -1,0 +1,31 @@
+{
+  "analysis": "After fixing email/policy section selection, outputs changed substantially versus prior run2 (diff shows multiple transaction owner/status/date changes). This indicates we were previously parsing decoy/draft sections and now parse authoritative structured sections, which is correct. However, the diff also shows correction effects seemingly missing now (e.g., TXN-caf3... owner reverted to evans though correction winner should set dlee; TXN-e637... date/status reverted; suggests either output_run2 is older and now output is newer, or reconcile.js winners not applied due to corrections parser boundary mismatch with new policy boundary changes; but corrections parsing was already fixed. We must now: re-run a fresh second run with same code and diff to check stability; verify reconciliation_report.jsonl still has 4 lines and TXN-caf3 owner is dlee in final output. If not, we have a bug in pipeline or we diffed against stale output_run2 from earlier. Also need to implement compliance_hold logic per Brief 09 later.",
+  "plan": "1) Create a fresh /app/output_run2 using current code and diff against /app/output to confirm no drift. 2) Inspect /app/output/reconciliation_report.jsonl and grep specific transactions to verify corrections applied (caf3 owner, e637 date). 3) If corrections not applied, debug by printing parsed corrections count during extract and checking reconcile result for those IDs. 4) Once corrections confirmed, proceed to implement hold logic (after reading Brief 03/07/09 text) and update schema/output to include compliance_hold fields if required by spec.",
+  "commands": [
+    {
+      "keystrokes": "rm -rf /app/output_run2 && mkdir -p /app/output_run2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output_run2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /app/output /app/output_run2 || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && cat /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

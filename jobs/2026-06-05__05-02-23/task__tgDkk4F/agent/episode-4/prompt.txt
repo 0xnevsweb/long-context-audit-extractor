@@ -1,0 +1,94 @@
+New Terminal Output:
+
+root@71d69e2634da:/app# cat /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@71d69e2634da:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   // Brief 01 (binding): only the section whose heading line is exactly
+>   // `## Transaction Ledger` is authoritative. Do not match "working copy".
+>   // Also: locate boundaries with regex anchored to whole heading lines.
+>   const headingRe = /^## Transaction Ledger\s*$/m;
+>   const m = markdown.match(headingRe);
+>   if (!m || m.index == null) return [];
+>
+>   // Slice just the authoritative section (until next H2 heading or EOF)
+>   const afterHeadingIdx = m.index + m[0].length;
+>   const rest = markdown.slice(afterHeadingIdx);
+>   const nextH2 = rest.search(/^##\s+/m);
+>   const section = nextH2 >= 0 ? rest.slice(0, nextH2) : rest;
+>
+>   // Parse TXN blocks. If duplicates exist, last non-provisional wins.
+>   const byId = new Map();
+>   const blocks = section.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     // Skip any ledger block with `provisional: true` (case-insensitive)
+>     const provisional = lines.some((l) => /^\s*provisional\s*:\s*true\s*$/i.test(l));
+>     if (provisional) continue;
+>
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.toLowerCase().startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.toLowerCase().startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.toLowerCase().startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.toLowerCase().startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     byId.set(transactionId, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@71d69e2634da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@71d69e2634da:/app# grep -n "TXN-88519dfd-79ff-5de0-ae59-862ab932bc25" /app/output/transactions.csv
+19:TXN-88519dfd-79ff-5de0-ae59-862ab932bc25,jdoe,reversed,2024-01-01,500
+root@71d69e2634da:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+0 /app/output/reconciliation_report.jsonl
+root@71d69e2634da:/app#

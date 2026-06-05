@@ -1,0 +1,35 @@
+{
+  "analysis": "We now have exact line numbers for the main brief sections and their field notes duplicates. Need to view the committee ruling text in the primary brief headings (first occurrence for each). Then implement reconciliation logic accordingly. Also still need to ensure tx output row values confirmed.",
+  "plan": "Use sed around the primary brief lines (252, 468, 685, 828, 1201, 1419, 1670) to capture the binding committee rulings. Then update normalize/reconcile.js to follow those rules (status precedence, compliance_hold timing amended by Brief 09, correction precedence, owner amendments rules, exception flags).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,340p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '685,780p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '828,920p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1201,1295p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1419,1515p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1670,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    }
+  ],
+  "task_complete": false
+}

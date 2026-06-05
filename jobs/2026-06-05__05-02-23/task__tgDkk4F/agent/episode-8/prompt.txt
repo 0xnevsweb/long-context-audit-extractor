@@ -1,0 +1,41 @@
+Current Terminal Screen:
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+root@71d69e2634da:/app# cat /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@71d69e2634da:/app#

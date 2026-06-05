@@ -1,0 +1,51 @@
+{
+  "analysis": "Key bugs are evident. parseLedger uses markdown.indexOf(\"## Transaction Ledger\"), which matches the earlier decoy heading \"## Transaction Ledger (working copy)\" and thus ingests the decoy row (owner=decoy, status=reversed, date=2020-01-01) instead of the canonical ledger section required by Brief 01 (heading line exactly \"## Transaction Ledger\"). That explains wrong ledger rows and likely correction misapplication. reconcile.js applies emails by overwriting status with the last parsed email order (not by effective date / policy), and applies corrections in input order without sorting by effective date; report previous_value is always empty, and reconciliation_report.jsonl being empty likely due to writer expecting entries but not receiving/report not written. Also transactions.json appears not to be JSON array of objects (python loaded a string), so jsonWriter may be writing JSONL or stringified incorrectly. Next we must: (1) fix ledger section selection to exact heading match; (2) implement policy-driven status/hold reconciliation (need to read Briefs about compliance_hold and later mail, and Brief 09 amendment); (3) apply corrections after computing base state and in effective-date order, capturing previous values; (4) ensure reconciliation_report.jsonl is written; (5) fix transactions.json format.",
+  "plan": "1) Read binding policy details in Brief 01 and Brief 09 (and any brief about holds/corrections) to implement correct precedence: canonical ledger baseline, meeting owner updates if allowed, emails for status/holds with proper timing rules, then corrections (sorted by effective date, and only after applying Brief 09 hold-timing amendment). 2) Fix parseLedger to locate the exact heading line '^## Transaction Ledger$' and parse only that section, excluding working copy. 3) Inspect jsonWriter/reportWriter to see why reconciliation_report.jsonl is empty and why transactions.json is not an array; fix writers to output valid JSON (likely array) and JSONL report lines. 4) Update reconcile.js to: keep history, compute compliance_hold from emails (including later mail), apply corrections in chronological order (stable tie-breaker by notice_id), and record previous/new values in report. 5) Re-run extraction and verify: decoy TXN-88519... matches canonical (500.00, jdoe, pending, 2024-01-01), reconciliation_report.jsonl non-empty, transactions.json parses as list, and outputs are stable across reruns.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1715p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"compliance_hold|hold|correction notice|Correction\" -n /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/ledger.js\n@@\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  if (start < 0) {\n-    return [];\n-  }\n-  const slice = markdown.slice(start);\n+  // Brief 01: only the markdown section whose heading line is exactly\n+  // `## Transaction Ledger` is authoritative. Earlier \"working copy\" headings\n+  // are decoys and must be ignored.\n+  const headingRe = /^## Transaction Ledger\\s*$/m;\n+  const match = markdown.match(headingRe);\n+  if (!match || match.index == null) return [];\n+  const slice = markdown.slice(match.index);\n   const rows = [];\n   const blocks = slice.split(/^### /m).slice(1);\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"TXN-88519dfd-79ff-5de0-ae59-862ab932bc25\" -n /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -c 200 /app/output/transactions.json; echo\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

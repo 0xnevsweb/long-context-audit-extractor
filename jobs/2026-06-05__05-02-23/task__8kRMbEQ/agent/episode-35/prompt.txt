@@ -1,0 +1,46 @@
+New Terminal Output:
+;
+root@5bc7934c2c61:/app# sed -n '1,220p' /app/audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@5bc7934c2c61:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> // Brief 08 (binding): JSON outputs are wrapped as {"items":[...]}.
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/output/jsonWriter.js
+root@5bc7934c2c61:/app# rm -rf /app/output && mkdir -p /app/output
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@5bc7934c2c61:/app# python3 - <<'PY'
+> import json
+> for p in ['/app/output/transactions.json','/app/output/exceptions.json']:
+>   with open(p) as f:
+>     d=json.load(f)
+>   print(p, d.keys())
+>   print('len', len(d['items']))
+> PY
+/app/output/transactions.json dict_keys(['items'])
+len 32
+/app/output/exceptions.json dict_keys(['items'])
+len 0
+root@5bc7934c2c61:/app#

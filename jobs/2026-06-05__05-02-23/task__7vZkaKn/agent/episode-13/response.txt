@@ -1,0 +1,43 @@
+{
+  "analysis": "Our grep for the exact phrase with backticks accidentally triggered shell command substitution when run without proper quoting, causing `compliance_hold` to be treated as a command; but we still got the line showing at 1209 that the comparison is defined in Brief 09. The greps within /tmp/brief09_full.txt are still returning mostly narrative non-binding lines, suggesting our ranges for brief09_full are wrong (we incorrectly set brief09 end at 3866, which includes massive narrative case studies). We need to isolate the actual Brief 09 section only (from its heading at 1670 to its next '## Investigation Brief' heading end—likely shortly after 1682 field notes). Similarly for Brief 02–04: use programmatic section extraction stopping at the next brief heading. Then read those extracted sections fully (they should be small) to capture the actual committee rulings. After that, implement the reconciliation logic and email timestamp parsing.",
+  "plan": "1) Use python to extract exact section boundaries for Brief 02/03/04/05/09 by locating their headings and ending at the next '## Investigation Brief' heading (or next H2 heading if different). Write each extracted section to /tmp and then print it (should be limited). 2) Also extract '## Email Excerpts' structured section to inspect the actual email field lines, to know what timestamp line to parse. 3) Fix our grep command quoting for backticks. 4) With rules and formats in hand, modify emails.js to include timestamp, and overhaul reconcile.js accordingly.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nmd=open('/app/data/audit_archive.md','r',encoding='utf-8').read().splitlines()\n\ndef find_line(pat):\n    r=re.compile(pat)\n    for i,l in enumerate(md,1):\n        if r.match(l):\n            return i\n    return None\n\ndef next_heading_after(start, pat):\n    r=re.compile(pat)\n    for i in range(start+1, len(md)+1):\n        if r.match(md[i-1]):\n            return i\n    return len(md)+1\n\ndef extract(start_pat, stop_pat, out):\n    s=find_line(start_pat)\n    if not s:\n        print('missing', start_pat)\n        return\n    e=next_heading_after(s, stop_pat)\n    with open(out,'w',encoding='utf-8') as f:\n        for i in range(s, e):\n            f.write(f\"{i}: {md[i-1]}\\n\")\n    print(out, s, e-1)\n\nstop_brief=r'^## Investigation Brief (0[1-9]|10)'\nextract(r'^## Investigation Brief 02', stop_brief, '/tmp/brief02_only.txt')\nextract(r'^## Investigation Brief 03', stop_brief, '/tmp/brief03_only.txt')\nextract(r'^## Investigation Brief 04', stop_brief, '/tmp/brief04_only.txt')\nextract(r'^## Investigation Brief 05', stop_brief, '/tmp/brief05_only.txt')\nextract(r'^## Investigation Brief 09', stop_brief, '/tmp/brief09_only.txt')\n\n# Structured sections\nextract(r'^## Email Excerpts\\s*$', r'^##\\s+', '/tmp/email_excerpts_only.txt')\nextract(r'^## Correction Notices\\s*$', r'^##\\s+', '/tmp/corrections_only.txt')\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/brief02_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/brief03_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief04_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief05_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief09_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/email_excerpts_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/corrections_only.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"comparison used for\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

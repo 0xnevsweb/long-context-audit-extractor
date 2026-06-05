@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     const subjectMatch = block.match(/^Subject:\s*(.+)$/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     const subject = subjectMatch ? subjectMatch[1].trim() : "";
+>     const txnMatch = subject.match(/\b(TXN-[0-9a-f-]+)\b/i);
+>
+>     // Status changes are expressed as `status: <value>` in structured excerpts.
+>     const statusMatch = block.match(/^status:\s*(\w+)\s*$/im);
+>     const ownerMatch = block.match(/^owner:\s*(\S+)\s*$/im);
+>
+>     const transaction_id = txnMatch ? txnMatch[1] : null;
+>     const status = statusMatch ? statusMatch[1].trim().toLowerCase() : null;
+>     const owner = ownerMatch ? ownerMatch[1].trim() : null;
+>
+>     // Commentary says only compliance-addressed threads with transaction subjects apply.
+>     const to = toMatch ? toMatch[1].trim().toLowerCase() : "";
+>     const isCompliance = /compliance/.test(to);
+>
+>     if (!fromMatch || !transaction_id) continue;
+>     if (!isCompliance) continue;
+>     if (!status && !owner) continue;
+>
+>     emails.push({
+>       idx: i,
+>       from_addr: fromMatch[1].trim(),
+>       to_addr: toMatch ? toMatch[1].trim() : "",
+>       transaction_id,
+>       sent: sentMatch ? sentMatch[1].trim() : null,
+>       status,
+>       owner,
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/parser/emails.js
+root@5bc7934c2c61:/app#

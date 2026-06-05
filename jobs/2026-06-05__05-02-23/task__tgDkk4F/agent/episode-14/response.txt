@@ -1,0 +1,35 @@
+{
+  "analysis": "Outputs are now stable across reruns (diff empty). Corrections are applied correctly (caf3 owner dlee; e637 date 2024-08-01), and reconciliation_report.jsonl is populated per Brief 04. Remaining unmet requirements relate to compliance holds and mail timing: the tool currently has no compliance_hold field at all and email-driven status changes are simplistic (last email wins, without using dates). Brief 09 says the hold flag is evaluated after ledger/meeting/email merges but before correction notice changes date/status; Brief 03 governs mail-driven status changes. We need to read Brief 03/07/09 binding rules fully and implement compliance_hold computation and correct mail precedence (including later mail). Also likely need to include compliance_hold and hold_reason in outputs and exceptions.json per Brief 07 (Exception Flags).",
+  "plan": "1) Read the binding text of Brief 03 (Compliance Mail Timing), Brief 07 (Exception Flags Part I), and the full Brief 09 amendment paragraph to implement exact rules. 2) Inspect structured Email Excerpts section (around line 1857) to understand fields: date/timestamp, status directives, and hold markers. 3) Update parser/emails.js to extract mail timestamp and any hold-related indicators required by Brief 03/09. 4) Update reconcile.js to: apply email events sorted by timestamp (deterministic), compute final status per Brief 03, compute compliance_hold per Brief 09 (considering later mail), and then apply winning corrections (already) while preserving the rule that hold is computed before date/status corrections. 5) Update outputs/schema/exceptions builder to include compliance_hold/hold_reason and ensure validateOutputs passes. 6) Re-run extractor and ensure outputs remain stable and reflect hold logic.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,510p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '510,585p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1255p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1255,1325p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1682p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1857,1925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1925,2005p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

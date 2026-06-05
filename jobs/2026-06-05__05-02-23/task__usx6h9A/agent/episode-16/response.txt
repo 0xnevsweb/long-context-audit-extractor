@@ -1,0 +1,6 @@
+{
+  "analysis": "Implemented canonical section slicing via regex-anchored headings and fixed parsers to avoid draft/working-copy/archived-thread sections. Ledger parsing now uses only `## Transaction Ledger`, ignores `provisional: true`, and applies last-non-provisional-wins per transaction id. Reconciliation now follows Briefs 02–09: status precedence with compliance-only emails and timing, signed meeting amendments, compliance_hold computed per Brief 09 pre-correction date, winning corrections by max effective date per (txn,field) with correct previous_value and deterministic notice_id ordering, retroactive_review based on winning status corrections, policy_waiver only for approved_by compliance policy exceptions, over_limit threshold, and exception_reason semicolon-joined in lexical order. Output formats updated to Brief 08: transactions.json/exceptions.json use {items:[...]}; transactions.csv includes exception_reason column; reconciliation_report.jsonl generated; outputs deterministic across reruns. Final extract command executed to /app/output producing all required files.",
+  "plan": "No further changes needed. All required command behavior and output files are in place in /app/output, produced by running the mandated CLI command without manual copying.",
+  "commands": [],
+  "task_complete": true
+}

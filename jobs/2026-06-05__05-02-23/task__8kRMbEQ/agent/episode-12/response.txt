@@ -1,0 +1,23 @@
+{
+  "analysis": "We still haven't printed the code files (emails.js etc) or the Brief 09/07 text; the terminal is currently showing a portion of the archive around Brief 08, likely because prior sed ranges weren’t executed/visible in the capture. We need to explicitly run sed on the specific line ranges for Brief 09 and print emails.js. Until we do, compliance_hold logic remains unverified and likely incorrect in reconcile.js (no sent-date gating).",
+  "plan": "1) Print parser/emails.js and identify how it extracts transaction_id, sent date, and status. 2) Print Brief 09 and Brief 07 sections by line number anchors to capture the exact binding rules. 3) Based on those rules, implement sent-date gating and deterministic ordering in reconcile.js (sort emails by sent date then stable tiebreaker; only apply when allowed). 4) Rerun extractor twice to confirm stability and output correctness, then write to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b9=$(grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"Brief09 at $b9\"; sed -n \"${b9},$((b9+180))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b7=$(grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"Brief07 at $b7\"; sed -n \"${b7},$((b7+180))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

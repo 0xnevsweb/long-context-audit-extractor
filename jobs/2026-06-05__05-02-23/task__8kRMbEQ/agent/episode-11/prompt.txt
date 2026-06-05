@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 17
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 18
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 19
+
+Internal coordination on FX revaluation lag. No transaction identifiers appear
+in this message. Investigators archived it to preserve mailbox ordering around
+compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 20
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 21
+
+root@5bc7934c2c61:/app# grep -n "Mid-Year Amendment" -n /app/data/audit_archive.md | head
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+1210:(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@5bc7934c2c61:/app#

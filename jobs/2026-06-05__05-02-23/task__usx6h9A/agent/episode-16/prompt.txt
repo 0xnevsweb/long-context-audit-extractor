@@ -1,0 +1,97 @@
+Current terminal state:
+New Terminal Output:
+}
+root@5e2242c073c7:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function csvEscape(value) {
+>   const s = value == null ? "" : String(value);
+>   if (/[",\n]/.test(s)) {
+>     return `"${s.replace(/"/g, '""')}"`;
+>   }
+>   return s;
+> }
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const reason = row.exception_reason == null ? "" : row.exception_reason;
+>     return [
+>       row.transaction_id,
+>       row.owner,
+>       row.status,
+>       row.effective_date,
+>       row.amount_usd,
+>       reason,
+>     ]
+>       .map(csvEscape)
+>       .join(",");
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@5e2242c073c7:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> const { sliceExactH2Section } = require("./sectionSlice");
+>
+> function parsePolicyExceptions(markdown) {
+>   // Canonical `## Policy Exceptions` section only.
+>   const slice = sliceExactH2Section(markdown, "Policy Exceptions");
+>   if (!slice) return new Set();
+>
+>   const ids = new Set();
+>   const blocks = slice.split(/^### /m).slice(1);
+>
+>   for (const block of blocks) {
+>     // Only exceptions approved_by: compliance qualify for policy_waiver (Brief 08).
+>     const approved = block.match(/^approved_by:\s*(.+)\s*$/im);
+>     if (!approved || approved[1].trim().toLowerCase() !== "compliance") continue;
+>
+>     const txn = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     if (txn) ids.add(txn[1].trim());
+>   }
+>
+>   return ids;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@5e2242c073c7:/app# rm -rf /tmp/audit_out_fix6 && mkdir -p /tmp/audit_out_fix6
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix6
+root@5e2242c073c7:/app# head -n 3 /tmp/audit_out_fix6/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+root@5e2242c073c7:/app# python3 - <<'PY'
+> import json
+> with open('/tmp/audit_out_fix6/exceptions.json') as f:
+>     ex=json.load(f)
+> print('exceptions top keys', list(ex.keys()))
+> print('exceptions count', len(ex['items']))
+> print('sample', ex['items'][:5])
+> PY
+exceptions top keys ['items']
+exceptions count 17
+sample [{'transaction_id': 'TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', 'owner': 'dlee', 'status': 'pending', 'effective_date': '2024-02-26', 'amount_usd': 15335
+.5, 'exception_reason': 'over_limit'}, {'transaction_id': 'TXN-0f577e8c-c09d-517f-8807-b09a17924f9c', 'owner': 'bwong', 'status': 'pending', 'effective_date': '
+2024-10-10', 'amount_usd': 12860.78, 'exception_reason': 'over_limit'}, {'transaction_id': 'TXN-1b083448-63e3-5527-a20a-edd71416341c', 'owner': 'jdoe', 'status'
+: 'rejected', 'effective_date': '2024-09-01', 'amount_usd': 10113.94, 'exception_reason': 'compliance_hold;over_limit'}, {'transaction_id': 'TXN-20cd5f27-165a-5
+5cf-90db-b472725bb03b', 'owner': 'bwong', 'status': 'approved', 'effective_date': '2024-12-24', 'amount_usd': 12588.66, 'exception_reason': 'over_limit'}, {'tra
+nsaction_id': 'TXN-33c930a7-114e-50c1-b790-e26c53e5f025', 'owner': 'ckim', 'status': 'pending', 'effective_date': '2024-11-11', 'amount_usd': 14234.2, 'exceptio
+n_reason': 'over_limit'}]
+root@5e2242c073c7:/app# rm -rf /app/output && mkdir -p /app/output
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@5e2242c073c7:/app# ls -la /app/output
+total 36
+drwxr-xr-x 2 root root 4096 Jun  5 12:09 .
+drwxr-xr-x 1 root root 4096 Jun  5 12:09 ..
+-rw-r--r-- 1 root root 4109 Jun  5 12:09 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  5 12:09 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2687 Jun  5 12:09 transactions.csv
+-rw-r--r-- 1 root root 7562 Jun  5 12:09 transactions.json
+root@5e2242c073c7:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

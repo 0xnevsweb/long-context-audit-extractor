@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Site visit #912 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers f
+lagged the gap because effective-date logic must honor notice precedence.
+
+During Q1 close, S. Patel circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state;
+QA reproduced the drift on a cold run the next morning.
+
+Follow-up #313 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows on
+ly from the canonical ledger and structured sections at file end.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Site visit #422 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers f
+lagged the gap because effective-date logic must honor notice precedence.
+
+Working paper WP-3953 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different
+status columns for the same transaction id.
+
+Lead reviewer J. Huang noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but tim
+eline reconstruction showed manual overrides arriving after batch lock.
+
+Interview #540 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+## Case Study 02 — Treasury Wire Cutoff Failures
+
+Site visit #625 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers
+flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-2278 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced differ
+ent status columns for the same transaction id.
+
+Interview #564 with treasury highlighted how treasury wire cutoff failures statements were forwarded without the matching ledger row. Counsel advised preserving
+ the full thread because downstream exception coding depends on mail timestamps.
+
+root@71d69e2634da:/app# grep -nE "STATUS_ORDER|status order|order of statuses" /app/data/audit_archive.md | head -n 80
+root@71d69e2634da:/app#

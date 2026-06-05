@@ -1,0 +1,145 @@
+New Terminal Output:
+
+root@5bc7934c2c61:/app# echo SHOW_POLICY_FILES
+SHOW_POLICY_FILES
+root@5bc7934c2c61:/app# cat /tmp/policy.js.txt
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@5bc7934c2c61:/app# cat /tmp/exceptions_norm.js.txt
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@5bc7934c2c61:/app# head -n 80 /tmp/policy_exceptions_section.txt
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+### CORR-c27e46a1
+targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+field: date
+value: 2024-09-01
+effective: 2024-09-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 7500.00
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+root@5bc7934c2c61:/app# grep -n "^###" /tmp/policy_exceptions_section.txt | head -n 60
+3:### Policy Exception
+8:### Policy Exception
+13:### Policy Exception
+20:### CORR-7f2a91bc
+26:### CORR-8e3b02cd
+32:### CORR-9f4c13de
+38:### CORR-a05d24ef
+44:### CORR-b16e35f0
+50:### CORR-c27e46a1
+58:### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+66:### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+72:### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+78:### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+84:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+90:### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+96:### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+102:### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+108:### TXN-1b083448-63e3-5527-a20a-edd71416341c
+114:### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+120:### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+126:### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+132:### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+138:### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+144:### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+150:### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+156:### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+162:### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+168:### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+174:### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+180:### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+186:### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+192:### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+198:### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+204:### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+210:### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+216:### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+root@5bc7934c2c61:/app#

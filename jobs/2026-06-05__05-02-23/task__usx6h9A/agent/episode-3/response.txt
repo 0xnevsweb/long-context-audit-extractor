@@ -1,0 +1,47 @@
+{
+  "analysis": "Root cause for wrong reconciliation is clear in parseLedger: it uses markdown.indexOf(\"## Transaction Ledger\"), which will match the earlier `## Transaction Ledger (working copy)` and then parse from there, including the decoy TXN-885... row with 99999 and decoy owner/status. It also incorrectly ignores duplicates by keeping the first seen transaction_id, whereas Brief 01 says last non-provisional block wins. It also does not implement provisional filtering (`provisional: true`). Corrections/holds issues likely also exist: reconcile.js blindly overwrites status with any email status (no precedence), and corrections apply in file order without checking effective date precedence; report previous_value is empty. Need to implement policies from Briefs 02–09 (status precedence, compliance_hold timing, correction precedence, meeting amendments, policy exceptions). Next step: read Briefs 02–08 and 09 to implement required logic, and inspect parser files for meetings/emails/corrections/policy which likely also use indexOf and may read draft sections.",
+  "plan": "1) Read Investigation Briefs 02–08 and 09 for binding reconciliation rules, focusing on: status precedence, compliance mail timing/compliance_hold, correction notice precedence, meeting owner amendments, policy exceptions. 2) Inspect parseEmails/parseCorrections/parseMeetings/parsePolicyExceptions for similar section-boundary bugs (indexOf picking archived/draft sections). 3) Implement robust section extraction using regex anchored to full heading lines (per Brief 01) for each canonical section: `## Email Excerpts`, `## Policy Exceptions`, `## Correction Notices`, `## Transaction Ledger` (exact match only). 4) Fix ledger parsing: parse all ledger blocks within canonical ledger section; ignore blocks containing `provisional: true` (case-insensitive) within that transaction block; for duplicates, keep last occurrence in file order. 5) Update reconciliation: apply meeting owner updates per policy, email status updates per precedence/timing, apply corrections with effective-date precedence (and ensure they map by transaction id from `targets:`). Add deterministic ordering by sorting notices by effective date then notice_id. 6) Re-run extractor and validate outputs; then run required command to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '240,520p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '520,900p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '900,1260p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1260,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,43 @@
+{
+  "analysis": "Core fixes working: transactions.json now has top key items, deterministic across reruns, TXN-885 row matches canonical ledger (500, jdoe, pending). Remaining required changes per Brief 08: transactions.csv must include exception_reason column and blank when null. csvWriter currently omits exception_reason. Also exceptions.json must be {items:[...]} already fixed by jsonWriter; ensure buildExceptions called and writer uses items key (it does). Need to ensure reconciliation_report.jsonl sorted by notice_id asc and includes only winning corrections (we do) with previous_value; good. Also need to ensure policy_waiver requires approved_by: compliance; our policy parser only collects transaction ids and ignores approved_by, so must enhance parsePolicyExceptions to only include those with approved_by compliance. Finally, run extract to /app/output.",
+  "plan": "1) Update csvWriter.js to include exception_reason header and value (empty string if null). 2) Update parser/policy.js to parse full Policy Exception blocks and only include txns with approved_by compliance. 3) Re-run extract to temp dir and spot-check exceptions.csv/json. 4) Run final extract into /app/output as requested.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction csvEscape(value) {\n  const s = value == null ? \"\" : String(value);\n  if (/[\",\\n]/.test(s)) {\n    return `\"${s.replace(/\"/g, '\"\"')}\"`;\n  }\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const reason = row.exception_reason == null ? \"\" : row.exception_reason;\n    return [\n      row.transaction_id,\n      row.owner,\n      row.status,\n      row.effective_date,\n      row.amount_usd,\n      reason,\n    ]\n      .map(csvEscape)\n      .join(\",\");\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\"));\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nconst { sliceExactH2Section } = require(\"./sectionSlice\");\n\nfunction parsePolicyExceptions(markdown) {\n  // Canonical `## Policy Exceptions` section only.\n  const slice = sliceExactH2Section(markdown, \"Policy Exceptions\");\n  if (!slice) return new Set();\n\n  const ids = new Set();\n  const blocks = slice.split(/^### /m).slice(1);\n\n  for (const block of blocks) {\n    // Only exceptions approved_by: compliance qualify for policy_waiver (Brief 08).\n    const approved = block.match(/^approved_by:\\s*(.+)\\s*$/im);\n    if (!approved || approved[1].trim().toLowerCase() !== \"compliance\") continue;\n\n    const txn = block.match(/^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/im);\n    if (txn) ids.add(txn[1].trim());\n  }\n\n  return ids;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out_fix6 && mkdir -p /tmp/audit_out_fix6\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix6\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "head -n 3 /tmp/audit_out_fix6/transactions.csv\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nwith open('/tmp/audit_out_fix6/exceptions.json') as f:\n    ex=json.load(f)\nprint('exceptions top keys', list(ex.keys()))\nprint('exceptions count', len(ex['items']))\nprint('sample', ex['items'][:5])\nPY\n",
+      "duration": 0.6
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": true
+}

@@ -1,0 +1,19 @@
+{
+  "analysis": "We now have the exact Brief 05 binding rule: apply meeting owner amendments only if signed:true and, if effective date exists, only if effective >= ledger date. Our meetings.js currently ignores effective and scans whole markdown with fixed slice; reconcile.js applies regardless of signed/effective. Must fix.\n\nFor Brief 09, our sed range command failed because we tried to pass a negative start line to sed via nl+sed; easiest is to just `nl -ba /tmp/brief09.txt | head` since it starts at line 1 anyway.",
+  "plan": "1) View Brief 09 content via nl/head to get binding rule. 2) Patch meetings.js to parse amendments from Meeting Notes section, capturing owner, signed, effective. 3) Patch reconcile.js meeting application to enforce Brief 05 rule using ledger date comparison. 4) Patch emails.js to parse sent dates and compliance addressing, then patch reconcile.js email application to enforce Brief 03/09 rules. 5) Rerun extractor to /app/output and verify deterministic.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /tmp/brief09.txt | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'\nfunction parseMeetings(markdown) {\n  // Meeting amendments are structured under the `## Meeting Notes` section.\n  const headingRe = /^## Meeting Notes\\s*$/m;\n  const m = headingRe.exec(markdown);\n  if (!m) return [];\n\n  const sectionStart = m.index + m[0].length;\n  const after = markdown.slice(sectionStart);\n  const nextH2Idx = after.search(/^##\\s+/m);\n  const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);\n\n  const meetings = [];\n\n  // Blocks are keyed by the amendment heading.\n  const re = /^####\\s+Amendment for\\s+(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(section)) !== null) {\n    const start = match.index + match[0].length;\n    const rest = section.slice(start);\n\n    // until next amendment heading or next H2/end of section\n    const next = rest.search(/^####\\s+Amendment for\\s+/m);\n    const block = next === -1 ? rest : rest.slice(0, next);\n\n    const ownerMatch = block.match(/^owner:\\s*(.+)$/im);\n    const signedMatch = block.match(/^signed:\\s*(.+)$/im);\n    const effectiveMatch = block.match(/^effective:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n\n    meetings.push({\n      transaction_id: match[1],\n      owner: ownerMatch ? ownerMatch[1].trim() : \"\",\n      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === \"true\" : false,\n      effective: effectiveMatch ? effectiveMatch[1].trim() : null,\n    });\n  }\n\n  return meetings;\n}\n\nmodule.exports = { parseMeetings };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

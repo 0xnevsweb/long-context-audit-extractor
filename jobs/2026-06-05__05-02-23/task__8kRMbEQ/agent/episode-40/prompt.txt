@@ -1,0 +1,14 @@
+New Terminal Output:
+6
+root@5bc7934c2c61:/app# echo SHOW_TMP
+SHOW_TMP
+root@5bc7934c2c61:/app# ls -la /tmp | egrep 'policy\.js\.txt|exceptions_norm\.js\.txt|policy_exceptions_section\.txt' || true
+-rw-r--r-- 1 root root      134 Jun  5 12:15 exceptions_norm.js.txt
+-rw-r--r-- 1 root root      482 Jun  5 12:15 policy.js.txt
+-rw-r--r-- 1 root root     4135 Jun  5 12:15 policy_exceptions_section.txt
+root@5bc7934c2c61:/app# wc -l /tmp/policy.js.txt /tmp/exceptions_norm.js.txt /tmp/policy_exceptions_section.txt 2>/dev/null || true
+  15 /tmp/policy.js.txt
+   5 /tmp/exceptions_norm.js.txt
+ 221 /tmp/policy_exceptions_section.txt
+ 241 total
+root@5bc7934c2c61:/app#

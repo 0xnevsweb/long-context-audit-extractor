@@ -1,0 +1,84 @@
+New Terminal Output:
+
+root@71d69e2634da:/app# sed -n '468,490p' /app/data/audit_archive.md
+## Investigation Brief 03 — Compliance Mail Timing
+
+Extract policy (authoritative):
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+## Investigation Brief 03 — Compliance Mail Timing — field notes
+
+Lead reviewer M. Chen noted that year-end close checklist drift created reconciliation noise in controller during December freeze. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-3037 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+Working paper WP-7415 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+root@71d69e2634da:/app# sed -n '1201,1212p' /app/data/audit_archive.md
+## Investigation Brief 07 — Exception Flags (Part I)
+
+Extract policy (authoritative):
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+root@71d69e2634da:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(markdown) {
+>   const startMatch = markdown.match(/^## Email Excerpts\s*$/m);
+>   if (!startMatch || startMatch.index == null) return [];
+>
+>   const afterStart = startMatch.index + startMatch[0].length;
+>   const rest = markdown.slice(afterStart);
+>   const endIdxInRest = rest.search(/^## Policy Exceptions\s*$/m);
+>   const slice = endIdxInRest >= 0 ? rest.slice(0, endIdxInRest) : rest;
+>
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     const sentMatch = block.match(/^sent:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\s*$/im);
+>
+>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim().toLowerCase(),
+>       transaction_id: subjectMatch[1],
+>       sent: sentMatch ? sentMatch[1] : null,
+>       status: statusMatch[1].trim().toLowerCase(),
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@71d69e2634da:/app# sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@71d69e2634da:/app#

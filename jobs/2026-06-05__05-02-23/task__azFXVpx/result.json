@@ -1,0 +1,126 @@
+{
+    "id": "357506bc-8fb7-4815-bb10-bd36fff7f78a",
+    "task_name": "task",
+    "trial_name": "task__azFXVpx",
+    "trial_uri": "file:///Users/admin/Documents/Snorkel/long-context-audit-extractor/jobs/2026-06-05__05-02-23/task__azFXVpx",
+    "task_id": {
+        "path": "task"
+    },
+    "source": null,
+    "task_checksum": "6b6c4c27be3ba3b4089290b8e5ac11500793243178c327a6f59d02ce2b624de1",
+    "config": {
+        "task": {
+            "path": "task",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "task__azFXVpx",
+        "trials_dir": "jobs/2026-06-05__05-02-23",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "openai/@openai/gpt-5.2",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "ad1745f1-1ffb-4da9-8fc7-3acf3ce1ffd5"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@openai/gpt-5.2",
+            "provider": "openai"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 314330,
+        "n_cache_tokens": 261760,
+        "n_output_tokens": 18162,
+        "cost_usd": 0.3920735,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 18,
+            "api_request_times_msec": [
+                10640.904903411865,
+                11147.566795349121,
+                12262.97402381897,
+                14119.432926177979,
+                11383.141040802002,
+                13035.603046417236,
+                8573.060989379883,
+                10460.325956344604,
+                14379.460096359253,
+                15604.113817214966,
+                13398.398876190186,
+                41562.697887420654,
+                34637.38489151001,
+                12273.735284805298,
+                11163.497924804688,
+                8031.008958816528,
+                42225.14820098877,
+                5341.612100601196
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 1.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-06-05T12:02:23.861508Z",
+    "finished_at": "2026-06-05T12:10:44.357906Z",
+    "environment_setup": {
+        "started_at": "2026-06-05T12:02:24.235708Z",
+        "finished_at": "2026-06-05T12:02:43.619879Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-06-05T12:02:43.619966Z",
+        "finished_at": "2026-06-05T12:02:51.063247Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-06-05T12:02:51.063612Z",
+        "finished_at": "2026-06-05T12:10:16.120093Z"
+    },
+    "verifier": {
+        "started_at": "2026-06-05T12:10:19.775439Z",
+        "finished_at": "2026-06-05T12:10:27.017810Z"
+    },
+    "step_results": null
+}

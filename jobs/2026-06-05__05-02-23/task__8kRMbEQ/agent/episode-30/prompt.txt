@@ -1,0 +1,144 @@
+New Terminal Output:
+.
+root@5bc7934c2c61:/app# nl -ba /tmp/brief05.txt | head -n 40
+     1  ## Investigation Brief 05 — Meeting Amendments and Owners
+     2
+     3  Committee ruling (binding for extract):
+     4
+     5  Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+     6  default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+     7  owner when `signed: true` (case insensitive) and, when the amendment includes
+     8  `effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+     9  ledger date for the transaction.
+    10
+    11  ## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+    12
+    13  During October count, R. Okonkwo circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was tra
+nsient cache state; QA reproduced the drift on a cold run the next morning.
+    14
+    15  Interview #143 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel
+ advised preserving the full thread because downstream exception coding depends on mail timestamps.
+    16
+    17  Working paper WP-4980 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+    18
+    19  Lead reviewer S. Patel noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initiall
+y blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+    20
+    21  The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+    22
+    23  In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+    24
+    25  Risk assessment WP-6252 ties inventory obsolescence reserve to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+ appendix commentary as authoritative transaction sources.
+    26
+    27  Working paper WP-1549 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+    28
+    29  In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+    30
+    31  The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+    32
+    33  Working paper WP-8981 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+    34
+    35  Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds
+. The mid-year amendment later in this archive supersedes that draft practice.
+    36
+    37  Interview #919 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel
+ advised preserving the full thread because downstream exception coding depends on mail timestamps.
+    38
+    39  Site visit #157 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction
+batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+    40
+root@5bc7934c2c61:/app# nl -ba /tmp/brief05.txt | sed -n '1,30p'
+     1  ## Investigation Brief 05 — Meeting Amendments and Owners
+     2
+     3  Committee ruling (binding for extract):
+     4
+     5  Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+     6  default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+     7  owner when `signed: true` (case insensitive) and, when the amendment includes
+     8  `effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+     9  ledger date for the transaction.
+    10
+    11  ## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+    12
+    13  During October count, R. Okonkwo circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was tra
+nsient cache state; QA reproduced the drift on a cold run the next morning.
+    14
+    15  Interview #143 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel
+ advised preserving the full thread because downstream exception coding depends on mail timestamps.
+    16
+    17  Working paper WP-4980 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+    18
+    19  Lead reviewer S. Patel noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initiall
+y blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+    20
+    21  The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+    22
+    23  In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+    24
+    25  Risk assessment WP-6252 ties inventory obsolescence reserve to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+ appendix commentary as authoritative transaction sources.
+    26
+    27  Working paper WP-1549 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+    28
+    29  In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+    30
+root@5bc7934c2c61:/app# grep -n "Mid-Year Amendment" /tmp/brief09.txt | head -n 20
+1:## Investigation Brief 09 — Mid-Year Amendment
+13:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@5bc7934c2c61:/app# ln=$(grep -n "Mid-Year Amendment" /tmp/brief09.txt | head -n1 | cut -d: -f1); nl -ba /tmp/brief09.txt | sed -n "$((ln-5)),$((ln+80))p"
+sed: invalid option -- '4'
+Usage: sed [OPTION]... {script-only-if-no-other-script} [input-file]...
+
+  -n, --quiet, --silent
+                 suppress automatic printing of pattern space
+      --debug
+                 annotate program execution
+  -e script, --expression=script
+                 add the script to the commands to be executed
+  -f script-file, --file=script-file
+                 add the contents of script-file to the commands to be executed
+  --follow-symlinks
+                 follow symlinks when processing in place
+  -i[SUFFIX], --in-place[=SUFFIX]
+                 edit files in place (makes backup if SUFFIX supplied)
+  -l N, --line-length=N
+                 specify the desired line-wrap length for the `l' command
+  --posix
+                 disable all GNU extensions.
+  -E, -r, --regexp-extended
+                 use extended regular expressions in the script
+                 (for portability use POSIX -E).
+  -s, --separate
+                 consider files as separate rather than as a single,
+                 continuous long stream.
+      --sandbox
+                 operate in sandbox mode (disable e/r/w commands).
+  -u, --unbuffered
+                 load minimal amounts of data from the input files and flush
+                 the output buffers more often
+  -z, --null-data
+                 separate lines by NUL characters
+      --help     display this help and exit
+      --version  output version information and exit
+
+If no -e, --expression, -f, or --file option is given, then the first
+non-option argument is taken as the sed script to interpret.  All
+remaining arguments are names of input files; if no input files are
+specified, then the standard input is read.
+
+GNU sed home page: <https://www.gnu.org/software/sed/>.
+General help using GNU software: <https://www.gnu.org/gethelp/>.
+root@5bc7934c2c61:/app#

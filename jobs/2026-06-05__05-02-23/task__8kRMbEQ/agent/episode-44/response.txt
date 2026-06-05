@@ -1,0 +1,35 @@
+{
+  "analysis": "Exceptions are now correctly populated (3 items) and exceptions.json contains only those rows with exception_reason set. However, transactions.csv header is missing exception_reason column; Brief 08 requires it to include exception_reason and leave blank when null. Our csvWriter likely omits the column. We need to fix csvWriter.js to include exception_reason and output blank for null. Also need to ensure transactions.json items include exception_reason (they do). After fixing csvWriter, rerun extractor.",
+  "plan": "1) Inspect src/output/csvWriter.js to see current header/row writing. 2) Patch it to include exception_reason column. 3) Rerun extractor to /app/output and verify header includes exception_reason and rows for exception transactions show value.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction esc(value) {\n  const s = value == null ? \"\" : String(value);\n  if (/[\\n\\r\",]/.test(s)) {\n    return '\"' + s.replace(/\"/g, '\"\"') + '\"';\n  }\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header = [\n    \"transaction_id\",\n    \"owner\",\n    \"status\",\n    \"effective_date\",\n    \"amount_usd\",\n    \"exception_reason\",\n  ];\n\n  const lines = [header.join(\",\")];\n  for (const row of items) {\n    lines.push(\n      [\n        row.transaction_id,\n        row.owner,\n        row.status,\n        row.effective_date,\n        row.amount_usd,\n        row.exception_reason || \"\",\n      ]\n        .map(esc)\n        .join(\",\"),\n    );\n  }\n\n  fs.writeFileSync(filePath, lines.join(\"\\n\") + \"\\n\");\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "head -n 2 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -E \"TXN-68b5423c-1abb-59e6-947e-7e56011cec58|TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0|TXN-c7416874-b91b-5c2d-92de-0098b1224d18\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

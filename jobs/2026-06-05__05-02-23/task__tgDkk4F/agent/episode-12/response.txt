@@ -1,0 +1,31 @@
+{
+  "analysis": "We haven’t yet displayed the Brief 03/07/09 and Email Excerpts text (sed outputs not shown here), but we can already see parser/policy.js uses indexOf(\"## Policy Exceptions\") which will match the draft section at line 970 instead of authoritative section at 3849. Similarly, parseEmails uses indexOf and likely matches the archived thread at line 238. This directly explains missing later mail and exceptions/holds issues. Next: fix parseEmails and parsePolicyExceptions to use regex-anchored exact headings and correct end boundaries (authoritative sections only). Then re-run extraction and confirm emails count changes (should include later mail), exceptions set matches authoritative exceptions, and statuses/holds stabilize. We will also need to implement hold logic per Brief 09 once we have the exact rules; but first fix section selection so correct data is ingested.",
+  "plan": "1) Update src/parser/emails.js to locate '^## Email Excerpts$' and slice until '^## Policy Exceptions$' (authoritative). Also extend parsing to include a Date field if present; for now we at least must ensure we’re reading the right section to stop missing later mail. 2) Update src/parser/policy.js to locate '^## Policy Exceptions$' and slice until '^## Correction Notices$' (authoritative). 3) Add quick node snippet to show counts of parsed emails and policy exceptions after changes. 4) Re-run extractor and check whether key problematic transaction (TXN-88519...) status changes now align and whether reconciliation_report remains correct.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  // Only the structured section headed exactly `## Policy Exceptions` is authoritative.\n  const startMatch = markdown.match(/^## Policy Exceptions\\s*$/m);\n  if (!startMatch || startMatch.index == null) return new Set();\n\n  const afterStart = startMatch.index + startMatch[0].length;\n  const rest = markdown.slice(afterStart);\n  const endIdxInRest = rest.search(/^## Correction Notices\\s*$/m);\n  const slice = endIdxInRest >= 0 ? rest.slice(0, endIdxInRest) : rest;\n\n  const ids = new Set();\n  const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(slice)) !== null) ids.add(match[1]);\n  return ids;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // Use authoritative structured section boundaries (decoy headings exist).\n  const startMatch = markdown.match(/^## Email Excerpts\\s*$/m);\n  if (!startMatch || startMatch.index == null) return [];\n\n  const afterStart = startMatch.index + startMatch[0].length;\n  const rest = markdown.slice(afterStart);\n  const endIdxInRest = rest.search(/^## Policy Exceptions\\s*$/m);\n  const slice = endIdxInRest >= 0 ? rest.slice(0, endIdxInRest) : rest;\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    const dateMatch = block.match(/^Date:\\s*(.+)$/im);\n\n    if (!fromMatch || !subjectMatch || !statusMatch) continue;\n\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      status: statusMatch[1].trim().toLowerCase(),\n      date: dateMatch ? dateMatch[1].trim() : null,\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst parsed = parseArchive(md);\nconsole.log({emails: parsed.emails.length, policyExceptions: parsed.policyExceptions.size, corrections: parsed.corrections.length, ledger: parsed.ledger.length});\nconsole.log('emailsSample', parsed.emails.slice(0,3));\nconsole.log('policyExceptionsSample', [...parsed.policyExceptions].slice(0,5));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /app/output /app/output_run2 2>/dev/null || true\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

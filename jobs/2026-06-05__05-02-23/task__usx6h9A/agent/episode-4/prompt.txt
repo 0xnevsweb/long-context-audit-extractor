@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@5e2242c073c7:/app# sed -n '1,220p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@5e2242c073c7:/app# sed -n '1,200p' /app/audit-extractor/src/utils/date.js
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+module.exports = { isIsoDate };
+root@5e2242c073c7:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@5e2242c073c7:/app#

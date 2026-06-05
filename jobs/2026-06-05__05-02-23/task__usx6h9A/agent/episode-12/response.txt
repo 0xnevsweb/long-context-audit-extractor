@@ -1,0 +1,71 @@
+{
+  "analysis": "We have the binding rule for Brief 09: compliance_hold comparison uses pre-correction date (after ledger + meeting + compliance mail merges, before corrections). Still missing Brief 02/03/04/05/07/08 rulings text (not shown), which define status precedence, qualifying emails, correction precedence, meeting amendment signing, and exception flags. Need to capture those texts, then implement in reconcile.js: track pre-correction snapshot for compliance_hold, apply emails and meetings per rules, apply corrections per precedence, compute exception_reason and compliance_hold, and ensure determinism.",
+  "plan": "1) Extract committee ruling paragraphs from Briefs 02,03,04,05,07,08 by printing around their headings and stopping before field notes headings. 2) Inspect schema/validate to know required output fields (compliance_hold, exception_reason). 3) Implement reconciliation accordingly. Given we already parse email.sent and corrections.effective, we can compute hold flag. 4) Re-run extractor and check outputs for drift and correct mappings.",
+  "commands": [
+    {
+      "keystrokes": "awk 'NR>=252 && NR<262 {print}' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "awk 'NR>=252 && NR<262+1 {print}' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '252,261p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '252,262p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '252,330p' /app/data/audit_archive.md | sed -n '1,80p'\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '468,478p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '685,695p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '828,837p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '828,910p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1201,1212p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1201,1270p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1419,1439p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1419,1488p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

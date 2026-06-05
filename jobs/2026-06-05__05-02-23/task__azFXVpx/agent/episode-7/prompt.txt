@@ -1,0 +1,31 @@
+New Terminal Output:
+
+
+root@64435c900e2e:/app# grep -n "Committee ruling (binding for extract):" /app/data/audit_archive.md
+13:Committee ruling (binding for extract):
+830:Committee ruling (binding for extract):
+1672:Committee ruling (binding for extract):
+root@64435c900e2e:/app# grep -n "## Investigation Brief 02" -n /app/data/audit_archive.md && grep -n "## Investigation Brief 03" -n /app/data/audit_archive.md &
+& grep -n "## Investigation Brief 04" -n /app/data/audit_archive.md && grep -n "## Investigation Brief 05" -n /app/data/audit_archive.md && grep -n "## Investig
+ation Brief 06" -n /app/data/audit_archive.md && grep -n "## Investigation Brief 07" -n /app/data/audit_archive.md && grep -n "## Investigation Brief 08" -n /ap
+p/data/audit_archive.md && grep -n "## Investigation Brief 09" -n /app/data/audit_archive.md
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@64435c900e2e:/app# awk 'NR>=240 && NR<=2100 {print NR ":" $0}' /app/data/audit_archive.md | grep -n "Committee ruling" | head -n 50
+591:830:Committee ruling (binding for extract):
+1433:1672:Committee ruling (binding for extract):
+root@64435c900e2e:/app#

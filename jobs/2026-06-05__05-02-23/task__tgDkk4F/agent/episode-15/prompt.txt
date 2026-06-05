@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Subject: FY24 sampling plan draft — thread 15
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 16
+
+Internal coordination on treasury wire cutoff failures. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 17
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 18
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 19
+
+Internal coordination on FX revaluation lag. No transaction identifiers appear
+in this message. Investigators archived it to preserve mailbox ordering around
+compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 20
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+root@71d69e2634da:/app#

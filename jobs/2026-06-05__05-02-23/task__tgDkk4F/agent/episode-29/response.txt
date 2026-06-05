@@ -1,0 +1,19 @@
+{
+  "analysis": "Extractor now computes exception_reason and exceptions.json is populated with over_limit entries. TXN-f4d... is approved with no exception_reason, despite having a compliance email setting rejected with sent 2024-06-15. That implies the later alice@ email (no sent) set approved and overwrote rejected; per Brief 03, emails without sent apply if precedence allows, but we haven’t implemented precedence—likely compliance@ mail should have higher precedence than non-compliance when setting rejected/hold, or perhaps later emails should not override rejected from compliance. Also compliance_hold condition requires final status rejected, so currently none flagged. We need to locate any other brief that defines precedence (maybe Brief 02/03 mentions). Search archive for 'precedence' and implement: likely status precedence uses STATUS_ORDER (pending<approved<rejected<reversed) or compliance sender dominance. Additionally, Brief 07 hold requires qualifying compliance@ email referenced with sent, plus final status rejected; so we must ensure final status calculation follows Brief 03 precedence to keep rejected when appropriate.",
+  "plan": "1) Search Investigation Briefs for the term 'precedence' and any explicit mail precedence/status ordering rule. 2) Implement that precedence in reconcile.js for emails without sent and/or conflicts: e.g., keep the most severe status by STATUS_ORDER, or prefer compliance@ over others, or choose latest sent date with tie-break. 3) Re-run and verify TXN-f4d final status becomes rejected (if that’s the rule) and compliance_hold is set when appropriate, and that outputs remain stable across reruns.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"precedence\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"precedence\" /app/data/audit_archive.md | head -n 5 | cut -d: -f1 | xargs -I{} sh -lc 'echo \"--- precedence context @{} ---\"; sed -n \"$(({}-10)),$(({}+25))p\" /app/data/audit_archive.md'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"STATUS_ORDER|status order|order of statuses\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,57 @@
+New Terminal Output:
+
+root@64435c900e2e:/app# sed -n '1,220p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@64435c900e2e:/app# find /app/audit-extractor/src -maxdepth 3 -type f -name "*.js" -print
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@64435c900e2e:/app# grep -RIn "Transaction Ledger" /app/audit-extractor/src
+/app/audit-extractor/src/lib/constants.js:2:  SECTION_LEDGER: "## Transaction Ledger",
+/app/audit-extractor/src/parser/ledger.js:2:  const start = markdown.indexOf("## Transaction Ledger");
+/app/audit-extractor/src/parser/corrections.js:3:  const end = markdown.indexOf("## Transaction Ledger");
+root@64435c900e2e:/app# grep -RIn "indexOf\(|substring\(|slice\(" /app/audit-extractor/src/parser /app/audit-extractor/src/lib /app/audit-extractor/src/normaliz
+e /app/audit-extractor/src/utils 2>/dev/null | head -n 80
+root@64435c900e2e:/app# grep -RIn "provisional" /app/audit-extractor/src
+root@64435c900e2e:/app# grep -RIn "correction|notice" /app/audit-extractor/src --line-number
+root@64435c900e2e:/app# grep -RIn "compliance_hold|hold" /app/audit-extractor/src --line-number
+root@64435c900e2e:/app#

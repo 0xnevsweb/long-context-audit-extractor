@@ -1,0 +1,35 @@
+{
+  "analysis": "Archive contains both decoy structured sections (Email Excerpts archived thread, Policy Exceptions draft, Transaction Ledger working copy) and canonical sections near end. Brief 01 mandates selecting only section whose heading line is exactly `## Transaction Ledger`, and ignoring ledger blocks with `provisional: true` (case-insensitive); if duplicate txn ids across non-provisional blocks, last in file order wins. Current code search for key strings returned nothing, implying section parsing/reconcile code may be overly generic and possibly uses substring/indexOf, risking choosing working copy ledger. Need to inspect parser/sections implementation and normalization logic for holds and corrections.",
+  "plan": "1) Inspect parser/sections to see how it finds sections and whether it incorrectly matches `## Transaction Ledger (working copy)` or draft headings. 2) Inspect reconcile/exceptions code to locate compliance_hold and correction notice logic. 3) Examine structured sections around lines ~3840 onward (Policy Exceptions, Correction Notices, Transaction Ledger) for exact formats. Then implement fixes: strict heading regex anchor, correct provisional filtering, stable last-wins selection, and correction notice mapping by transaction id; ensure compliance hold timing uses Brief 09 amendment.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/parser /app/audit-extractor/src/normalize /app/audit-extractor/src/lib /app/audit-extractor/src/utils\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src/parser -type f -maxdepth 2 -print\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '3820,3975p' /app/data/audit_archive.md\n",
+      "duration": 0.3
+    }
+  ],
+  "task_complete": false
+}

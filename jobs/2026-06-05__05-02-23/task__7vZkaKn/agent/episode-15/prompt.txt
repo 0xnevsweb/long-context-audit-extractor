@@ -1,0 +1,41 @@
+Current Terminal Screen:
+2091:
+2092: From: audit-lead@corp.internal
+2093: Subject: FY24 sampling plan draft — thread 33
+2094:
+2095: Internal coordination on inventory obsolescence reserve. No transaction
+2096: identifiers appear in this message. Investigators archived it to preserve
+2097: mailbox ordering around compliance threads.
+2098:
+2099: From: audit-lead@corp.internal
+2100: Subject: FY24 sampling plan draft — thread 34
+2101:
+2102: Internal coordination on year-end close checklist drift. No transaction
+2103: identifiers appear in this message. Investigators archived it to preserve
+2104: mailbox ordering around compliance threads.
+2105:
+2106: From: controller@corp.internal
+2107: Subject: close calendar revision — thread 35
+2108:
+2109: Internal coordination on vendor onboarding backlog. No transaction identifiers
+2110: appear in this message. Investigators archived it to preserve mailbox ordering
+2111: around compliance threads.
+2112:
+2113: From: controller@corp.internal
+2114: Subject: close calendar revision — thread 36
+2115:
+2116: Internal coordination on capital project capitalization. No transaction
+root@796178391c5a:/app# python3 - <<'PY'
+> import re
+> s=open('/tmp/email_excerpts_only.txt','r',encoding='utf-8').read()
+> # show distinct header keys used in excerpts
+> keys=set(re.findall(r'(?m)^[0-9]+: ([A-Za-z-]+):', s))
+> print('email_header_keys', sorted(keys))
+> # show a few lines that look like dates
+> for m in re.finditer(r'(?mi)^[0-9]+: (Date|Sent|Received):\s*(.+)$', s):
+>     print('date_line', m.group(1), m.group(2))
+>     break
+> PY
+email_header_keys ['From', 'Subject', 'sent', 'status']
+date_line sent 2024-06-15
+root@796178391c5a:/app#

@@ -1,0 +1,325 @@
+New Terminal Output:
+
+root@5e2242c073c7:/app# ls -la /app/audit-extractor/src/parser /app/audit-extractor/src/normalize /app/audit-extractor/src/lib /app/audit-extractor/src/utils
+/app/audit-extractor/src/lib:
+total 16
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  241 Jun  5 09:03 constants.js
+-rw-r--r-- 1 root root  268 Jun  5 09:03 handbook.js
+
+/app/audit-extractor/src/normalize:
+total 16
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  134 Jun  5 09:03 exceptions.js
+-rw-r--r-- 1 root root 1685 Jun  5 09:03 reconcile.js
+
+/app/audit-extractor/src/parser:
+total 32
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root 1137 Jun  5 09:03 corrections.js
+-rw-r--r-- 1 root root  828 Jun  5 09:03 emails.js
+-rw-r--r-- 1 root root 1149 Jun  5 09:03 ledger.js
+-rw-r--r-- 1 root root  639 Jun  5 09:03 meetings.js
+-rw-r--r-- 1 root root  482 Jun  5 09:03 policy.js
+-rw-r--r-- 1 root root  564 Jun  5 09:03 sections.js
+
+/app/audit-extractor/src/utils:
+total 16
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  112 Jun  5 09:03 date.js
+-rw-r--r-- 1 root root  167 Jun  5 09:03 sort.js
+root@5e2242c073c7:/app# sed -n '1,240p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@5e2242c073c7:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@5e2242c073c7:/app# find /app/audit-extractor/src/parser -type f -maxdepth 2 -print
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@5e2242c073c7:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@5e2242c073c7:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@5e2242c073c7:/app# sed -n '3820,3975p' /app/data/audit_archive.md
+
+Internal coordination on intercompany netting dispute. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 58
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 59
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+### CORR-c27e46a1
+targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+field: date
+value: 2024-09-01
+effective: 2024-09-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 7500.00
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+status: pending
+date: 2024-05-05
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+root@5e2242c073c7:/app#

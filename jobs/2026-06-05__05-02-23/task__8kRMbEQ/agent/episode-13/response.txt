@@ -1,0 +1,19 @@
+{
+  "analysis": "Only reconcile.js portion is visible; prior commands to show emails.js and briefs did not appear in captured output, so we still lack the needed policy text and email parser structure. We must rerun those commands and ensure we capture their output. Until then, compliance_hold timing and later-mail handling remain unfixed.",
+  "plan": "Rerun: (1) print emails.js, (2) print Brief 09 and Brief 07 sections by anchored grep-derived line numbers, (3) based on those outputs, adjust reconcile.js to apply email events with sent-date gating and correct ordering/precedence, then rerun extractor.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b9=$(grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"Brief09 at $b9\"; sed -n \"${b9},$((b9+220))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b7=$(grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"Brief07 at $b7\"; sed -n \"${b7},$((b7+220))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,31 @@
+{
+  "analysis": "Brief 01 ledger sourcing is fixed; Brief 04 correction precedence is now implemented: reconciliation_report.jsonl has 4 lines (winners only) with correct previous_value populated. TXN-51cc... status now reflects winning correction (reversed). Remaining reported issues: compliance holds miss later mail and statuses drift between reruns. Drift may relate to email ordering / unstable parsing, and compliance_hold logic appears not implemented at all (no field in outputs). We must read Brief 07/09 hold timing amendment and implement compliance_hold determination and stable status precedence from emails (e.g., choose latest by timestamp, handle holds and releases). Need to inspect emails section format in archive and current parseEmails (it only extracts status, no date). We must update parseEmails to include date/timestamp and maybe hold flag; then reconcile accordingly. Also ensure deterministic sorting when multiple emails exist.",
+  "plan": "1) Locate Investigation Briefs governing email ingestion and compliance_hold (likely Brief 07 and Brief 09). Read those sections to implement exact rules. 2) Inspect Email Excerpts section format near end of archive to see fields available (date, from, subject, status, maybe compliance_hold markers). 3) Update parser/emails.js to parse timestamp/date and any hold indicators; ensure it only reads the structured Email Excerpts section using regex-anchored headings. 4) Update reconcile.js to compute final status and compliance_hold per rules: select controlling email(s) by date, incorporate later mail (e.g., release after hold), and ensure deterministic outcome. 5) Re-run extractor twice and diff outputs to confirm stability; check that compliance_hold is present and correct per spec, and that holds incorporate later mail.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"## Investigation Brief 07|## Investigation Brief 08|## Investigation Brief 09\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1180,1320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1600,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"## Email Excerpts|From:|Subject:\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '3400,3865p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

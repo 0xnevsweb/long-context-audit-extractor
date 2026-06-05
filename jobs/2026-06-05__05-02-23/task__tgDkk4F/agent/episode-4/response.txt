@@ -1,0 +1,31 @@
+{
+  "analysis": "Ledger parsing now correctly uses the canonical section: TXN-88519... amount/date/owner match canonical, but status is now 'reversed' even though canonical ledger shows pending—so status is being overwritten by emails/corrections logic. reconciliation_report.jsonl is still empty despite correction notices existing, implying either corrections are not being parsed (section slicing boundary issue), or report is not being passed to writer, or report is being dropped. Also reconcile.js overwrites status from every email (no timing/precedence), which likely explains compliance holds missing later mail and wrong statuses. Next we must: verify corrections parser is actually returning notices; inspect index.js pipeline; implement Brief 04 correction precedence and Brief 09 hold-timing amendment; and fix report generation to include previous_value and to actually write entries.",
+  "plan": "1) Inspect src/index.js and normalize/reconcile usage to confirm report is written and see why empty. 2) Directly test parsing counts (ledger/emails/corrections) by running a small node snippet to print lengths and sample corrections. 3) Read Investigation Brief 04 section in archive to implement correction precedence (likely sort by effective date; maybe apply multiple corrections per txn; maybe ignore corrections before/after certain events). 4) Fix parser/corrections.js section boundaries: it uses end=indexOf(\"## Transaction Ledger\") which currently matches working copy heading and may truncate corrections or be fine; but we should change it to stop at exact '^## Transaction Ledger$' like ledger parser. 5) Update reconcile.js to: apply corrections sorted by effective date, track previous values, and produce report; update status application from emails to honor later mail/holds per Brief 09. Then rerun and verify reconciliation_report.jsonl non-empty and TXN-88519 status matches rules.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst parsed = parseArchive(md);\nconsole.log({ledger: parsed.ledger.length, meetings: parsed.meetings.length, emails: parsed.emails.length, corrections: parsed.corrections.length, policyExceptions: parsed.policyExceptions.length});\nconsole.log('firstCorrections', parsed.corrections.slice(0,5));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '660,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const startMatch = markdown.match(/^## Correction Notices\\s*$/m);\n  if (!startMatch || startMatch.index == null) return [];\n\n  // End at the authoritative ledger heading (exact line), not the working copy.\n  const afterStart = startMatch.index + startMatch[0].length;\n  const rest = markdown.slice(afterStart);\n  const endIdxInRest = rest.search(/^## Transaction Ledger\\s*$/m);\n  const slice = endIdxInRest >= 0 ? rest.slice(0, endIdxInRest) : rest;\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.field && entry.value && entry.effective) {\n      notices.push(entry);\n    }\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst { parseCorrections } = require('/app/audit-extractor/src/parser/corrections');\nconst c = parseCorrections(md);\nconsole.log('corrections', c.length);\nconsole.log(c);\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

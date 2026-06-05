@@ -1,0 +1,41 @@
+Current Terminal Screen:
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+## Investigation Brief 09 — Mid-Year Amendment — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed too
+ling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-7766 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Follow-up #977 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #872 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-9137 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Interview #628 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+root@71d69e2634da:/app#

@@ -1,0 +1,178 @@
+New Terminal Output:
+root@71d69e2634da:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  5 11:46 .
+drwxr-xr-x 1 root root 4096 Jun  5 12:02 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  5 11:46 data
+root@71d69e2634da:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  5 11:46 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 11:46 data
+drwxr-xr-x 2 root root 4096 Jun  5 11:32 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@71d69e2634da:/app# find /app/audit-extractor -maxdepth 3 -type f -print
+/app/audit-extractor/docs/architecture.md
+/app/audit-extractor/data/audit_archive.md
+/app/audit-extractor/config/defaults.json
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+/app/audit-extractor/package.json
+root@71d69e2634da:/app# node -v
+v20.11.1
+root@71d69e2634da:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@71d69e2634da:/app# sed -n '1,200p' /app/audit-extractor/package.json
+{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+root@71d69e2634da:/app# rm -rf /app/output && mkdir -p /app/output
+root@71d69e2634da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@71d69e2634da:/app# find /app/output -maxdepth 2 -type f -print -exec wc -l {} \;
+/app/output/reconciliation_report.jsonl
+0 /app/output/reconciliation_report.jsonl
+/app/output/transactions.csv
+32 /app/output/transactions.csv
+/app/output/exceptions.json
+2 /app/output/exceptions.json
+/app/output/transactions.json
+259 /app/output/transactions.json
+root@71d69e2634da:/app# rm -rf /app/output_run2 && mkdir -p /app/output_run2
+root@71d69e2634da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output_run2
+root@71d69e2634da:/app# diff -ru /app/output /app/output_run2 || true
+root@71d69e2634da:/app# wc -l /app/data/audit_archive.md
+4118 /app/data/audit_archive.md
+root@71d69e2634da:/app# sed -n '1,200p' /app/data/audit_archive.md
+# FY24 Internal Audit Archive
+
+Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across the
+ file.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative,
+decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correction
+ Notices, and the canonical Transaction Ledger heading.
+
+Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+
+## Investigation Brief 01 — Ledger Sourcing
+
+Committee ruling (binding for extract):
+
+Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+slice. For extractor output, treat only the markdown section whose heading
+line is exactly `## Transaction L
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1458:Memo WP-6380 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1482:Memo WP-9453 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1494:Memo WP-4884 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1516:Memo WP-1760 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1518:Memo WP-8361 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1532:Memo WP-4453 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1534:Memo WP-9316 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1540:Memo WP-5946 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1556:Memo WP-1033 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1564:Memo WP-9121 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+1602:Memo WP-7491 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+1638:Memo WP-5054 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+1642:Memo WP-4718 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+1650:Memo WP-2854 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+1710:Memo WP-2693 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1736:Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1782:Memo WP-6435 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1804:Memo WP-5659 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1822:Memo WP-4038 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+1828:Memo WP-9951 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever over
+ride ledger owners; Brief 05 resolves that question for the extractor.
+3866:## Correction Notices
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@71d69e2634da:/app#

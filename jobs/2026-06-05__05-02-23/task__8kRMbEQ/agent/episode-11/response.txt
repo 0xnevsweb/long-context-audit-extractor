@@ -1,0 +1,35 @@
+{
+  "analysis": "We found where Brief 09 starts (line ~1670). We still haven't displayed emails.js etc due to scrolling state, but we can proceed by directly printing those files and the Brief 09 section. Next we need to implement the Brief 09 amendment for compliance_hold timing (it supersedes earlier draft practice and partially defers Brief 07). Also need to ensure emails without TXN ids are ignored, and emails are applied in correct precedence/order. Our current reconcile.js is simplified and likely does not implement sent-date gating at all (it just applies msg.status/msg.owner). That must be fixed.",
+  "plan": "1) Print emails.js to see whether it parses sent dates and status changes, and how it represents them. 2) Print Brief 09 amendment text to extract the exact rule changes. 3) Update reconcile.js to enforce: if email has sent: YYYY-MM-DD then apply status change only if sent >= ledger date (Brief 03), with Brief 09 modifications; ensure later email can override earlier based on sent date and/or file order deterministically; then apply corrections last. 4) Rerun extractor and ensure stable reruns and non-empty reconciliation report as appropriate.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1660,1760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1760,1860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Brief 07\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "b7=$(grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${b7},$((b7+220))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

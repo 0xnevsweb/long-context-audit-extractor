@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@5e2242c073c7:/app# sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@5e2242c073c7:/app# sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@5e2242c073c7:/app# rm -rf /tmp/audit_out_fix4 /tmp/audit_out_fix5 && mkdir -p /tmp/audit_out_fix4 /tmp/audit_out_fix5
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix4
+root@5e2242c073c7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix5
+root@5e2242c073c7:/app# diff -ru /tmp/audit_out_fix4 /tmp/audit_out_fix5 || true
+root@5e2242c073c7:/app# python3 - <<'PY'
+> import json
+> with open('/tmp/audit_out_fix4/transactions.json') as f:
+>     data=json.load(f)
+> print('top keys', list(data.keys()))
+> print('count', len(data['items']))
+> row=next(x for x in data['items'] if x['transaction_id']=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25')
+> print('TXN-885 row', row)
+> PY
+top keys ['items']
+count 32
+TXN-885 row {'transaction_id': 'TXN-88519dfd-79ff-5de0-ae59-862ab932bc25', 'owner': 'jdoe', 'status': 'pending', 'effective_date': '2024-01-01', 'amount_usd': 5
+00, 'exception_reason': None}
+root@5e2242c073c7:/app#

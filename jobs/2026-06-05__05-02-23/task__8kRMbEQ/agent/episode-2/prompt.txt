@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@5bc7934c2c61:/app# rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+root@5bc7934c2c61:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+root@5bc7934c2c61:/app# find /tmp/audit-out1 -type f -maxdepth 2 -print
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/tmp/audit-out1/reconciliation_report.jsonl
+/tmp/audit-out1/transactions.csv
+/tmp/audit-out1/exceptions.json
+/tmp/audit-out1/transactions.json
+root@5bc7934c2c61:/app# diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200
+root@5bc7934c2c61:/app#

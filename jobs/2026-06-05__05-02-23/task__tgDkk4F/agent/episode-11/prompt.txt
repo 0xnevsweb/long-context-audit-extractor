@@ -1,0 +1,23 @@
+New Terminal Output:
+
+root@71d69e2634da:/app# grep -n "^## Investigation Brief 03" /app/data/audit_archive.md | head
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+root@71d69e2634da:/app# grep -n "^## Investigation Brief 07" /app/data/audit_archive.md | head
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+root@71d69e2634da:/app# grep -n "^## Investigation Brief 09" /app/data/audit_archive.md | head
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@71d69e2634da:/app# grep -n "^## Email Excerpts" /app/data/audit_archive.md | head
+238:## Email Excerpts (archived thread)
+1857:## Email Excerpts
+root@71d69e2634da:/app# grep -n "^## Policy Exceptions" /app/data/audit_archive.md | head
+970:## Policy Exceptions (draft)
+3849:## Policy Exceptions
+root@71d69e2634da:/app# grep -n "^## Correction Notices" /app/data/audit_archive.md | head
+3866:## Correction Notices
+root@71d69e2634da:/app# grep -n "^## Transaction Ledger" /app/data/audit_archive.md | head -n 20
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@71d69e2634da:/app#

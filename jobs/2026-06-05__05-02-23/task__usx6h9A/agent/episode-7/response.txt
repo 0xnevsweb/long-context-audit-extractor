@@ -1,0 +1,43 @@
+{
+  "analysis": "corrections.js uses indexOf and will likely match `## Transaction Ledger (working copy)` for end boundary, but more importantly it will match the first `## Transaction Ledger` substring, not exact heading; and start uses indexOf which is ok here since only one canonical `## Correction Notices` exists but still violates Brief 01 guidance. emails.js output not shown here but earlier likely uses indexOf too and may capture archived thread `## Email Excerpts (archived thread)`. Need to refactor emails.js, corrections.js, meetings.js to use sliceExactH2Section. Also need to inspect jsonWriter to understand output structure (dict vs list).",
+  "plan": "1) Inspect jsonWriter.js to interpret transactions.json. 2) Update emails.js/corrections.js/meetings.js to slice exact H2 sections: Email Excerpts, Correction Notices, and Meeting Minutes (need exact heading from archive). Use heredoc overwrite. 3) Re-run extract and confirm output includes TXN-885... and uses canonical ledger values and correct email/correction application targets. 4) Then proceed to implement remaining reconciliation rules for status precedence/holds per briefs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/tmp/audit_out_fix2/transactions.json'\nwith open(p) as f:\n    data=json.load(f)\n# print a couple values to see layout\nif isinstance(data, dict):\n    for k,v in list(data.items())[:5]:\n        print('key',k,'type',type(v))\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"^## Meeting\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nconst { sliceExactH2Section } = require(\"./sectionSlice\");\n\nfunction parseCorrections(markdown) {\n  const slice = sliceExactH2Section(markdown, \"Correction Notices\");\n  if (!slice) return [];\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n    notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nconst { sliceExactH2Section } = require(\"./sectionSlice\");\n\nfunction parseEmails(markdown) {\n  // Use only canonical `## Email Excerpts` section (ignore archived thread).\n  const slice = sliceExactH2Section(markdown, \"Email Excerpts\");\n  if (!slice) return [];\n\n  const emails = [];\n  const blocks = slice.split(/^From:/m).slice(1);\n  for (const block of blocks) {\n    const match = block.match(/Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/i);\n    if (!match) continue;\n\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})$/im);\n    const statusMatch = block.match(/^status:\\s*(.+)$/im);\n\n    emails.push({\n      transaction_id: match[1],\n      sent: sentMatch ? sentMatch[1].trim() : \"\",\n      status: statusMatch ? statusMatch[1].trim() : \"\",\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix3\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "grep -RIn \"88519dfd-79ff-5de0-ae59-862ab932bc25\" /tmp/audit_out_fix3/transactions.json | head\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

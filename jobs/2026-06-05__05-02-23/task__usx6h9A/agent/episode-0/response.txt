@@ -1,0 +1,71 @@
+{
+  "analysis": "We are at /app with no prior commands run. Need to inspect /app/audit-extractor Node project, read /app/data/audit_archive.md (the spec), identify why extractor output is nondeterministic (status drift across reruns) and why compliance holds/corrections map to wrong ledger rows. Then fix source code, ensure CLI requires --input and --outdir (stderr + exit 1 when missing), and run the required extract command writing to /app/output (no manual copying).",
+  "plan": "1) Inspect repository structure and existing CLI behavior. 2) Run current extractor against the given archive into a temp outdir to observe current outputs and reproduce drift across reruns (run twice and diff). 3) Read the audit_archive.md sections: Investigation Briefs 01–09, meeting notes, email excerpts, policy exceptions, correction notices, and canonical ledger; extract the authoritative reconciliation rules and required mapping logic. 4) Locate parsing/reconciliation code; fix nondeterminism (e.g., iteration over object keys/Set/Map without stable sort, reliance on JS Date parsing locale, unstable regex matches). 5) Fix logic: compliance holds must consider later mail updates; correction notices must target correct ledger row via canonical identifiers (txn id / reference) not row index; ensure rerun is deterministic. 6) Add/adjust tests or at least add a quick verification script; rerun extractor twice and confirm identical output. 7) Ensure CLI validates required args and errors properly. 8) Run final command with /app/output.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/package.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js --help\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out1 /tmp/audit_out2 && mkdir -p /tmp/audit_out1 /tmp/audit_out2\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "find /tmp/audit_out1 -type f -maxdepth 2 -print\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit_out1 /tmp/audit_out2 || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/data/audit_archive.md\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief\" -n /app/data/audit_archive.md | head\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"Brief 09\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"Correction\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "grep -n \"Canonical\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.2
+    }
+  ],
+  "task_complete": false
+}

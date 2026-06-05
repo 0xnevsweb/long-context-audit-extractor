@@ -1,0 +1,55 @@
+{
+  "analysis": "Two extractor runs produced identical outputs (diff empty), so drift may be data-dependent or triggered by parsing the wrong ledger/corrections under certain conditions; or the nondeterminism is elsewhere (e.g., report ordering but currently stable). We have reconcile.js tail showing it lowercases status, applies notices by iterating notices (order-dependent), and writes a report with previous_value always \"\" (likely wrong). We still need to: (1) finish reading the archive for Briefs 04–09 and correction/ledger specs, (2) inspect sections/ledger parsing to ensure it uses anchored heading regex and authoritative '## Transaction Ledger' only, and (3) validate compliance hold timing and correction notice matching rules vs the archive. Then implement fixes and run extraction to /app/output.",
+  "plan": "1) Locate and read Investigation Briefs 04–09, focusing on Brief 07 and Brief 09 amendment that changes compliance_hold date comparison. 2) Jump to the canonical sections near file end: Email Excerpts, Policy Exceptions, Correction Notices, and '## Transaction Ledger' to understand formats/identifiers used for matching. 3) Inspect parser/sections.js and parser/ledger.js to confirm it selects the authoritative ledger section exactly and ignores provisional blocks; fix if it uses substring/indexOf or weak regex. 4) Inspect parser/corrections.js and normalize/reconcile.js to see how correction notices target rows; adjust to match on transaction_id + effective date/sequence per archive rather than positional row. 5) After code changes, rerun extractor twice to ensure determinism and then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 0[4-9]\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "start=$(grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); end=$((start+220)); sed -n \"${start},${end}p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Correction Notices\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger$\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "s=$(grep -n \"## Correction Notices\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"$((s)), $((s+220))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "l=$(grep -n \"^## Transaction Ledger$\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"$((l)), $((l+260))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

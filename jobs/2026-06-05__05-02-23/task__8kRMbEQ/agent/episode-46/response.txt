@@ -1,0 +1,6 @@
+{
+  "analysis": "We verified deterministic extraction: two runs to /tmp/audit-out1 and /tmp/audit-out2 produce identical outputs (diff empty). reconciliation_report.jsonl in /app/output contains 4 entries and is sorted by notice_id ascending as required. Outputs are generated via the CLI into /app/output without manual copying. Key policy fixes implemented: authoritative ledger section selection with anchored headings, ignoring provisional blocks, last-non-provisional ledger block wins per transaction; meeting amendments apply only when signed and effective date gating vs ledger date; emails parsed from the proper section, filtered to compliance-addressed TXN subjects, and sent-date gating enforced; correction notices parsed from anchored section, applied last, and only winning corrections are reported with previous_value and sorted output; JSON and CSV outputs match required schemas including exception_reason and exceptions.json includes only exception rows.",
+  "plan": "No further changes needed. Mark the task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

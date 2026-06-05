@@ -1,0 +1,41 @@
+Current Terminal Screen:
+es. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+81:1750: Risk assessment WP-3391 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings o
+r appendix commentary as authoritative transaction sources.
+83:1752: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hold
+s. The mid-year amendment later in this archive supersedes that draft practice.
+87:1756: Follow-up #634 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+ derive rows only from the canonical ledger and structured sections at file end.
+91:1760: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+93:1762: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hold
+s. The mid-year amendment later in this archive supersedes that draft practice.
+95:1764: Follow-up #106 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+ derive rows only from the canonical ledger and structured sections at file end.
+103:1772: Site visit #452 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+107:1776: Follow-up #449 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instea
+d derive rows only from the canonical ledger and structured sections at file end.
+109:1778: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+115:1784: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+119:1788: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves
+ narrative context so auditors can explain why a given transaction received compliance_hold.
+123:1792: Site visit #186 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+125:1794: Risk assessment WP-1294 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings
+or appendix commentary as authoritative transaction sources.
+131:1800: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hol
+ds. The mid-year amendment later in this archive supersedes that draft practice.
+139:1808: Follow-up #439 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instea
+d derive rows only from the canonical ledger and structured sections at file end.
+145:1814: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hol
+ds. The mid-year amendment later in this archive supersedes that draft practice.
+161:1830: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging hol
+ds. The mid-year amendment later in this archive supersedes that draft practice.
+167:1836: Committee minutes include signed amendments affecting owner fields.
+root@796178391c5a:/app# grep -n "comparison used for `compliance_hold`" -n /app/data/audit_archive.md
+bash: compliance_hold: command not found
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+root@796178391c5a:/app#

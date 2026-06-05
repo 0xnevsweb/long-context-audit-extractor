@@ -1,0 +1,47 @@
+{
+  "analysis": "The patch did not apply because `apply_patch` is not available in this environment, so ledger.js remains unchanged (still indexOf + first-wins). Despite that, extractor ran and produced outputs in /app/output, but they are based on buggy logic. We need to edit the file using available tools (e.g., heredoc to overwrite with cat, or use perl/sed). Next step: rewrite /app/audit-extractor/src/parser/ledger.js with the corrected implementation, then rerun extraction to /app/output and ensure outputs are stable.",
+  "plan": "1) Display current ledger.js to confirm it’s unchanged. 2) Overwrite ledger.js using cat <<'EOF' with the corrected implementation that follows Brief 01 (anchored heading, proper section slicing, ignore provisional, last-wins). 3) Syntax-check the file with node -c. 4) Rerun extractor twice into temp dirs and diff to ensure determinism. 5) Rerun extractor to /app/output (no manual copying).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  // Investigation Brief 01 (binding):\n  // - Treat only the markdown section whose heading line is exactly `## Transaction Ledger` as authoritative.\n  // - Locate section boundaries with regular expressions anchored to whole heading lines.\n  // - Ignore any ledger block that includes a line `provisional: true` (case insensitive).\n  // - When the same transaction id appears in multiple non-provisional ledger blocks,\n  //   the last such block in file order is the base row for that id.\n\n  const headingRe = /^## Transaction Ledger\\s*$/m;\n  const match = headingRe.exec(markdown);\n  if (!match) return [];\n\n  const sectionStart = match.index + match[0].length;\n  const after = markdown.slice(sectionStart);\n\n  // Section extends until the next H2 heading (or EOF).\n  const nextH2Idx = after.search(/^##\\s+/m);\n  const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);\n\n  const byId = new Map();\n  const blocks = section.split(/^###\\s+/m).slice(1);\n\n  for (const block of blocks) {\n    if (/^\\s*provisional\\s*:\\s*true\\s*$/im.test(block)) {\n      continue;\n    }\n\n    const lines = block.split(\"\\n\");\n    const transactionId = (lines[0] || \"\").trim();\n    if (!transactionId.startsWith(\"TXN-\")) continue;\n\n    const row = { transaction_id: transactionId };\n\n    for (const line of lines) {\n      const trimmed = line.trim();\n      const idx = trimmed.indexOf(\":\");\n      if (idx === -1) continue;\n\n      const key = trimmed.slice(0, idx).trim().toLowerCase();\n      const value = trimmed.slice(idx + 1).trim();\n\n      if (key === \"amount\") {\n        row.amount = Number(value);\n      } else if (key === \"owner\") {\n        row.owner = value;\n      } else if (key === \"status\") {\n        row.status = value;\n      } else if (key === \"date\") {\n        row.date = value;\n      }\n    }\n\n    // last-in-file-order wins\n    byId.set(transactionId, row);\n  }\n\n  return [...byId.values()];\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

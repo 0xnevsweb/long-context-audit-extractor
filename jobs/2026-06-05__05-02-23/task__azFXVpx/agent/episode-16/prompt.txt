@@ -1,0 +1,103 @@
+New Terminal Output:
+
+root@64435c900e2e:/app# cat > /tmp/print_briefs.py <<'EOF'
+> import itertools
+>
+> PATH = '/app/data/audit_archive.md'
+> RANGES = [
+>   ('Brief02', 252, 261),
+>   ('Brief03', 468, 478),
+>   ('Brief04', 685, 695),
+>   ('Brief05', 828, 837),
+>   ('Brief06', 1058, 1068),
+>   ('Brief07', 1201, 1212),
+> ]
+>
+> with open(PATH, 'r', encoding='utf-8') as f:
+>   lines = f.readlines()
+>
+> for name, start, end in RANGES:
+>   print('\n' + '='*20 + f' {name} lines {start}-{end} ' + '='*20)
+>   for i in range(start-1, end):
+>     if 0 <= i < len(lines):
+>       print(lines[i].rstrip('\n'))
+> EOF
+root@64435c900e2e:/app# python3 /tmp/print_briefs.py
+
+==================== Brief02 lines 252-261 ====================
+## Investigation Brief 02 — Status Precedence
+
+Auditor directive (mandatory for extract):
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+
+==================== Brief03 lines 468-478 ====================
+## Investigation Brief 03 — Compliance Mail Timing
+
+Extract policy (authoritative):
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+
+==================== Brief04 lines 685-695 ====================
+## Investigation Brief 04 — Correction Notice Precedence
+
+Controller memo (binding reconciliation rule):
+
+The corrections desk ships multiple notices per field. When several notices
+target the same transaction and field, the notice with the lexicographically
+greatest `effective` date wins. For each winning notice, `previous_value` in
+`reconciliation_report.jsonl` is the field value immediately before that notice
+applies (after ledger, amendments, and emails). Owner corrections override
+both ledger owners and signed meeting amendments when applied in this step.
+
+
+==================== Brief05 lines 828-837 ====================
+## Investigation Brief 05 — Meeting Amendments and Owners
+
+Committee ruling (binding for extract):
+
+Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+owner when `signed: true` (case insensitive) and, when the amendment includes
+`effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+ledger date for the transaction.
+
+
+==================== Brief06 lines 1058-1068 ====================
+## Investigation Brief 06 — Effective Dates on Output
+
+Auditor directive (mandatory for extract):
+
+Auditors compared effective_date columns to correction paperwork. Start from the
+ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+sets field `date` or `status`, use that notice's `effective` date as
+`effective_date` only if that correction modified status or date; otherwise
+keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+places in CSV and as a JSON number.
+
+
+==================== Brief07 lines 1201-1212 ====================
+## Investigation Brief 07 — Exception Flags (Part I)
+
+Extract policy (authoritative):
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+root@64435c900e2e:/app#

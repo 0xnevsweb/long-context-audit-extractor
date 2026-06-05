@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Internal coordination on treasury wire cutoff failures. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 8
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 9
+
+Internal coordination on inventory obsolescence reserve. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 10
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 11
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 12
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+root@5bc7934c2c61:/app#

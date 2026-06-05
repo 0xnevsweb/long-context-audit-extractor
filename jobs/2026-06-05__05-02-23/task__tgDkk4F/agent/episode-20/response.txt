@@ -1,0 +1,31 @@
+{
+  "analysis": "Grepping within the authoritative Email Excerpts section for sent/transaction/status/hold produced only From/Subject thread headers and no structured fields. That suggests the Email Excerpts section is unstructured narrative emails without explicit TXN IDs; however our extractor currently outputs many TXNs with statuses influenced by emails, meaning the TXN-referencing emails must exist somewhere else in the archive (possibly after Briefs, in another structured subsection, or in a different format like 'Subject: Re: TXN-...' but not within 1857–2500 window we searched). Also, Brief 09 references qualifying email's `sent:` date, so such fields must exist in some structured mail excerpts portion, maybe later in the Email Excerpts section beyond 2500 up to Policy Exceptions at 3849. We should search the entire file for 'sent:' and for 'Subject: Re: TXN-' and 'status:' occurrences, then inspect around those hits.",
+  "plan": "1) Search the entire archive for key tokens: 'sent:', 'Subject: Re: TXN-', 'status:', 'transaction: TXN-' to locate the structured email excerpts. 2) Once located, print a window around several matches to learn the format. 3) Update parseEmails to parse that actual format and include sent date. 4) Implement compliance_hold logic per Brief 09 and status merge per Brief 03 after we read Brief 03 text.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"sent:\" /app/data/audit_archive.md | head -n 60\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"sent:\" /app/data/audit_archive.md | tail -n 60\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^Subject:\\s*Re:\\s*TXN-|^status:\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^Subject:\\s*Re:\\s*TXN-|^status:\" /app/data/audit_archive.md | tail -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^transaction:\\s*TXN-\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '460,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

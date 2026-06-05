@@ -1,0 +1,51 @@
+{
+  "analysis": "We found a clear violation of Brief 01: parser/ledger.js uses markdown.indexOf(\"## Transaction Ledger\") (not anchored whole heading regex), then slices from there and splits by /^### /m. It also incorrectly de-duplicates by keeping the first occurrence of a transaction_id (rows.some then continue), but Brief 01 requires: ignore ledger blocks containing 'provisional: true' (case-insensitive), and when same transaction id appears in multiple non-provisional ledger blocks, the last such block in file order is the base row. This likely causes wrong base rows and drift if different ledger slices are included. We need to fix ledger parsing to: locate the exact section heading line '^## Transaction Ledger$' using anchored regex; extract only that section (until next '## ' heading); parse ledger entry blocks; ignore provisional blocks; and for duplicates, overwrite so last wins. Then rerun extractor.",
+  "plan": "1) Inspect parser/sections.js to reuse proper section boundary extraction (it likely already does anchored regex). 2) Patch src/parser/ledger.js to use anchored heading match and section slicing to next level-2 heading, ignore provisional blocks, and ensure last non-provisional row wins. 3) Add stable normalization (lowercase status already). 4) Run extractor twice and diff outputs, then run to /app/output. Also quickly grep archive to ensure multiple ledger headings/working-copy ledgers exist so fix matters.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Transaction Ledger\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/parser/ledger.js\n@@\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  if (start < 0) {\n-    return [];\n-  }\n-  const slice = markdown.slice(start);\n-  const rows = [];\n-  const blocks = slice.split(/^### /m).slice(1);\n-  for (const block of blocks) {\n-    const lines = block.split(\"\\n\");\n-    const transactionId = lines[0].trim();\n-    if (!transactionId.startsWith(\"TXN-\")) {\n-      continue;\n-    }\n-    if (rows.some((row) => row.transaction_id === transactionId)) {\n-      continue;\n-    }\n-    const row = { transaction_id: transactionId };\n-    for (const line of lines) {\n-      const trimmed = line.trim();\n-      if (trimmed.startsWith(\"amount:\")) {\n-        row.amount = Number(trimmed.split(\":\")[1].trim());\n-      } else if (trimmed.startsWith(\"owner:\")) {\n-        row.owner = trimmed.split(\":\")[1].trim();\n-      } else if (trimmed.startsWith(\"status:\")) {\n-        row.status = trimmed.split(\":\")[1].trim();\n-      } else if (trimmed.startsWith(\"date:\")) {\n-        row.date = trimmed.split(\":\")[1].trim();\n-      }\n-    }\n-    rows.push(row);\n-  }\n-  return rows;\n+  // Brief 01 (binding):\n+  // - Treat only the section whose heading line is exactly `## Transaction Ledger` as authoritative.\n+  // - Locate section boundaries with regex anchored to whole heading lines.\n+  // - Ignore any ledger block containing `provisional: true` (case-insensitive).\n+  // - When the same transaction id appears multiple times in non-provisional blocks, the LAST wins.\n+\n+  const headingRe = /^## Transaction Ledger\\s*$/m;\n+  const m = headingRe.exec(markdown);\n+  if (!m) return [];\n+\n+  const sectionStart = m.index + m[0].length;\n+  const after = markdown.slice(sectionStart);\n+  const nextH2 = after.search(/^##\\s+/m);\n+  const section = nextH2 === -1 ? after : after.slice(0, nextH2);\n+\n+  const byId = new Map();\n+  const blocks = section.split(/^###\\s+/m).slice(1);\n+  for (const block of blocks) {\n+    if (/^\\s*provisional\\s*:\\s*true\\s*$/im.test(block)) {\n+      continue;\n+    }\n+\n+    const lines = block.split(\"\\n\");\n+    const transactionId = (lines[0] || \"\").trim();\n+    if (!transactionId.startsWith(\"TXN-\")) continue;\n+\n+    const row = { transaction_id: transactionId };\n+    for (const line of lines) {\n+      const trimmed = line.trim();\n+      const idx = trimmed.indexOf(\":\");\n+      if (idx === -1) continue;\n+      const key = trimmed.slice(0, idx).trim().toLowerCase();\n+      const value = trimmed.slice(idx + 1).trim();\n+      if (key === \"amount\") {\n+        row.amount = Number(value);\n+      } else if (key === \"owner\") {\n+        row.owner = value;\n+      } else if (key === \"status\") {\n+        row.status = value;\n+      } else if (key === \"date\") {\n+        row.date = value;\n+      }\n+    }\n+\n+    // last-in-file-order wins\n+    byId.set(transactionId, row);\n+  }\n+\n+  return [...byId.values()];\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

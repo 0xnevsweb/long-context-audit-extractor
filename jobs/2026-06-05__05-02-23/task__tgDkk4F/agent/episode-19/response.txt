@@ -1,0 +1,31 @@
+{
+  "analysis": "We now have the binding Brief 09 rule: compliance_hold depends on comparing qualifying emails' sent dates to the transaction's pre-correction ledger date (after ledger+meetings+mail merges, but before correction date/status changes). We still need Brief 03 (mail-driven status changes) and Brief 07 (exception flags/what qualifies as hold) and we must inspect the authoritative Email Excerpts section to find the structured fields, especially a `sent:` date and indicators for qualifying emails. Our current email parser looks for 'Date:' and 'Subject: Re: TXN-' and 'status:', which likely doesn’t match the real structured format (Brief 09 explicitly references `sent:`). Next: locate Brief 03/07 and the Email Excerpts format; then update parseEmails to parse `sent:` and any hold/status fields and reconcile to compute compliance_hold and stable status selection.",
+  "plan": "1) Print Brief 03 and Brief 07 binding paragraphs to learn: what constitutes a qualifying email for compliance_hold, how statuses should be derived from mail, and how later mail affects holds. 2) Inspect the authoritative Email Excerpts section near line 1857 and search within it for keys like `sent:`, `transaction:`, `status:`, `hold:` etc. 3) Update parser/emails.js to parse the actual structured schema (likely blocks with `transaction:` and `sent:`). 4) Update reconcile.js: apply mail-driven status changes per Brief 03 (using sent date ordering), compute compliance_hold per Brief 09 by comparing qualifying email sent dates to the pre-correction effective_date, and include compliance_hold fields in output items. 5) Update writers/schema/exceptions as needed, rerun extraction, and rerun twice to ensure stability.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,590p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1265,1340p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1857,2100p' /app/data/audit_archive.md | grep -niE \"sent\\s*:|transaction\\s*:|status\\s*:|compliance_hold|hold\\s*:|subject\\s*:|from\\s*:\" | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '2100,2500p' /app/data/audit_archive.md | grep -niE \"sent\\s*:|transaction\\s*:|status\\s*:|compliance_hold|hold\\s*:\" | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

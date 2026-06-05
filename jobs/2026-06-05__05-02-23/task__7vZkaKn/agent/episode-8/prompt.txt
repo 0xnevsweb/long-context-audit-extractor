@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> -  const end = markdown.indexOf("## Transaction Ledger");
+> -  const slice =
+> -    start >= 0 && end > start ? markdown.slice(start, end) : "";
+> +  const start = findHeadingIndex(markdown, "Correction Notices");
+> +  if (start < 0) return [];
+> +  const afterStart = markdown.slice(start);
+> +  // End at the canonical ledger heading, not the working copy.
+> +  const ledgerIdx = findHeadingIndex(afterStart, "Transaction Ledger");
+> +  const slice = ledgerIdx >= 0 ? afterStart.slice(0, ledgerIdx) : afterStart;
+>    const notices = [];
+>    const blocks = slice.split(/^### /m).slice(1);
+>    for (const block of blocks) {
+> @@
+>    return notices;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@796178391c5a:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: /app/audit-extractor/src/utils/sort.js
+> @@
+>  function sortByTransactionId(items) {
+> -  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+> +  return items.sort((a, b) => {
+> +    const at = String(a.transaction_id || "");
+> +    const bt = String(b.transaction_id || "");
+> +    if (at < bt) return -1;
+> +    if (at > bt) return 1;
+> +    return 0;
+> +  });
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@796178391c5a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@796178391c5a:/app# rm -rf /tmp/out2 && mkdir -p /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/
+out2
+root@796178391c5a:/app# diff -u /app/output/transactions.json /tmp/out2/transactions.json | head
+root@796178391c5a:/app#

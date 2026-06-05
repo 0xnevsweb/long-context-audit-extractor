@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      "effective_date": "2024-01-13",
+      "amount_usd": 16981.04,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8",
+      "owner": "frost",
+      "status": "rejected",
+      "effective_date": "2024-04-01",
+      "amount_usd": 18082.34,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-c7416874-b91b-5c2d-92de-0098b1224d18",
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-09-09",
+      "amount_usd": 11487.36,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "over_limit"
+    }
+  ]
+}root@71d69e2634da:/app# grep -n "TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4" /app/output/transactions.csv
+33:TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4,dlee,approved,2024-05-05,5993.68,
+root@71d69e2634da:/app#

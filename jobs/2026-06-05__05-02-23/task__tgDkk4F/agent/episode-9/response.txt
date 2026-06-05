@@ -1,0 +1,39 @@
+{
+  "analysis": "We’ve located part of Brief 09 text indicating the amendment affects only the hold flag and that it is evaluated after ledger load, meeting amendments, and compliance mail merges, but before correction notice changes date/status; Brief 03 governs mail-driven status changes. We still need the full binding text for Brief 03 (mail-driven status), Brief 07 (hold date comparison referenced), and the exact Email Excerpts format/fields (dates, hold markers). Next we should extract the exact sections with line ranges around Brief 03/07/09 headings and the Email Excerpts section boundaries via grep line numbers, then implement parser/emails and reconcile logic accordingly.",
+  "plan": "1) Get exact line numbers for Brief 03, Brief 07, Brief 09 and print their binding rule paragraphs fully. 2) Find the Email Excerpts section start/end and print a representative sample to see fields (date/received, status, hold flag). 3) Based on those rules, update parser/emails.js to use regex anchored headings and parse the required fields (transaction id, mail date, status change, compliance_hold set/clear). 4) Update reconcile.js to apply status changes per Brief 03 (likely choose latest mail by timestamp, maybe status order), compute compliance_hold per Brief 09 timing, then apply correction winners (already implemented) afterward for date/status changes as required. 5) Re-run extraction and verify compliance_hold is correctly represented and stable.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '430,620p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1420,1675p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3280,3560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

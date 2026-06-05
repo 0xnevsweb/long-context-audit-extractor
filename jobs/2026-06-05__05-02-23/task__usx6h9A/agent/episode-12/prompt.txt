@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+root@5e2242c073c7:/app# sed -n '1670,1698p' /app/data/audit_archive.md
+## Investigation Brief 09 — Mid-Year Amendment
+
+Committee ruling (binding for extract):
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+## Investigation Brief 09 — Mid-Year Amendment — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed too
+ling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-7766 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Follow-up #977 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #872 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-9137 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+root@5e2242c073c7:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "Archive clearly contains decoy headings: '## Transaction Ledger (working copy)' and an earlier '## Email Excerpts (archived thread)' and '## Policy Exceptions (draft)'. Our parsers currently use indexOf(\"## Transaction Ledger\") which will match the working copy and/or any mention earlier, causing wrong base rows and drift. The tail shows a provisional block inside canonical ledger; current parser doesn’t ignore provisional:true and also incorrectly keeps the first instance of a TXN id, but spec says ignore provisional blocks and last non-provisional block wins when duplicates appear. We need to implement a proper heading slicer (anchored whole line) and update ledger parsing accordingly. Next, we must read Briefs 02–09 for status precedence, compliance mail timing/hold rules, correction precedence, meeting amendments/owners, effective dates, and exception flags.",
+  "plan": "1) Read the binding rulings in Briefs 02–09 (only the ruling parts, not field notes) to implement reconciliation correctly. 2) Inspect meeting parser too since owners can be amended there (Brief 05). 3) Implement robust section extraction helper using /^##\\s+...$/m anchored lines and selecting exact headings. Use it across parsers (emails, policy exceptions, corrections, ledger). 4) Update ledger parser: parse only within canonical ledger section; for each '### TXN-' block detect provisional flag; if provisional skip; otherwise overwrite existing id so last wins. 5) Then proceed to implement status/hold/correction precedence per briefs after reading them.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,540p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '685,940p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '828,1125p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1201,1505p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1670,1855p' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

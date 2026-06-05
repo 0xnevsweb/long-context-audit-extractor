@@ -1,0 +1,39 @@
+{
+  "analysis": "Not safe to mark complete. Although ledger sourcing was fixed to match Brief 01 and output is deterministic, we have not yet addressed the other explicit QA failures: compliance holds missing later mail and correction notices landing on wrong ledger rows. reconcile.js shows corrections are applied in a simple loop with no sorting/precedence checks and report.previous_value is always blank; this is a strong indicator correction handling is still wrong per archive policy. We also haven’t reviewed Briefs 04–09 (especially Brief 09 amendment) nor validated parser/emails.js logic against the mail timing rules. Therefore the task is not complete.",
+  "plan": "1) Read the remainder of /app/data/audit_archive.md focusing on: Brief 04–09 rulings (esp Brief 07 and Brief 09 amendment), and the canonical structured sections for Email Excerpts, Policy Exceptions, Correction Notices, and the Transaction Ledger. 2) Inspect current implementations: src/parser/emails.js, src/parser/corrections.js, src/normalize/reconcile.js, and src/utils/date.js/sort.js for ordering and date comparisons. 3) Implement policy-correct merging: ledger base rows (fixed), then meetings/amendments, then emails with sent-date gating (and any Brief 09 modifications), then corrections last; ensure later emails can update holds; ensure corrections match correct transaction and apply in effective-date order; make the report include previous_value and deterministic ordering. 4) Rerun extractor twice and diff for stability; run final extraction to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 0[4-9]\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 4 5 6 7 8 9; do ln=$(grep -n \"## Investigation Brief 0${b}\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"\\n--- Brief 0${b} @ ${ln} ---\"; sed -n \"${ln},$((ln+220))p\" /app/data/audit_archive.md; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts$\" /app/data/audit_archive.md && grep -n \"^## Policy Exceptions$\" /app/data/audit_archive.md && grep -n \"^## Correction Notices$\" /app/data/audit_archive.md && grep -n \"^## Transaction Ledger$\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "e=$(grep -n \"^## Email Excerpts$\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${e},$((e+260))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "c=$(grep -n \"^## Correction Notices$\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"${c},$((c+260))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

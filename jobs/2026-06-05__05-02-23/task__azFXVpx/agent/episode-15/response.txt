@@ -1,0 +1,11 @@
+{
+  "analysis": "The attempted grep/head outputs are not visible; terminal is still showing unrelated mid-file narrative with hyphen-prefixed lines (likely from previous commands or wrapped output). To avoid drowning in narrative, we should directly extract the authoritative brief blocks by line numbers (we have exact start/end lines for each brief's authoritative portion: from its heading to the line before its field-notes heading). We'll write a small node or awk script to print those ranges cleanly with separators, so we can read the rules. This is more reliable than grep context in this environment.",
+  "plan": "1) Create a small script (python or node) that reads /app/data/audit_archive.md and prints specific line ranges for Briefs 02–07. 2) Run it to display those blocks only. 3) With the rules captured, proceed to implement reconciliation logic updates.",
+  "commands": [
+    {
+      "keystrokes": "cat > /tmp/print_briefs.py <<'EOF'\nimport itertools\n\nPATH = '/app/data/audit_archive.md'\nRANGES = [\n  ('Brief02', 252, 261),\n  ('Brief03', 468, 478),\n  ('Brief04', 685, 695),\n  ('Brief05', 828, 837),\n  ('Brief06', 1058, 1068),\n  ('Brief07', 1201, 1212),\n]\n\nwith open(PATH, 'r', encoding='utf-8') as f:\n  lines = f.readlines()\n\nfor name, start, end in RANGES:\n  print('\\n' + '='*20 + f' {name} lines {start}-{end} ' + '='*20)\n  for i in range(start-1, end):\n    if 0 <= i < len(lines):\n      print(lines[i].rstrip('\\n'))\nEOF\npython3 /tmp/print_briefs.py\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

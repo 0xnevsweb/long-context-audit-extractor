@@ -1,0 +1,43 @@
+{
+  "analysis": "We now have exact line numbers. There are decoy sections: '## Email Excerpts (archived thread)' at line 238 and authoritative '## Email Excerpts' at 1857; likewise '## Policy Exceptions (draft)' at 970 and authoritative at 3849. Current parseEmails uses indexOf and will likely latch onto the decoy archived thread at 238, causing incorrect/missing later mail (explains compliance holds miss later mail and status issues). We must update parseEmails (and parsePolicyExceptions too) to select exact headings. Next, read Brief 03 (mail timing) at 468+, Brief 07 (exception flags/holds) at 1201+, and Brief 09 at 1670+ for hold amendment. Then implement: parseEmails should parse mail date and status/hold actions; reconciliation should apply mail rules deterministically and incorporate later mail; compliance_hold should be computed per Brief 09 timing.",
+  "plan": "1) Print the binding rule text for Brief 03, Brief 07, and Brief 09. 2) Inspect the authoritative Email Excerpts section (1857.. maybe to 3849) to see exact structured email format and fields (date, transaction line, status, hold). 3) Fix parser/emails.js to use regex anchored '^## Email Excerpts$' and '^## Policy Exceptions$' (the authoritative one at 3849) for section boundaries, not indexOf. Also update parser/policy.js similarly to avoid draft section. 4) Update reconcile.js to apply email events in chronological order using parsed email date/time, ensuring later mail is included; compute compliance_hold per Brief 09; then apply correction winners (already implemented) after mail merges but before date/status correction? Brief 09 says hold computed before correction changes date/status; Brief 04 says previous_value after emails but before corrections—fine. 5) Re-run extractor and diff runs for stability.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1275p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1685p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1857,1995p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1995,2160p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2160,2385p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2385,2520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3825,3875p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

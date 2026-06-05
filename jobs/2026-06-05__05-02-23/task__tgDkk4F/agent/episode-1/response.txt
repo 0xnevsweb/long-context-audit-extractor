@@ -1,0 +1,47 @@
+{
+  "analysis": "Repo structure is present with parsers for ledger, meetings, policy, emails, corrections, and normalize/reconcile. CLI already validates missing --input/--outdir by printing to stderr and exiting 1. Running extraction on /app/data/audit_archive.md produced outputs; reconciliation_report.jsonl is empty (0 lines), which is suspicious. A second run produced identical outputs (diff empty), so the reported “status drift between reruns” is not currently reproduced, but other correctness issues likely remain (holds and corrections). We need to read the authoritative sections in the archive (Briefs 01–09, correction notices, canonical ledger) and then inspect reconcile/corrections logic and why reconciliation_report is empty and why holds/corrections might be misapplied.",
+  "plan": "1) Inspect reconciliation and corrections code paths (normalize/reconcile.js, parser/corrections.js, parser/ledger.js, parser/emails.js, utils/sort.js) to find where statuses/holds are computed and how corrections are matched to ledger rows. 2) Read the key binding parts of the archive: Brief 01 (ledger sourcing rules), Brief 03/07/09 around hold timing and correction ordering, and the Correction Notices + canonical Transaction Ledger sections near the end. 3) Examine current extracted transactions.json/csv to see current status fields and identify which rows look wrong. 4) Then implement targeted fixes: ensure we use the exact canonical ledger section (per Brief 01), incorporate later email excerpts when determining compliance_hold release/override per Brief 09, and apply correction notices by stable transaction identifier (not row index) in the correct precedence order. Also ensure reconciliation_report.jsonl is actually written with entries.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1650,1760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3840,3945p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/app/output/transactions.json'\nwith open(p) as f:\n    tx=json.load(f)\nprint('count', len(tx))\n# show a compact view of fields present\nkeys=set()\nfor t in tx:\n    keys.update(t.keys())\nprint('keys', sorted(keys))\n# show first 5\nfor t in tx[:5]:\n    print({k:t.get(k) for k in ['id','date','amount','vendor','status','compliance_hold','hold_reason','ledger_row','note'] if k in t})\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 50 /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

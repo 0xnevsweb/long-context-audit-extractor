@@ -1,0 +1,35 @@
+{
+  "analysis": "Repo is present under /app/audit-extractor. CLI already enforces command=extract and missing --input/--outdir prints to stderr and exits 1 (seems compliant). The archive is large (4118 lines). Brief 01 specifies authoritative ledger must be exactly the heading line '## Transaction Ledger', ignore any ledger block containing 'provisional: true' (case-insensitive), and when same transaction id appears in multiple non-provisional blocks, last in file order wins. Also mandates section boundary detection via regex anchored to whole heading lines (not indexOf). Need to inspect extractor internals (parsing/ledger selection/corrections/holds) and compare to these rules; likely current code is using substring search or unstable selection causing drift and wrong mapping.",
+  "plan": "1) Inspect src/index.js and implementation under parser/normalize/lib for ledger section extraction, correction notice application, and compliance hold logic. 2) Search for section-finding patterns (indexOf/substring) and for any non-deterministic iteration/sorting. 3) Find where 'Transaction Ledger' is parsed and ensure it is anchored exactly and respects provisional blocks + last-block-wins. 4) After understanding current behavior, run extractor twice into different temp outdirs and diff outputs to reproduce drift. Then implement deterministic parsing and correct precedence logic per briefs (including Brief 09 amendment once we locate it in archive).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -name \"*.js\" -print\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"Transaction Ledger\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"indexOf\\(|substring\\(|slice\\(\" /app/audit-extractor/src/parser /app/audit-extractor/src/lib /app/audit-extractor/src/normalize /app/audit-extractor/src/utils 2>/dev/null | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"provisional\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"correction|notice\" /app/audit-extractor/src --line-number\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"compliance_hold|hold\" /app/audit-extractor/src --line-number\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   const m = headingRe.exec(markdown);
+>   if (!m) return [];
+>
+>   const sectionStart = m.index + m[0].length;
+>   const after = markdown.slice(sectionStart);
+>   const nextH2Idx = after.search(/^##\s+/m);
+>   const section = nextH2Idx === -1 ? after : after.slice(0, nextH2Idx);
+>
+>   const meetings = [];
+>
+>   // Blocks are keyed by the amendment heading.
+>   const re = /^####\s+Amendment for\s+(TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(section)) !== null) {
+>     const start = match.index + match[0].length;
+>     const rest = section.slice(start);
+>
+>     // until next amendment heading or next H2/end of section
+>     const next = rest.search(/^####\s+Amendment for\s+/m);
+>     const block = next === -1 ? rest : rest.slice(0, next);
+>
+>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     meetings.push({
+>       transaction_id: match[1],
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+>     });
+>   }
+>
+>   return meetings;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@5bc7934c2c61:/app# node -c /app/audit-extractor/src/parser/meetings.js
+root@5bc7934c2c61:/app#

@@ -3,6 +3,57 @@ set -euo pipefail
 
 cd /app/audit-extractor
 
+cat <<'EOF' > src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function findHeadingIndex(markdown, headingLine) {
+  const re = new RegExp(`^${escapeRegExp(headingLine)}$`, "m");
+  const match = re.exec(markdown);
+  return match ? match.index : -1;
+}
+
+function sliceSection(markdown, startHeading, endHeading) {
+  const start = findHeadingIndex(markdown, startHeading);
+  if (start < 0) {
+    return "";
+  }
+  const afterStart = markdown.slice(start);
+  if (!endHeading) {
+    return afterStart;
+  }
+  const endRel = findHeadingIndex(afterStart, endHeading);
+  if (endRel > 0) {
+    return afterStart.slice(0, endRel);
+  }
+  return afterStart;
+}
+
+function parseArchive(markdown) {
+  const emailSlice = sliceSection(markdown, "## Email Excerpts", "## Policy Exceptions");
+  const policySlice = sliceSection(markdown, "## Policy Exceptions", "## Correction Notices");
+  const correctionsSlice = sliceSection(markdown, "## Correction Notices", "## Transaction Ledger");
+  const ledgerSlice = sliceSection(markdown, "## Transaction Ledger", null);
+
+  return {
+    ledger: parseLedger(ledgerSlice),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(emailSlice),
+    corrections: parseCorrections(correctionsSlice),
+    policyExceptions: parsePolicyExceptions(policySlice),
+  };
+}
+
+module.exports = { parseArchive, sliceSection, findHeadingIndex };
+EOF
+
 cat <<'EOF' > src/parser/ledger.js
 function ledgerSlice(markdown) {
   const normalized = markdown.replace(/\r\n/g, "\n");
@@ -109,12 +160,8 @@ EOF
 cat <<'EOF' > src/parser/policy.js
 function parsePolicyExceptions(markdown) {
   const normalized = markdown.replace(/\r\n/g, "\n");
-  const start = normalized.indexOf("## Policy Exceptions");
-  const end = normalized.indexOf("## Correction Notices");
-  const slice =
-    start >= 0 && end > start ? normalized.slice(start, end) : "";
   const ids = new Set();
-  for (const block of slice.split("### Policy Exception")) {
+  for (const block of normalized.split("### Policy Exception")) {
     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
     const apprMatch = block.match(/^approved_by:\s*(\S+)\s*$/im);
     if (txnMatch && apprMatch && apprMatch[1].trim().toLowerCase() === "compliance") {
@@ -130,21 +177,8 @@ EOF
 cat <<'EOF' > src/parser/corrections.js
 function parseCorrections(markdown) {
   const normalized = markdown.replace(/\r\n/g, "\n");
-  const startMatch = normalized.match(/^## Correction Notices\s*$/m);
-  if (!startMatch) {
-    return [];
-  }
-  const rest = normalized.slice(startMatch.index + startMatch[0].length);
-  const endMatch = rest.match(/^## Transaction Ledger\s*$/m);
-  const slice =
-    endMatch !== null
-      ? normalized.slice(
-          startMatch.index,
-          startMatch.index + startMatch[0].length + endMatch.index,
-        )
-      : normalized.slice(startMatch.index);
   const notices = [];
-  for (const block of slice.split(/^### /m).slice(1)) {
+  for (const block of normalized.split(/^### /m).slice(1)) {
     const lines = block.split("\n");
     const noticeId = lines[0].trim();
     if (!noticeId.startsWith("CORR-")) {
@@ -210,6 +244,10 @@ function reconcileTransactions(parsed) {
       target.status = next;
     }
   }
+
+  const preCorrectionDates = new Map(
+    [...byId.entries()].map(([tid, row]) => [tid, row.date]),
+  );
 
   const report = [];
   const corrByTxn = new Map();
@@ -281,6 +319,7 @@ function reconcileTransactions(parsed) {
       if (amount > 10000) {
         reasons.push("over_limit");
       }
+      const holdCompareDate = preCorrectionDates.get(tid) ?? ledgerDate;
       if (
         status === "rejected" &&
         parsed.emails.some(
@@ -288,7 +327,7 @@ function reconcileTransactions(parsed) {
             em.transaction_id === tid &&
             em.from_addr.toLowerCase().includes("compliance@") &&
             em.sent &&
-            em.sent >= ledgerDate,
+            em.sent >= holdCompareDate,
         )
       ) {
         reasons.push("compliance_hold");

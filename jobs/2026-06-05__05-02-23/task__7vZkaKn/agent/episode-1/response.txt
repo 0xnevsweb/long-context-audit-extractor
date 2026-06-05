@@ -1,0 +1,51 @@
+{
+  "analysis": "Repo structure and entrypoints are identified. CLI already enforces command=extract and requires --input/--outdir with stderr+exit 1, so that part likely already meets requirements. We need to fix reconciliation logic: nondeterministic statuses across reruns, compliance holds missing later mail, and correction notices applied to wrong ledger rows. The archive has Investigation Briefs 01–09 and correction notices at ~3866; canonical transaction ledger heading likely near the end (grep for Transaction Ledger next). Next step: read the authoritative briefs around the areas relevant to status precedence, compliance mail timing (Brief 03 + amended by Brief 09), and correction notice precedence (Brief 04). Then inspect current parser and reconcile implementation to see how it maps emails/corrections/ledger rows and where ordering or matching is unstable/incorrect.",
+  "plan": "1) Locate canonical ledger section heading and parse sections layout via parser/sections.js. 2) Read the relevant Investigation Brief sections (01–05 and 09) to extract the exact rules we must implement. 3) Inspect current parsers for ledger/emails/corrections and normalize/reconcile.js to see current matching and ordering logic, especially how it joins corrections to ledger rows and applies holds based on mail timestamps. 4) Then implement fixes: deterministic ordering (stable sort with explicit keys), correct compliance hold time comparison per Brief 09, and correction notice mapping by transaction id (not row index/order). After changes, run the extractor twice against /app/data/audit_archive.md into /app/output to confirm identical outputs.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Transaction Ledger\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/data/audit_archive.md | sed -n '11,140p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '240,340p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '460,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '680,780p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1660,1760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

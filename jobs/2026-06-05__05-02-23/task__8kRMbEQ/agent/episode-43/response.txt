@@ -1,0 +1,43 @@
+{
+  "analysis": "sections.js already includes policyExceptions: parsePolicyExceptions(markdown). Good. Now reconcile.js must consume parsed.policyExceptions (now an array of {transaction_id, reason}) and set exception_reason on items. We'll implement mapping txn->unique reasons joined with semicolon. Then rerun extractor and confirm exceptions.json length 3 and transactions.csv exception_reason filled for those TXNs.",
+  "plan": "1) Patch reconcile.js to compute exception reasons from parsed.policyExceptions and include exception_reason in mapped items. 2) Rerun extractor to /app/output. 3) Validate exceptions.json and spot-check affected transaction_ids.",
+  "commands": [
+    {
+      "keystrokes": "perl -0777 -i -pe 's/exception_reason: null,/exception_reason: (exceptionReasons.get(row.transaction_id) || null),/g' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"exceptionReasons\" /app/audit-extractor/src/normalize/reconcile.js || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "perl -0777 -i -pe 's/const items = sortByTransactionId\\(/const exceptionReasons = new Map();\\n  for (const ex of parsed.policyExceptions || []) {\\n    if (!ex || !ex.transaction_id || !ex.reason) continue;\\n    const k = ex.transaction_id;\\n    const prev = exceptionReasons.get(k) || [];\\n    prev.push(String(ex.reason).trim());\\n    exceptionReasons.set(k, prev);\\n  }\\n  for (const \\[k, v\\] of exceptionReasons.entries()) {\\n    const uniq = Array.from(new Set(v.filter(Boolean)));\\n    exceptionReasons.set(k, uniq.join(\";\"));\\n  }\\n\\n  const items = sortByTransactionId\\(/s' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nex=json.load(open('/app/output/exceptions.json'))['items']\nprint('exceptions',len(ex))\nprint(ex)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "csvcut -n /app/output/transactions.csv 2>/dev/null || head -n 1 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -E \"TXN-68b5423c-1abb-59e6-947e-7e56011cec58|TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0|TXN-c7416874-b91b-5c2d-92de-0098b1224d18\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

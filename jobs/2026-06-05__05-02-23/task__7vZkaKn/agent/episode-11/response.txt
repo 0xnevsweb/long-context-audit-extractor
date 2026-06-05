@@ -1,0 +1,39 @@
+{
+  "analysis": "Our grep within brief slices is still mostly hitting narrative lines containing keywords like effective-date, compliance_hold, must, etc., rather than the actual binding rule statements. Also, the node snippet and code listings outputs are not visible in the current screen (scrolled away). We need to capture outputs to files and then view only the relevant parts. For the archive, better approach: locate explicit rule blocks inside briefs (likely bullet lists or lines starting with 'Ruling:' / 'Committee ruling' / 'Binding:' etc.). We'll search within the brief slices for such markers and for backticked terms like `compliance_hold`, `effective`, `precedence`. We'll also directly locate the structured Email Excerpts and Correction Notices sections to understand their fields and add timestamp parsing accordingly.",
+  "plan": "1) Re-run node snippet but redirect to /tmp/parse_summary.txt and then cat it. 2) Dump emails.js and reconcile.js to /tmp and view. 3) In brief slices, search for more specific patterns: 'Committee', 'Ruling', 'Binding', 'Extractor must', numbered rules, or lines starting with '-' under a 'Committee Ruling' subheading. 4) Inspect the '## Email Excerpts' section format directly (small window around its heading) to see if there is a Date/Sent/Received line we should parse. Same for Correction Notices format. 5) With that, implement emails.js timestamp parsing and reconcile.js logic updates.",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE' > /tmp/parse_summary.txt\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconst summary = {\n  ledger: p.ledger.length,\n  meetings: p.meetings.length,\n  emails: p.emails.length,\n  corrections: p.corrections.length,\n  policyExceptions: p.policyExceptions.length,\n  emails_hold_count: p.emails.filter(e=>String(e.status).toLowerCase()==='compliance_hold').length,\n  corrections_fields: [...new Set(p.corrections.map(c=>c.field))].sort(),\n  email_statuses: [...new Set(p.emails.map(e=>String(e.status).toLowerCase()))].sort(),\n};\nconsole.log(JSON.stringify(summary,null,2));\nconsole.log('correction_first', p.corrections[0]);\nconsole.log('correction_last', p.corrections[p.corrections.length-1]);\nNODE\ncat /tmp/parse_summary.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js > /tmp/emails_js.txt\nnl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,260p' > /tmp/reconcile_js.txt\nsed -n '1,260p' /tmp/emails_js.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/reconcile_js.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3500,3585p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3866,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief02.md /tmp/brief03.md /tmp/brief04.md /tmp/brief09.md; do echo \"==== $f ====\"; grep -nE \"Committee|Ruling|Binding|Extractor|Supersed|\\`compliance_hold\\`|\\`effective\\`|\\`status\\`\" \"$f\"; done | head -n 200\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

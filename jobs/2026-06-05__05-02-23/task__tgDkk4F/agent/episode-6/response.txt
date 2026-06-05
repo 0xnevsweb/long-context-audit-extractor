@@ -1,0 +1,27 @@
+{
+  "analysis": "Index.js correctly writes reconciliation_report.jsonl with the report from reconcileTransactions, so the empty file means reconcileTransactions is returning an empty report during extraction earlier (before corrections parser fix) or validateOutputs might be truncating? But reportWriter simply writes the given report. Now that corrections parsing is fixed, reconcile.js still needs to apply Brief 04: for each (transaction, field) pick the notice with lexicographically greatest effective date (not all notices), and set previous_value to the value immediately before applying the winning notice. Current reconcile.js applies all notices in file order, sets previous_value to empty, and doesn’t filter winners. That also explains wrong ledger rows (corrections landing wrong) and status drift potential. Next: implement Brief 04 in reconcile.js and re-run; reconciliation_report.jsonl should have one row per winning notice (for TXN-51cc... status winner effective 2024-06-15, plus others) => expected 4 winners (status, owner, date, date).",
+  "plan": "1) Update reconcile.js: build base rows from ledger, apply meetings and emails as before (we will adjust emails/holds after reading Brief 09 later), then compute winning corrections per (transaction_id, field) choosing max effective lexicographically; apply only those. Before applying, capture previous value from the target row; write that into report. For deterministic output, sort winning corrections by (transaction_id, field, effective, notice_id). 2) Re-run extractor and confirm reconciliation_report.jsonl has expected non-zero lines and includes previous_value. 3) Verify TXN-51cc... status reflects winning correction (reversed).",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\nconst STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n  for (const row of parsed.ledger) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // Meeting minutes may amend owner (subject to later correction precedence).\n  for (const meeting of parsed.meetings) {\n    const target = byId.get(meeting.transaction_id);\n    if (target) target.owner = meeting.owner;\n  }\n\n  // Email excerpts can update status. (Hold-timing rules are handled elsewhere.)\n  for (const email of parsed.emails) {\n    const target = byId.get(email.transaction_id);\n    if (target) target.status = email.status;\n  }\n\n  // Brief 04: when multiple notices target the same transaction + field,\n  // the lexicographically greatest `effective` date wins.\n  const winners = new Map();\n  for (const notice of parsed.corrections) {\n    if (!notice.transaction_id || !notice.field || !notice.effective) continue;\n    const key = `${notice.transaction_id}::${notice.field}`;\n    const cur = winners.get(key);\n    if (!cur || String(notice.effective) > String(cur.effective)) {\n      winners.set(key, notice);\n    }\n  }\n\n  const winningNotices = [...winners.values()].sort((a, b) => {\n    if (a.transaction_id !== b.transaction_id)\n      return a.transaction_id.localeCompare(b.transaction_id);\n    if (a.field !== b.field) return a.field.localeCompare(b.field);\n    if (a.effective !== b.effective) return String(a.effective).localeCompare(String(b.effective));\n    return String(a.notice_id).localeCompare(String(b.notice_id));\n  });\n\n  const report = [];\n  for (const notice of winningNotices) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    const field = notice.field;\n    let previous;\n    if (field === \"owner\") previous = target.owner;\n    else if (field === \"status\") previous = target.status;\n    else if (field === \"date\") previous = target.date;\n    else previous = target[field];\n\n    if (field === \"owner\") target.owner = notice.value;\n    else if (field === \"status\") target.status = notice.value;\n    else if (field === \"date\") target.date = notice.value;\n    else target[field] = notice.value;\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: previous == null ? \"\" : String(previous),\n      new_value: notice.value,\n      effective: notice.effective,\n    });\n  }\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => ({\n      transaction_id: row.transaction_id,\n      owner: row.owner,\n      status: String(row.status).toLowerCase(),\n      effective_date: row.date,\n      amount_usd: Number(row.amount),\n      exception_reason: null,\n    })),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && cat /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f\" /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

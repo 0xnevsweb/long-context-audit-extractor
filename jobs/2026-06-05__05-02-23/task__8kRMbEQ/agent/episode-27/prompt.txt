@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #186 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-1294 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Interview #831 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer R. Okonkwo noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooli
+ng, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Interview #811 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Memo WP-5659 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-2113 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Follow-up #439 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+root@5bc7934c2c61:/app# grep -n "Extract policy" -n /tmp/brief05.txt | head -n 50
+root@5bc7934c2c61:/app# grep -n "signed" /tmp/brief05.txt | head -n 80
+5:Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+7:owner when `signed: true` (case insensitive) and, when the amendment includes
+63:Memo WP-3214 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+101:Memo WP-7032 summarizes stakeholder interviews about lease modification restatement. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+141:Memo WP-5231 summarizes stakeholder interviews about lease modification restatement. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+root@5bc7934c2c61:/app#

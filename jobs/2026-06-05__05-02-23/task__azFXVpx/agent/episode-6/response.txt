@@ -1,0 +1,19 @@
+{
+  "analysis": "The sed outputs we attempted aren’t visible due to terminal buffer truncation; we’re seeing unrelated case study narrative instead of the committee rulings text. We need a more targeted way to extract just the binding ruling paragraphs from each brief, likely by grepping around 'Committee ruling (binding for extract):' markers. We'll use grep to find those markers and then use sed with exact line ranges around them. That will let us implement correct rules for status precedence, compliance mail timing/holds, correction precedence, meeting amendments, effective dates, and exception flags (including Brief 09 amendment).",
+  "plan": "1) Find all 'Committee ruling (binding for extract):' occurrences with line numbers. 2) For each relevant brief, print a small window around that marker to capture the exact rule text. 3) Also locate any explicit 'Mid-Year Amendment' ruling text. With rules in hand, proceed to refactor parsers and reconciliation logic.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Committee ruling (binding for extract):\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 02\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 03\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 04\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 05\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 06\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 07\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 08\" -n /app/data/audit_archive.md && grep -n \"## Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=240 && NR<=2100 {print NR \":\" $0}' /app/data/audit_archive.md | grep -n \"Committee ruling\" | head -n 50\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}
