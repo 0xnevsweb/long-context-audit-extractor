@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    at Module._load (node:internal/modules/cjs/loader:985:27)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at [eval]:1:9
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/app/[eval]' ]
+}
+
+Node.js v20.11.1
+root@78de76cd218c:/app# node -e 'const x=require("/app/output/exceptions.json"); console.log(Object.keys(x)); console.log(x.items.length);'
+node:internal/modules/cjs/loader:1147
+  throw err;
+  ^
+
+Error: Cannot find module '/app/output/exceptions.json'
+Require stack:
+- /app/[eval]
+    at Module._resolveFilename (node:internal/modules/cjs/loader:1144:15)
+    at Module._load (node:internal/modules/cjs/loader:985:27)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at [eval]:1:9
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [ '/app/[eval]' ]
+}
+
+Node.js v20.11.1
+root@78de76cd218c:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 20 /app/output/reconciliation_report.jsonl
+wc: /app/output/reconciliation_report.jsonl: No such file or directory
+root@78de76cd218c:/app#

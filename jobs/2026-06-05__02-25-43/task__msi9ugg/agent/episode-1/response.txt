@@ -1,0 +1,39 @@
+{
+  "analysis": "Repo is present. cli.js already enforces extract command and missing --input/--outdir (stderr, exit 1) so that part seems OK. Parser code is currently wrong: ledger.js uses indexOf (will match prose and working copy), splits by headings poorly, drops repeated IDs (but should keep last non-provisional), and doesn’t handle provisional flag. meetings.js extracts amendments but slices fixed 400 chars and doesn’t respect “signed #### Amendment … owner changes” robustly. policy.js is truncated in output but clearly uses indexOf for section boundaries, which violates requirements (must parse sections by whole heading line regex). Need to inspect remaining parser files (emails, corrections, sections) and current reconcile.js, then implement handbook logic and output shapes/order.",
+  "plan": "1) View the rest of parser modules (emails/corrections/sections/policy fully) and reconcile.js/index.js to understand current pipeline and required data shapes. 2) Read the handbook section (top of markdown) around amendments/status precedence/exception codes/corrections rules. 3) Implement robust section extraction in parser/sections.js using whole-line heading regex and use it everywhere (no indexOf). 4) Fix ledger parsing to select only exact '## Transaction Ledger' section (not working copy), parse blocks, drop provisional:true rows, and resolve duplicate IDs by keeping last non-provisional occurrence in file order. 5) Fix amendments parsing to apply only when signed:true, and update owner accordingly. 6) Fix email parsing to apply status changes only if status moves up precedence ladder; if 'sent:' exists apply only when sent >= ledger date; if no sent, always apply. 7) Apply correction notices last: per txn+field choose notice with greatest effective date; generate reconciliation_report.jsonl one row per winning correction notice with previous_value from state right before applying that winning correction. 8) Ensure output writers emit transactions.json as {\"items\":[...]}, exceptions.json likewise; CSV header/order; sort by transaction_id; normalize fields (lowercase status, effective_date, amount_usd number with 2 decimals, exception_reason null or semicolon-joined). 9) Run extract into /app/output and spot-check outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

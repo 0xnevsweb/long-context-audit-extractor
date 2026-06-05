@@ -1,0 +1,380 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected after JSON object
+
+New Terminal Output:
+
+root@915627c498db:/app# sed -n '1,260p' /app/data/audit_archive.md
+# FY24 Internal Audit Archive
+
+Mixed meeting notes, mail excerpts, policy exceptions, and ledger rows.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+## Meeting Notes
+
+[2024-03-01] standup-0000: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0001: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0002: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0003: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0004: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0005: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0006: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0007: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0008: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0009: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0010: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0011: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0012: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0013: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0014: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0015: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0016: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0017: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0018: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0019: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0020: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0021: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0022: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0023: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0024: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0025: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0026: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0027: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0028: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0029: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0030: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0031: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0032: routine capacity review, no ledger impact.
+
+[2024-03-06] stand
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+root@915627c498db:/app# sed -n '5310,5368p' /app/data/audit_archive.md
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 1873.42
+owner: asmith
+status: approved
+root@915627c498db:/app# sed -n '5350,5520p' /app/data/audit_archive.md
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 1873.42
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+status: pending
+date: 2024-05-05
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+owner: ckim
+status: pending
+date: 2024-11-11
+
+### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+amount: 15607.62
+owner: dlee
+status: approved
+date: 2024-12-12
+
+### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+amount: 16981.04
+owner: evans
+status: rejected
+date: 2024-01-13
+
+### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+amount: 18354.46
+owner: frost
+status: approved
+date: 2024-02-14
+
+### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+amount: 19727.88
+owner: jdoe
+status: pending
+date: 2024-03-15
+
+### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+amount: 1601.30
+owner: asmith
+status: pending
+date: 2024-04-16
+
+### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+amount: 2974.72
+owner: bwong
+status: approved
+date: 2024-05-17
+
+### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+amount: 4348.14
+owner: ckim
+status: rejected
+date: 2024-06-18
+
+### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+amount: 5721.56
+owner: dlee
+status: approved
+date: 2024-07-19
+
+### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+amount: 7094.98
+owner: evans
+status: pending
+date: 2024-08-20
+
+### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+amount: 8468.40
+owner: frost
+status: pending
+date: 2024-09-21
+
+### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+amount: 9841.82
+owner: jdoe
+status: approved
+date: 2024-10-22
+
+### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+amount: 11215.24
+owner: asmith
+status: rejected
+date: 2024-11-23
+
+### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+amount: 12588.66
+owner: bwong
+status: approved
+date: 2024-12-24
+
+### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+amount: 13962.08
+owner: ckim
+status: pending
+date: 2024-01-25
+
+### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+amount: 15335.50
+owner: dlee
+status: pending
+date: 2024-02-26
+
+### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+amount: 16708.92
+owner: evans
+status: approved
+date: 2024-03-27
+
+root@915627c498db:/app# sed -n '1,260p' /app/audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@915627c498db:/app#

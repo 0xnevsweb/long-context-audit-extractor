@@ -1,0 +1,31 @@
+New Terminal Output:
+
+root@4be5beddfa9b:/app# head -n 5 /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@4be5beddfa9b:/app# head -n 3 /app/output/exceptions.json
+{
+  "items": [
+    {
+root@4be5beddfa9b:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+root@4be5beddfa9b:/app# grep -n "TXN-88519dfd-79ff-5de0-ae59-862ab932bc25" -n /app/output/transactions.json | head
+140:      "transaction_id": "TXN-88519dfd-79ff-5de0-ae59-862ab932bc25",
+root@4be5beddfa9b:/app# node -e 'const j=require("/app/output/transactions.json"); const t=j.items.find(x=>x.transaction_id==="TXN-88519dfd-79ff-5de0-ae59-862ab
+932bc25"); console.log(t);'
+{
+  transaction_id: 'TXN-88519dfd-79ff-5de0-ae59-862ab932bc25',
+  owner: 'jdoe',
+  status: 'pending',
+  effective_date: '2024-01-01',
+  amount_usd: 500,
+  exception_reason: null
+}
+root@4be5beddfa9b:/app# node -e 'const j=require("/app/output/transactions.json"); let ok=true; for(let i=1;i<j.items.length;i++){ if(j.items[i-1].transaction_i
+d>j.items[i].transaction_id){ ok=false; break; } } console.log("sorted",ok, "count", j.items.length);'
+sorted true count 32
+root@4be5beddfa9b:/app#

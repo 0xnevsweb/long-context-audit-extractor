@@ -1,0 +1,287 @@
+New Terminal Output:
+
+root@4be5beddfa9b:/app# sed -n '1,240p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@4be5beddfa9b:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@4be5beddfa9b:/app# sed -n '1,260p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@4be5beddfa9b:/app# sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@4be5beddfa9b:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@4be5beddfa9b:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? o
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+pact.
+
+[2024-03-10] standup-0037: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0038: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0039: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0040: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0041: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0042: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0043: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0044: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0045: routine capacity review, no ledger impact.
+
+root@4be5beddfa9b:/app# sed -n '140,260p' /app/data/audit_archive.md
+
+[2024-03-19] standup-0046: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0047: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0048: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0049: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0050: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0051: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0052: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0053: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0054: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0055: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0056: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0057: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0058: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0059: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0060: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0061: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0062: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0063: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0064: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0065: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0066: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0067: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0068: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0069: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0070: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0071: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0072: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0073: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0074: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0075: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0076: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0077: routine capacity review, no ledger impact.
+
+[2024-03-23] standup-0078: routine capacity review, no ledger impact.
+
+[2024-03-24] standup-0079: routine capacity review, no ledger impact.
+
+[2024-03-25] standup-0080: routine capacity review, no ledger impact.
+
+[2024-03-26] standup-0081: routine capacity review, no ledger impact.
+
+[2024-03-27] standup-0082: routine capacity review, no ledger impact.
+
+[2024-03-28] standup-0083: routine capacity review, no ledger impact.
+
+[2024-03-01] standup-0084: routine capacity review, no ledger impact.
+
+[2024-03-02] standup-0085: routine capacity review, no ledger impact.
+
+[2024-03-03] standup-0086: routine capacity review, no ledger impact.
+
+[2024-03-04] standup-0087: routine capacity review, no ledger impact.
+
+[2024-03-05] standup-0088: routine capacity review, no ledger impact.
+
+[2024-03-06] standup-0089: routine capacity review, no ledger impact.
+
+[2024-03-07] standup-0090: routine capacity review, no ledger impact.
+
+[2024-03-08] standup-0091: routine capacity review, no ledger impact.
+
+[2024-03-09] standup-0092: routine capacity review, no ledger impact.
+
+[2024-03-10] standup-0093: routine capacity review, no ledger impact.
+
+[2024-03-11] standup-0094: routine capacity review, no ledger impact.
+
+[2024-03-12] standup-0095: routine capacity review, no ledger impact.
+
+[2024-03-13] standup-0096: routine capacity review, no ledger impact.
+
+[2024-03-14] standup-0097: routine capacity review, no ledger impact.
+
+[2024-03-15] standup-0098: routine capacity review, no ledger impact.
+
+[2024-03-16] standup-0099: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0100: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0101: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0102: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0103: routine capacity review, no ledger impact.
+
+[2024-03-21] standup-0104: routine capacity review, no ledger impact.
+
+[2024-03-22] standup-0105: routine capacity review, no ledger impact.
+
+root@4be5beddfa9b:/app#

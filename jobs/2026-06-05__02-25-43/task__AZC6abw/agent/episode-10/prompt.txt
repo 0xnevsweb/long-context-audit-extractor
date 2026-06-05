@@ -1,0 +1,41 @@
+Current Terminal Screen:
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+root@666bc8f9d84a:/app/audit-extractor# E1=$(grep -nE '^## Email Excerpts$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); E2=$(grep -nE '^## Policy Exce
+ptions$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); awk -v s=$E1 -v e=$E2 'NR>=s && NR<=e && (/^From: compliance@/ || /^sent: / || /^status: / || /TX
+N-/){print NR ":" $0}' /app/data/audit_archive.md | head -n 80
+5277:From: compliance@corp.internal
+5278:Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+5279:sent: 2024-06-15
+5280:status: rejected
+5283:Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+5284:status: approved
+5286:From: compliance@audit.corp
+5287:Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+5288:status: rejected
+5290:From: compliance@corp.internal
+5291:Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+5292:sent: 2024-08-15
+5293:status: rejected
+5295:From: compliance@corp.internal
+5296:Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+5297:sent: 2024-09-01
+5298:status: reversed
+root@666bc8f9d84a:/app/audit-extractor#

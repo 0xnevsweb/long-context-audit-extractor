@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+root@666bc8f9d84a:/app/audit-extractor# grep -nE '^approved_by:' /app/data/audit_archive.md | head
+43:approved_by: compliance; set retroactive_review when final status is reversed,
+2071:approved_by: compliance on its own line. The retroactive_review code applies
+5304:approved_by: compliance
+5309:approved_by: finance
+5314:approved_by: compliance
+root@666bc8f9d84a:/app/audit-extractor#

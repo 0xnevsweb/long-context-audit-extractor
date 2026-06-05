@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-09-09",
+      "amount_usd": 11487.36,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-05-05",
+      "amount_usd": 5993.68,
+      "exception_reason": "compliance_hold"
+    }
+  ]
+}root@4be5beddfa9b:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+3 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@4be5beddfa9b:/app#

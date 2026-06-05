@@ -1,0 +1,24 @@
+New Terminal Output:
+y
+root@78de76cd218c:/app# node - <<'NODE'
+> const { runExtract } = require('/app/audit-extractor/src/index');
+> runExtract('/app/data/audit_archive.md','/app/output').then(()=>console.log('OK')).catch(e=>{console.error(e.stack||e); process.exit(1)});
+> NODE
+TypeError: items.sort is not a function
+    at sortByTransactionId (/app/audit-extractor/src/utils/sort.js:2:16)
+    at Array.sort (<anonymous>)
+    at reconcileTransactions (/app/audit-extractor/src/normalize/reconcile.js:133:12)
+    at runExtract (/app/audit-extractor/src/index.js:14:29)
+    at [stdin]:2:1
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [stdin]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10)
+root@78de76cd218c:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@78de76cd218c:/app#

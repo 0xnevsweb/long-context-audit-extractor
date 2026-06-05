@@ -1,0 +1,43 @@
+{
+  "analysis": "We now have key handbook exception rules displayed (likely from the handbook section): exception_reason codes and conditions: over_limit (amount_usd > 10000), compliance_hold (final status rejected + qualifying compliance@ email referenced txn + that email block includes sent:), policy_waiver (final status approved + amount_usd > 10000 + Policy Exception block exists with approved_by: compliance), retroactive_review (final status reversed + amount_usd > 5000 + a winning correction notice changed status). We also found at least one provisional: true at line 5556 in the archive, meaning ledger rows can include provisional flag and must be skipped. Still missing: status precedence ladder definition; exact formats for compliance email blocks, policy exception blocks, correction notices, and how to parse sections via heading-line regex. Also need to implement output shape fixes and reconcile logic per precedence/date rules.",
+  "plan": "1) Print more of the handbook section around status precedence ladder rules and any parsing notes. 2) Inspect the markdown around the provisional line to see how provisional rows are represented in ledger blocks. 3) Locate and inspect a compliance@ email block that references a TXN and includes sent/status fields to implement parsing and sent-date gating. 4) Inspect a Policy Exception block to see its structure (approved_by, codes) and how to map to policy_waiver. Then we can proceed to code edits in parsers, reconcile.js, and writers.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "H1=$(grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); sed -n \"$((H1)),$((H1+120))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "H1=$(grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); sed -n \"$((H1+120)),$((H1+260))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "P=5556; sed -n \"$((P-25)),$((P+35))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^From: compliance@' /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "CL=$(grep -nE '^From: compliance@' /app/data/audit_archive.md | head -n1 | cut -d: -f1); [ -n \"$CL\" ] && sed -n \"$((CL-2)),$((CL+80))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^## Policy Exceptions$' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "PL=$(grep -nE '^## Policy Exceptions$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); sed -n \"$((PL)),$((PL+120))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^approved_by:' /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

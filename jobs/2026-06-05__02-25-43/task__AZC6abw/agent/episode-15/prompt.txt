@@ -1,0 +1,45 @@
+Current terminal state:
+Current Terminal Screen:
+  amount_usd: 4620.26,
+  exception_reason: null
+}
+TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4 {
+  transaction_id: 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',
+  owner: 'dlee',
+  status: 'rejected',
+  effective_date: '2024-05-05',
+  amount_usd: 5993.68,
+  exception_reason: 'compliance_hold'
+}
+TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f {
+  transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+  owner: 'asmith',
+  status: 'reversed',
+  effective_date: '2024-02-02',
+  amount_usd: 1873.42,
+  exception_reason: null
+}
+TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f {
+  transaction_id: 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f',
+  owner: 'dlee',
+  status: 'approved',
+  effective_date: '2024-09-09',
+  amount_usd: 11487.36,
+  exception_reason: 'over_limit'
+}
+root@666bc8f9d84a:/app/audit-extractor# head -n 5 /app/output/transactions.csv && tail -n 3 /app/output/reconciliation_report.jsonl
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94,over_limit
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@666bc8f9d84a:/app/audit-extractor#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

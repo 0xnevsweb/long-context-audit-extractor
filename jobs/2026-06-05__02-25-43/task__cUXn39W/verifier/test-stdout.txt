@@ -1,0 +1,167 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-8.4.1, pluggy-1.6.0
+cachedir: /tmp/pytest_cache
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 17 items
+
+../tests/test_outputs.py ...F.FFF...s...F.                               [100%]
+
+=================================== FAILURES ===================================
+________________________ test_transactions_json_schema _________________________
+
+pipeline_output = PosixPath('/app/output')
+expected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...ef', ...}, {'effective': '2024-08-01', 'field': 'date', 'new_value': '2024-08-01', 'notice_id': 'CORR-b16e35f0', ...}])
+
+    def test_transactions_json_schema(
+        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    ) -> None:
+        """Verify transactions.json envelope and row fields match the handbook."""
+        expected_rows, _ = expected
+        payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+        assert "items" in payload and isinstance(payload["items"], list)
+        assert len(payload["items"]) == len(expected_rows)
+    
+        for actual, exp in zip(payload["items"], expected_rows, strict=True):
+            assert actual["transaction_id"] == exp.transaction_id
+            assert actual["owner"] == exp.owner
+            assert actual["status"] == exp.status
+            assert actual["effective_date"] == exp.effective_date
+            assert abs(actual["amount_usd"] - exp.amount_usd) < 0.001
+>           assert actual.get("exception_reason") == exp.exception_reason
+E           AssertionError: assert None == 'over_limit'
+E            +  where None = <built-in method get of dict object at 0x7f43f9e711c0>('exception_reason')
+E            +    where <built-in method get of dict object at 0x7f43f9e711c0> = {'amount_usd': 15335.5, 'effective_date': '2024-02-26', 'exception_reason': None, 'owner': 'dlee', ...}.get
+E            +  and   'over_limit' = TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_date='2024-02-26', amount_usd=15335.5, exception_reason='over_limit').exception_reason
+
+/tests/test_outputs.py:347: AssertionError
+______________________ test_transactions_csv_matches_json ______________________
+
+pipeline_output = PosixPath('/app/output')
+expected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...ef', ...}, {'effective': '2024-08-01', 'field': 'date', 'new_value': '2024-08-01', 'notice_id': 'CORR-b16e35f0', ...}])
+
+    def test_transactions_csv_matches_json(
+        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    ) -> None:
+        """Verify transactions.csv header, ordering, and cell values mirror JSON rows."""
+        expected_rows, _ = expected
+        with (pipeline_output / "transactions.csv").open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+            assert reader.fieldnames == [
+                "transaction_id",
+                "owner",
+                "status",
+                "effective_date",
+                "amount_usd",
+                "exception_reason",
+            ]
+            rows = list(reader)
+        assert len(rows) == len(expected_rows)
+        for actual, exp in zip(rows, expected_rows, strict=True):
+            assert actual["transaction_id"] == exp.transaction_id
+            assert actual["owner"] == exp.owner
+            assert actual["status"] == exp.status
+            assert actual["effective_date"] == exp.effective_date
+            assert float(actual["amount_usd"]) == pytest.approx(exp.amount_usd)
+            exc_cell = actual["exception_reason"]
+            if exp.exception_reason is None:
+                assert exc_cell == ""
+            else:
+>               assert exc_cell == exp.exception_reason
+E               AssertionError: assert '' == 'over_limit'
+E                 
+E                 - over_limit
+
+/tests/test_outputs.py:384: AssertionError
+______________________ test_exceptions_json_only_flagged _______________________
+
+pipeline_output = PosixPath('/app/output')
+expected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...ef', ...}, {'effective': '2024-08-01', 'field': 'date', 'new_value': '2024-08-01', 'notice_id': 'CORR-b16e35f0', ...}])
+
+    def test_exceptions_json_only_flagged(
+        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    ) -> None:
+        """Verify exceptions.json contains only rows with non-null exception_reason."""
+        expected_rows, _ = expected
+        flagged = [row for row in expected_rows if row.exception_reason]
+        payload = json.loads((pipeline_output / "exceptions.json").read_text(encoding="utf-8"))
+        assert "items" in payload
+>       assert len(payload["items"]) == len(flagged)
+E       AssertionError: assert 3 == 16
+E        +  where 3 = len([{'amount_usd': 8468.4, 'effective_date': '2024-09-21', 'exception_reason': 'executive_waiver', 'owner': 'frost', ...}...amount_usd': 11215.24, 'effective_date': '2024-11-23', 'exception_reason': 'executive_waiver', 'owner': 'asmith', ...}])
+E        +  and   16 = len([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_d... owner='jdoe', status='pending', effective_date='2024-03-15', amount_usd=19727.88, exception_reason='over_limit'), ...])
+
+/tests/test_outputs.py:395: AssertionError
+__________________________ test_reconciliation_report __________________________
+
+pipeline_output = PosixPath('/app/output')
+expected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...ef', ...}, {'effective': '2024-08-01', 'field': 'date', 'new_value': '2024-08-01', 'notice_id': 'CORR-b16e35f0', ...}])
+
+    def test_reconciliation_report(
+        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    ) -> None:
+        """Verify reconciliation_report.jsonl lines match winning correction notices."""
+        _, expected_report = expected
+        lines = (pipeline_output / "reconciliation_report.jsonl").read_text(encoding="utf-8").splitlines()
+        assert len(lines) == len(expected_report)
+        parsed = [json.loads(line) for line in lines if line.strip()]
+        assert [row["notice_id"] for row in parsed] == [row["notice_id"] for row in expected_report]
+        for actual, exp in zip(parsed, expected_report, strict=True):
+>           assert actual == exp
+E           AssertionError: assert {'effective':...05d24ef', ...} == {'effective':...05d24ef', ...}
+E             
+E             Omitting 5 identical items, use -vv to show
+E             Differing items:
+E             {'previous_value': 'asmith'} != {'previous_value': 'evans'}
+E             Use -v to get more diff
+
+/tests/test_outputs.py:411: AssertionError
+_________________ test_correction_effective_date_from_handbook _________________
+
+pipeline_output = PosixPath('/app/output')
+archive_text = '# FY24 Internal Audit Archive\n\nMixed meeting notes, mail excerpts, policy exceptions, and ledger rows.\n\n## Reconc...tion.\nAppendix note 1399: historical context padding for long-context evaluation; ignore for structured extraction.\n'
+expected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...ef', ...}, {'effective': '2024-08-01', 'field': 'date', 'new_value': '2024-08-01', 'notice_id': 'CORR-b16e35f0', ...}])
+
+    def test_correction_effective_date_from_handbook(
+        pipeline_output: Path,
+        archive_text: str,
+        expected: tuple[list[TransactionRow], list[dict]],
+    ) -> None:
+        """Verify effective_date uses winning correction effective dates when status or date was corrected."""
+        expected_rows, _ = expected
+        corrections = _parse_corrections(archive_text)
+        date_or_status_corrected = {
+            c["transaction_id"] for c in corrections if c["field"] in ("status", "date")
+        }
+        payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+        by_id = {row["transaction_id"]: row for row in payload["items"]}
+        for exp in expected_rows:
+            if exp.transaction_id not in date_or_status_corrected:
+                continue
+>           assert by_id[exp.transaction_id]["effective_date"] == exp.effective_date
+E           AssertionError: assert '2024-02-02' == '2024-06-15'
+E             
+E             - 2024-06-15
+E             + 2024-02-02
+
+/tests/test_outputs.py:544: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ../tests/test_outputs.py::test_archive_is_long_context
+PASSED ../tests/test_outputs.py::test_cli_requires_arguments
+PASSED ../tests/test_outputs.py::test_output_files_exist
+PASSED ../tests/test_outputs.py::test_transactions_sorted
+PASSED ../tests/test_outputs.py::test_duplicate_ledger_last_wins
+PASSED ../tests/test_outputs.py::test_ignores_decoy_ledger_section
+PASSED ../tests/test_outputs.py::test_compliance_hold_requires_sent_line
+PASSED ../tests/test_outputs.py::test_compliance_email_without_sent_applies_status
+PASSED ../tests/test_outputs.py::test_compliance_email_sent_date_gate
+PASSED ../tests/test_outputs.py::test_deterministic_rerun
+PASSED ../tests/test_outputs.py::test_meeting_signed_owner_override
+SKIPPED [1] ../tests/test_outputs.py:471: no retroactive_review rows in fixture
+FAILED ../tests/test_outputs.py::test_transactions_json_schema - AssertionErr...
+FAILED ../tests/test_outputs.py::test_transactions_csv_matches_json - Asserti...
+FAILED ../tests/test_outputs.py::test_exceptions_json_only_flagged - Assertio...
+FAILED ../tests/test_outputs.py::test_reconciliation_report - AssertionError:...
+FAILED ../tests/test_outputs.py::test_correction_effective_date_from_handbook
+=================== 5 failed, 11 passed, 1 skipped in 0.58s ====================

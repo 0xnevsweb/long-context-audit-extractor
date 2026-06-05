@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   }
+>
+>   return items;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@915627c498db:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(markdown) {
+>   if (!markdown) return [];
+>   const notices = [];
+>
+>   const blocks = markdown.split(/^###\s+/m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split(/\r?\n/);
+>     const noticeId = (lines[0] || "").trim();
+>     if (!/^CORR-[0-9a-f]+$/i.test(noticeId)) continue;
+>
+>     const targetsMatch = block.match(/^targets:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     const fieldMatch = block.match(/^field:\s*(\w+)\s*$/im);
+>     const valueMatch = block.match(/^value:\s*(.+)\s*$/im);
+>     const effMatch = block.match(/^effective:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\s*$/im);
+>
+>     if (!targetsMatch || !fieldMatch || !valueMatch || !effMatch) continue;
+>
+>     notices.push({
+>       notice_id: noticeId,
+>       transaction_id: targetsMatch[1],
+>       field: fieldMatch[1].trim().toLowerCase(),
+>       value: valueMatch[1].trim(),
+>       effective: effMatch[1],
+>     });
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@915627c498db:/app#

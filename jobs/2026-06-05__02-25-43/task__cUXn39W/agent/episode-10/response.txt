@@ -1,0 +1,35 @@
+{
+  "analysis": "The environment lacks apply_patch and jq. So our reconcile.js was not modified; correction still applies to nonexistent tx.date, leaving effective_date unchanged and previous_value null. We must edit reconcile.js using sed/heredoc. Also need to inspect JSON without jq using grep/sed/python. Next: rewrite reconcile.js with the field mapping fix and rerun extractor; then verify TXN-e637... effective_date becomes 2024-08-01 and reconciliation report previous_value shows 2024-04-16.",
+  "plan": "1) Edit /app/audit-extractor/src/normalize/reconcile.js by rewriting the file with corrected logic (field mapping for correction notices). 2) Re-run extractor. 3) Verify in transactions.csv the TXN-e637... row has effective_date 2024-08-01. 4) Verify reconciliation_report.jsonl CORR-b16e35f0 has previous_value 2024-04-16. 5) Use python to sanity-check JSON formatting/values since jq is unavailable.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"const report\" -n /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require('../utils/sort');\n\n// Precedence ladder (lowest -> highest). Higher number = higher precedence.\nconst STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };\n\nfunction statusMovesUp(prev, next) {\n  if (!prev) return true;\n  const a = STATUS_ORDER[String(prev).toLowerCase()];\n  const b = STATUS_ORDER[String(next).toLowerCase()];\n  if (a === undefined || b === undefined) return false;\n  return b > a;\n}\n\nfunction reconcileTransactions(parsed) {\n  // 1) Canonical ledger: last non-provisional block in file order\n  const byId = new Map();\n  for (const row of parsed.ledger || []) {\n    if (row.provisional) continue;\n    byId.set(row.transaction_id, {\n      transaction_id: row.transaction_id,\n      owner: row.owner,\n      status: row.status.toLowerCase(),\n      effective_date: row.effective_date,\n      amount_usd: Number(Number(row.amount_usd).toFixed(2)),\n      exception_reason: null,\n    });\n  }\n\n  // 2) Signed amendments: owner changes\n  for (const amd of parsed.amendments || []) {\n    if (!amd || !amd.signed || !amd.transaction_id || !amd.owner) continue;\n    const tx = byId.get(amd.transaction_id);\n    if (!tx) continue;\n    tx.owner = amd.owner;\n  }\n\n  // 3) compliance@ status changes: apply only if moving up ladder; sent gating.\n  for (const mail of parsed.complianceEmails || []) {\n    const tx = byId.get(mail.transaction_id);\n    if (!tx) continue;\n    if (mail.sent && mail.sent < tx.effective_date) continue;\n\n    const nextStatus = String(mail.status).toLowerCase();\n    if (statusMovesUp(tx.status, nextStatus)) tx.status = nextStatus;\n  }\n\n  // 4) Correction notices: greatest effective date wins per transaction and field\n  const bestByTxnField = new Map();\n  for (const n of parsed.corrections || []) {\n    if (!n.transaction_id || !n.field || !n.effective) continue;\n    const key = `${n.transaction_id}::${n.field}`;\n    const prev = bestByTxnField.get(key);\n    if (!prev || n.effective > prev.effective) bestByTxnField.set(key, n);\n  }\n\n  const report = [];\n\n  // Apply winning notices and build report objects\n  const winners = Array.from(bestByTxnField.values()).sort((a, b) => {\n    if (a.effective !== b.effective) return a.effective < b.effective ? -1 : 1;\n    return a.notice_id.localeCompare(b.notice_id);\n  });\n\n  for (const n of winners) {\n    const tx = byId.get(n.transaction_id);\n    if (!tx) continue;\n\n    const field = n.field;\n    // Map handbook/notice field names onto our normalized output schema.\n    const targetField =\n      field === 'date' ? 'effective_date' : field === 'amount' ? 'amount_usd' : field;\n\n    const previous_value = Object.prototype.hasOwnProperty.call(tx, targetField)\n      ? tx[targetField]\n      : null;\n\n    let new_value = n.value;\n    if (targetField === 'status') new_value = String(new_value).toLowerCase();\n    if (targetField === 'amount_usd') new_value = Number(Number(new_value).toFixed(2));\n\n    report.push({\n      notice_id: n.notice_id,\n      transaction_id: n.transaction_id,\n      field,\n      previous_value,\n      new_value,\n      effective: n.effective,\n    });\n\n    tx[targetField] = new_value;\n  }\n\n  // Exception reasons (from handbook codes)\n  for (const tx of byId.values()) {\n    const codes = [];\n    if (parsed.policyExceptions && parsed.policyExceptions.has(tx.transaction_id)) {\n      codes.push('executive_waiver');\n    }\n    tx.exception_reason = codes.length ? codes.join(';') : null;\n\n    tx.status = String(tx.status).toLowerCase();\n    tx.amount_usd = Number(Number(tx.amount_usd).toFixed(2));\n  }\n\n  const items = sortByTransactionId(Array.from(byId.values()));\n  report.sort((a, b) => a.notice_id.localeCompare(b.notice_id));\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "grep -nF 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f' /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nF 'CORR-b16e35f0' /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nwith open('/app/output/transactions.json') as f:\n  data=json.load(f)\nitems=data['items']\nrow=[r for r in items if r['transaction_id']=='TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f'][0]\nprint(row)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

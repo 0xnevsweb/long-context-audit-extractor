@@ -1,0 +1,6 @@
+{
+  "analysis": "Extractor has been fixed and produces the required four outputs under /app/output with correct shapes: transactions.json and exceptions.json are wrapped as {\"items\":...}, CSV includes exception_reason column with empty for null, and reconciliation_report.jsonl contains one JSON object per winning correction notice sorted by notice_id with correct previous_value. Parsers now use regex heading-line matching and ledger uses the canonical \"## Transaction Ledger\" section, skipping working copy and provisional rows while keeping last non-provisional duplicate blocks. Reconciliation applies signed amendments, then compliance@ email status updates with precedence and sent-date gating, then correction notices with greatest effective date winning per txn+field, and exceptions are computed per handbook codes. CLI already errors on missing --input/--outdir. Spot checks show expected values and exception codes being set.",
+  "plan": "No further changes needed; mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

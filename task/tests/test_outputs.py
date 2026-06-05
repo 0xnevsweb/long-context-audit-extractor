@@ -475,6 +475,23 @@ def test_retroactive_review_on_status_correction(
         assert "retroactive_review" in (out_by_id[exp.transaction_id].get("exception_reason") or "")
 
 
+def test_compliance_email_without_sent_applies_status(
+    pipeline_output: Path,
+    archive_text: str,
+    expected: tuple[list[TransactionRow], list[dict]],
+) -> None:
+    """Verify compliance emails without sent: still apply status when precedence allows."""
+    emails = _parse_emails(archive_text)
+    exp_by_id = {r.transaction_id: r for r in expected[0]}
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
+    for email in emails:
+        if "compliance@" not in email["from_addr"].lower() or email.get("sent"):
+            continue
+        tid = email["transaction_id"]
+        assert out_by_id[tid]["status"] == exp_by_id[tid].status
+
+
 def test_compliance_email_sent_date_gate(
     pipeline_output: Path,
     archive_text: str,

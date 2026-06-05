@@ -1,0 +1,41 @@
+Current Terminal Screen:
+-rw-r--r-- 1 root root    0 Jun  5 09:36 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2682 Jun  5 09:36 transactions.csv
+-rw-r--r-- 1 root root 7550 Jun  5 09:36 transactions.json
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+0 /tmp/audit_out/reconciliation_report.jsonl
+root@666bc8f9d84a:/app/audit-extractor#

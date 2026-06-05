@@ -1,0 +1,19 @@
+{
+  "analysis": "Extractor ran and produced outputs; we saw exceptions.json contents at the end showing items with exception_reason. Need to verify that corrections were applied correctly: TXN-51cc... has multiple status corrections with greatest effective 2024-06-15 winning; report should include only winning notices (one per txn+field) sorted by notice_id and previous_value computed from state before applying. Also need to ensure amendment logic applied: TXN-cf3b... signed true effective 2024-02-01 should apply because ledger date 2024-03-03? actually effective < ledger date so should NOT apply; TXN-caf3... effective 2024-11-01 >= ledger date 2024-09-09 so should apply owner to evans unless later correction overrides; but we saw owner for TXN-caf3... still dlee in exceptions output snippet, so amendment may not have applied because meeting section slicing might exclude amendments: amendments appear near end of Meeting Notes but before '## Supplemental Policy Clarifications', which is also an H2 heading; our sliceSection ends at next H2 so Meeting Notes slice likely stops before Supplemental Policy Clarifications, which would incorrectly drop amendments (they are before Supplemental though, so should be included). However owner didn't change, so need to inspect transactions for those ids and ensure amendments parsed and applied. Also ensure policy_waiver is set for TXN-68b5.. or similar when approved and over limit + policy exception approved_by compliance. We should inspect specific transactions and the report file.",
+  "plan": "1) Query transactions.json for specific ids affected by amendments/corrections/emails (TXN-caf3..., TXN-cf3b..., TXN-ba9e..., TXN-f4d0..., TXN-e637..., TXN-51cc...). 2) View reconciliation_report.jsonl to ensure only winning notices are present (should include CORR-9f4c13de for TXN-51cc... status; CORR-a05d24ef owner; CORR-b16e35f0 date) and sorted by notice_id, with correct previous_value values. 3) Check emails effects: TXN-de3b... has compliance email without sent and with sent; only sent>=ledger date should apply? no-sent applies if precedence allows; ensure compliance_hold only when qualifying compliance email referenced txn and includes sent, and final status rejected. 4) If amendments not applied, debug parser/sections slice or meetings parser and fix, then rerun.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/app/output/transactions.json'\nitems=json.load(open(p))['items']\nby={x['transaction_id']:x for x in items}\nfor tid in [\n 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f',\n 'TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15',\n 'TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb',\n 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',\n 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f',\n 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',\n 'TXN-68b5423c-1abb-59e6-947e-7e56011cec58',\n]:\n    print(tid, by.get(tid))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst parsed=require('/app/audit-extractor/src/parser/sections').parseArchive(fs.readFileSync('/app/data/audit_archive.md','utf8'));\nconsole.log('meetings', parsed.meetings);\nconsole.log('emails(last 10)', parsed.emails.slice(-10));\nconsole.log('policy', parsed.policyExceptions);\nconsole.log('corrections', parsed.corrections);\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,24 @@
+Current terminal state:
+New Terminal Output:
+
+root@4be5beddfa9b:/app# node -e 'const t=require("/app/output/transactions.json").items; const e=require("/app/output/exceptions.json").items; console.log("txns
+",t.length,"exceptions",e.length,"txnsWithExc",t.filter(x=>x.exception_reason).length);'
+txns 32 exceptions 16 txnsWithExc 16
+root@4be5beddfa9b:/app# awk -F'"' '{for(i=1;i<=NF;i++) if($i=="notice_id"){print $(i+2)}}' /app/output/reconciliation_report.jsonl | nl -ba
+     1  CORR-9f4c13de
+     2  CORR-a05d24ef
+     3  CORR-b16e35f0
+root@4be5beddfa9b:/app# python3 - <<'PY'
+> import json
+> ids=[]
+> with open('/app/output/reconciliation_report.jsonl','r') as f:
+>   for line in f:
+>     if line.strip():
+>       ids.append(json.loads(line)['notice_id'])
+> print('sorted', ids==sorted(ids), 'count', len(ids))
+> PY
+sorted True count 3
+root@4be5beddfa9b:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

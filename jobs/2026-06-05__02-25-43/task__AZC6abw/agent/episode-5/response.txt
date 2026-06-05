@@ -1,0 +1,31 @@
+{
+  "analysis": "We saw ledger snippet; we have handbook references to approved_by: compliance and found actual approved_by lines at 5304/5309/5314, which are likely inside the Policy Exceptions section near line ~5290-5316 (right before Correction Notices at 5317). Need to view that section to parse policy exceptions properly (transaction id, approved_by). Also still need compliance@ email formats and status precedence ladder; and implement all code fixes. Next: print around the policy exceptions lines and locate compliance@ blocks; also check provisional row around 5556 and any repeated TXN IDs.",
+  "plan": "1) Display markdown around lines 5280-5320 to capture Policy Exceptions blocks including approved_by fields. 2) Display around the first compliance@ email occurrence and search for patterns that reference TXN and status and sent. 3) Display around provisional line 5556 to see ledger block format and repeated IDs. Then proceed to edit parser/policy/emails/ledger and reconcile/output code.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '5260,5335p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^From: compliance@' /app/data/audit_archive.md | head -n 20\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "CL=$(grep -nE '^From: compliance@' /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"CL=$CL\"; sed -n \"$((CL-2)),$((CL+90))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^Subject:.*TXN-|^status:|^sent:' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '5525,5585p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^### TXN-[0-9a-f-]+' /app/data/audit_archive.md | awk '{print $0}' | head -n 60\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

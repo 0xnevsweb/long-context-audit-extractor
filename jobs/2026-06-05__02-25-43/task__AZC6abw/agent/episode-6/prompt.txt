@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Appendix note 19: historical context padding for long-context evaluation; ignore for structured extraction.
+Appendix note 20: historical context padding for long-context evaluation; ignore for structured extraction.
+Appendix note 21: historical context padding for long-context evaluation; ignore for structured extraction.
+root@666bc8f9d84a:/app/audit-extractor# grep -nE '^### TXN-[0-9a-f-]+' /app/data/audit_archive.md | awk '{print $0}' | head -n 60
+5351:### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+5359:### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+5365:### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+5371:### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+5377:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+5383:### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+5389:### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+5395:### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+5401:### TXN-1b083448-63e3-5527-a20a-edd71416341c
+5407:### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+5413:### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+5419:### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+5425:### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+5431:### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+5437:### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+5443:### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+5449:### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+5455:### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+5461:### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+5467:### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+5473:### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+5479:### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+5485:### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+5491:### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+5497:### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+5503:### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+5509:### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+5515:### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+5521:### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+5527:### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+5533:### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+5539:### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+5545:### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+5551:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+5558:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+root@666bc8f9d84a:/app/audit-extractor#

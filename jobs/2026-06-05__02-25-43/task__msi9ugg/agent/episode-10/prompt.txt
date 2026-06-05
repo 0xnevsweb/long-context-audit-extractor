@@ -1,0 +1,52 @@
+New Terminal Output:
+;
+root@78de76cd218c:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(a, b) {
+>   if (a.transaction_id === b.transaction_id) return 0;
+>   return a.transaction_id < b.transaction_id ? -1 : 1;
+> }
+>
+> module.exports = { sortByTransactionId };
+> EOF
+root@78de76cd218c:/app# rm -rf /app/output && mkdir -p /app/output
+root@78de76cd218c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output; echo EXIT:$?
+EXIT:0
+root@78de76cd218c:/app# ls -la /app/output
+total 32
+drwxr-xr-x 2 root root 4096 Jun  5 09:31 .
+drwxr-xr-x 1 root root 4096 Jun  5 09:31 ..
+-rw-r--r-- 1 root root 3864 Jun  5 09:31 exceptions.json
+-rw-r--r-- 1 root root  543 Jun  5 09:31 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2681 Jun  5 09:31 transactions.csv
+-rw-r--r-- 1 root root 7549 Jun  5 09:31 transactions.json
+root@78de76cd218c:/app# head -n 5 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94,over_limit
+root@78de76cd218c:/app# node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("/app/output/transactions.json","utf8")); console.log(Object.keys(x)
+); console.log(x.items.length); console.log(x.items[0]);'
+[ 'items' ]
+32
+{
+  transaction_id: 'TXN-08b4472a-f4b7-5455-9f43-e97005d4a594',
+  owner: 'dlee',
+  status: 'pending',
+  effective_date: '2024-02-26',
+  amount_usd: 15335.5,
+  exception_reason: 'over_limit'
+}
+root@78de76cd218c:/app# node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("/app/output/exceptions.json","utf8")); console.log(Object.keys(x));
+ console.log(x.items.length);'
+[ 'items' ]
+16
+root@78de76cd218c:/app# wc -l /app/output/reconciliation_report.jsonl && cat /app/output/reconciliation_report.jsonl
+3 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@78de76cd218c:/app#

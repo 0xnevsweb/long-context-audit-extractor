@@ -1,0 +1,250 @@
+New Terminal Output:
+
+root@78de76cd218c:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: /app/audit-extractor/src/output/jsonWriter.js
+> @@
+>  const fs = require("node:fs");
+>
+>  function writeTransactionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+>
+>  function writeExceptionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@78de76cd218c:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: /app/audit-extractor/src/output/csvWriter.js
+> @@
+>  const fs = require("node:fs");
+> +
+> +function csvEscape(value) {
+> +  if (value === null || value === undefined) return "";
+> +  const s = String(value);
+> +  if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+> +  return s;
+> +}
+> @@
+>  function writeTransactionsCsv(filePath, items) {
+> -  const header = "transaction_id,owner,status,effective_date,amount_usd";
+> +  const header = "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>    const lines = items.map(
+>      (row) =>
+> -      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+> +      [
+> +        csvEscape(row.transaction_id),
+> +        csvEscape(row.owner),
+> +        csvEscape(row.status),
+> +        csvEscape(row.effective_date),
+> +        // CSV requires 2 decimals
+> +        csvEscape((Number(row.amount_usd) || 0).toFixed(2)),
+> +        csvEscape(row.exception_reason ?? ""),
+> +      ].join(","),
+>    );
+>    fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@78de76cd218c:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Delete File: /app/audit-extractor/src/parser/sections.js
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@78de76cd218c:/app# apply_patch<<'PATCH'
+ndex : markdown.length;
++  return markdown.slice(startIdx, endIdx);
++}
++
++function parseArchive(markdown) {
++  // Note: ledger must be extracted only from the exact heading "## Transaction Ledger".
++  const ledgerText = extractSection(markdown, "## Transaction Ledger");
++  const meetingsText = extractSection(markdown, "## Meeting Notes");
++  const emailsText = extractSection(markdown, "## Email Excerpts");
++  const policyText = extractSection(markdown, "## Policy Exceptions");
++  const correctionsText = extractSection(markdown, "## Correction Notices");
++
++  return {
++    ledger: parseLedger(ledgerText),
++    meetings: parseMeetings(meetingsText),
++    emails: parseEmails(emailsText),
++    corrections: parseCorrections(correctionsText),
++    policyExceptions: parsePolicyExceptions(policyText),
++  };
++}
++
++module.exports = { parseArchive, extractSection };
++
+*** End Patch
+PATCH
+> *** Begin Patch
+> *** Add File: /app/audit-extractor/src/parser/sections.js
+> +const { parseLedger } = require("./ledger");
+> +const { parseMeetings } = require("./meetings");
+> +const { parseEmails } = require("./emails");
+> +const { parseCorrections } = require("./corrections");
+> +const { parsePolicyExceptions } = require("./policy");
+> +
+> +// Extract markdown sections by matching whole heading lines.
+> +// This avoids false matches where the handbook mentions section titles in prose.
+> +function extractSection(markdown, headingLine) {
+> +  const escaped = headingLine.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> +  const startRe = new RegExp(`^${escaped}\\s*$`, "m");
+> +  const startMatch = markdown.match(startRe);
+> +  if (!startMatch || startMatch.index == null) return "";
+> +
+> +  const startIdx = startMatch.index + startMatch[0].length;
+> +  const after = markdown.slice(startIdx);
+> +  const nextHeading = after.match(/^##\s+.+\s*$/m);
+> +  const endIdx = nextHeading && nextHeading.index != null ? startIdx + nextHeading.index : markdown.length;
+> +  return markdown.slice(startIdx, endIdx);
+> +}
+> +
+> +function parseArchive(markdown) {
+> +  // Note: ledger must be extracted only from the exact heading "## Transaction Ledger".
+> +  const ledgerText = extractSection(markdown, "## Transaction Ledger");
+> +  const meetingsText = extractSection(markdown, "## Meeting Notes");
+> +  const emailsText = extractSection(markdown, "## Email Excerpts");
+> +  const policyText = extractSection(markdown, "## Policy Exceptions");
+> +  const correctionsText = extractSection(markdown, "## Correction Notices");
+> +
+> +  return {
+> +    ledger: parseLedger(ledgerText),
+> +    meetings: parseMeetings(meetingsText),
+> +    emails: parseEmails(emailsText),
+> +    corrections: parseCorrections(correctionsText),
+> +    policyExceptions: parsePolicyExceptions(policyText),
+> +  };
+> +}
+> +
+> +module.exports = { parseArchive, extractSection };
+> +
+> *** End Patch
+> PATCH
+bash
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+status || "").toLowerCase();
+> +    if (statusUpgrades(txn.status, newStatus)) {
+> +      txn.status = newStatus;
+> +    }
+> +  }
+> +
+> +  // 4) Corrections: pick winning notice per txn+field with greatest effective (lexicographic YYYY-MM-DD)
+> +  const winningByKey = new Map();
+> +  for (const notice of parsed.corrections) {
+> +    if (!notice.notice_id || !notice.transaction_id || !notice.field || !notice.effective) continue;
+> +    const key = `${notice.transaction_id}::${notice.field}`;
+> +    const prev = winningByKey.get(key);
+> +    if (!prev || String(notice.effective) > String(prev.effective)) {
+> +      winningByKey.set(key, notice);
+> +    }
+> +  }
+> +
+> +  // Build report rows: one per winning correction notice, previous_value before applying.
+> +  // Sort by notice_id for output; apply corrections after capturing previous_value.
+> +  const winningNotices = Array.from(winningByKey.values()).sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+> +  const report = [];
+> +  const statusCorrectionWonByTxn = new Map();
+> +
+> +  for (const notice of winningNotices) {
+> +    const txn = baseById.get(notice.transaction_id);
+> +    if (!txn) continue;
+> +
+> +    const field = notice.field.trim();
+> +    const newValueRaw = notice.value;
+> +
+> +    let previousValue;
+> +    if (field === "status") previousValue = txn.status;
+> +    else if (field === "owner") previousValue = txn.owner;
+> +    else if (field === "date") previousValue = txn.ledger_date;
+> +    else if (field === "amount") previousValue = txn.amount_usd;
+> +    else previousValue = txn[field];
+> +
+> +    // apply
+> +    if (field === "status") {
+> +      txn.status = String(newValueRaw).toLowerCase();
+> +      txn.effective_date = notice.effective;
+> +      statusCorrectionWonByTxn.set(txn.transaction_id, true);
+> +    } else if (field === "date") {
+> +      txn.ledger_date = String(newValueRaw);
+> +      txn.effective_date = notice.effective;
+> +    } else if (field === "owner") {
+> +      txn.owner = String(newValueRaw);
+> +    } else if (field === "amount") {
+> +      txn.amount_usd = Number(newValueRaw);
+> +    } else {
+> +      txn[field] = newValueRaw;
+> +    }
+> +
+> +    report.push({
+> +      notice_id: notice.notice_id,
+> +      transaction_id: txn.transaction_id,
+> +      field,
+> +      previous_value: previousValue,
+> +      new_value: field === "status" ? String(newValueRaw).toLowerCase() : newValueRaw,
+> +      effective: notice.effective,
+> +    });
+> +  }
+> +
+> +  // Finalize items and exceptions
+> +  const items = Array.from(baseById.values()).map((txn) => {
+> +    const hasCompliancePolicyWaiver = (() => {
+> +      const p = parsed.policyExceptions && parsed.policyExceptions.get ? parsed.policyExceptions.get(txn.transaction_id) : null;
+> +      return p && p.approved_by === "compliance";
+> +    })();
+> +    const exception_reason = computeExceptionReason({
+> +      txn,
+> +      complianceEmailHadSent: Boolean(complianceEmailHadSentByTxn.get(txn.transaction_id)),
+> +      hasCompliancePolicyWaiver,
+> +      statusCorrectionWon: Boolean(statusCorrectionWonByTxn.get(txn.transaction_id)),
+> +    });
+> +
+> +    return {
+> +      transaction_id: txn.transaction_id,
+> +      owner: txn.owner,
+> +      status: txn.status,
+> +      effective_date: txn.effective_date,
+> +      amount_usd: Number(txn.amount_usd.toFixed(2)),
+> +      exception_reason,
+> +    };
+> +  });
+> +
+> +  items.sort(sortByTransactionId);
+> +  report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+> +  return { items, report };
+> +}
+> +
+> +module.exports = { reconcileTransactions };
+> +
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@78de76cd218c:/app# rm -rf /app/output && mkdir -p /app/output
+root@78de76cd218c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@78de76cd218c:/app# ls -la /app/output
+total 24
+drwxr-xr-x 2 root root 4096 Jun  5 09:28 .
+drwxr-xr-x 1 root root 4096 Jun  5 09:28 ..
+-rw-r--r-- 1 root root   22 Jun  5 09:28 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  5 09:28 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2447 Jun  5 09:28 transactions.csv
+-rw-r--r-- 1 root root 7412 Jun  5 09:28 transactions.json
+root@78de76cd218c:/app# head -n 5 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94
+root@78de76cd218c:/app# head -n 20 /app/output/reconciliation_report.jsonl
+root@78de76cd218c:/app# jq '.items[0], .items|length' /app/output/transactions.json
+bash: jq: command not found
+root@78de76cd218c:/app# jq '.items|length' /app/output/exceptions.json
+bash: jq: command not found
+root@78de76cd218c:/app#

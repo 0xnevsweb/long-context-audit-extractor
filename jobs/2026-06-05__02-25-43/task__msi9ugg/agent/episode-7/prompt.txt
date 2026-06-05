@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    95      }
+    96
+    97      report.push({
+    98        notice_id: notice.notice_id,
+    99        transaction_id: txn.transaction_id,
+   100        field,
+   101        previous_value: previousValue,
+   102        new_value: field === "status" ? String(newValueRaw).toLowerCase() : newValueRaw,
+   103        effective: notice.effective,
+   104      });
+   105    }
+   106
+   107    const items = Array.from(baseById.values()).map((txn) => {
+   108      const p = parsed.policyExceptions && parsed.policyExceptions.get ? parsed.policyExceptions.get(txn.transaction_id) : null;
+   109      const hasCompliancePolicyWaiver = Boolean(p && p.approved_by === "compliance");
+   110
+   111      const exception_reason = computeExceptionReason({
+   112        txn,
+   113        complianceEmailHadSent: Boolean(complianceEmailHadSentByTxn.get(txn.transaction_id)),
+   114        hasCompliancePolicyWaiver,
+   115        statusCorrectionWon: Boolean(statusCorrectionWonByTxn.get(txn.transaction_id)),
+   116      });
+   117
+   118      return {
+   119        transaction_id: txn.transaction_id,
+   120        owner: txn.owner,
+   121        status: txn.status,
+   122        effective_date: txn.effective_date,
+   123        amount_usd: Number(txn.amount_usd.toFixed(2)),
+   124        exception_reason,
+   125      };
+   126    });
+   127
+   128    items.sort(sortByTransactionId);
+   129    report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+   130    return { items, report };
+   131  }
+   132
+   133  module.exports = { reconcileTransactions };
+root@78de76cd218c:/app#

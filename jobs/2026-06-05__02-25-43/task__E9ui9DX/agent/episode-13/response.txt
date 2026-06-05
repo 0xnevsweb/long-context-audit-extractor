@@ -1,0 +1,6 @@
+{
+  "analysis": "All required handbook rules have been implemented in the source under /app/audit-extractor. The extractor runs successfully with the graded invocation and produces the four required reports in /app/output with correct shapes: transactions.json and exceptions.json use {\"items\": [...]}, transactions.csv has the required header including exception_reason with empty values for null, amounts are formatted to two decimals in CSV and numeric in JSON, transactions are sorted by transaction_id, and reconciliation_report.jsonl contains only winning correction notices sorted by notice_id with correct previous_value semantics. CLI already exits 1 with stderr on missing --input/--outdir. No outstanding issues observed in spot checks of amendments, compliance emails, correction precedence, effective_date rules, and exception_reason derivation.",
+  "plan": "Proceed to grading with the current implementation; no further commands needed.",
+  "commands": [],
+  "task_complete": true
+}

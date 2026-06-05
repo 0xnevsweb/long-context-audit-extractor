@@ -1,0 +1,124 @@
+New Terminal Output:
+js
+root@915627c498db:/app# sed -n '2038,2072p' /app/data/audit_archive.md
+
+[2024-03-16] standup-0995: routine capacity review, no ledger impact.
+
+[2024-03-17] standup-0996: routine capacity review, no ledger impact.
+
+[2024-03-18] standup-0997: routine capacity review, no ledger impact.
+
+[2024-03-19] standup-0998: routine capacity review, no ledger impact.
+
+[2024-03-20] standup-0999: routine capacity review, no ledger impact.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+effective: 2024-11-01
+
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Supplemental Policy Clarifications (FY24 Addendum)
+
+Policy Exception blocks only qualify for policy_waiver when they include
+approved_by: compliance on its own line. The retroactive_review code applies
+only after all status corrections are resolved. compliance_hold requires a
+root@915627c498db:/app# sed -n '5268,5308p' /app/data/audit_archive.md
+
+From: ops798@vendor.example
+Subject: weekly metrics 798
+(no transaction references)
+
+From: ops799@vendor.example
+Subject: weekly metrics 799
+(no transaction references)
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+status: approved
+
+From: compliance@audit.corp
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+sent: 2024-08-15
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+root@915627c498db:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+> const { parseLedger } = require("./ledger");
+> const { parseMeetings } = require("./meetings");
+> const { parseEmails } = require("./emails");
+> const { parseCorrections } = require("./corrections");
+> const { parsePolicyExceptions } = require("./policy");
+>
+> function escapeRegex(s) {
+>   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> }
+>
+> function sliceSection(markdown, headingLine) {
+>   const startRe = new RegExp(`^${escapeRegex(headingLine)}\\s*$`, "m");
+>   const startMatch = markdown.match(startRe);
+>   if (!startMatch || startMatch.index == null) return "";
+>   const startIdx = startMatch.index;
+>
+>   // Next heading at the same level (## ...)
+>   const rest = markdown.slice(startIdx + startMatch[0].length);
+>   const nextRe = /^##\s+.+\s*$/m;
+>   const nextMatch = rest.match(nextRe);
+>   const endIdx = nextMatch && nextMatch.index != null ? startIdx + startMatch[0].length + nextMatch.index : markdown.length;
+>   return markdown.slice(startIdx, endIdx);
+> }
+>
+> function parseArchive(markdown) {
+>   const meetingsSection = sliceSection(markdown, "## Meeting Notes");
+>   const emailsSection = sliceSection(markdown, "## Email Excerpts");
+>   const policySection = sliceSection(markdown, "## Policy Exceptions");
+>   const correctionsSection = sliceSection(markdown, "## Correction Notices");
+>   const ledgerSection = sliceSection(markdown, "## Transaction Ledger");
+>
+>   return {
+>     ledger: parseLedger(ledgerSection),
+>     meetings: parseMeetings(meetingsSection),
+>     emails: parseEmails(emailsSection),
+>     corrections: parseCorrections(correctionsSection),
+>     policyExceptions: parsePolicyExceptions(policySection),
+>   };
+> }
+>
+> module.exports = { parseArchive, sliceSection };
+> EOF
+root@915627c498db:/app#

@@ -1,0 +1,59 @@
+{
+  "analysis": "We’ve confirmed major issues: parser modules use indexOf for section boundaries (buggy because headings appear in prose) and ledger.js incorrectly starts at first occurrence of \"## Transaction Ledger\" which currently hits \"(working copy)\"; it also keeps first instance of a transaction_id (but spec wants last non-provisional). emails.js ignores sent date, precedence ladder, and only matches Subject: Re: TXN-...; corrections.js parses but reconcile.js ignores effective-date conflict logic and doesn’t compute previous_value; policy.js just returns IDs rather than codes; meetings.js is truncated in output but seems intended to parse amendments; need to re-open meetings.js fully. Also rg is unavailable; will rely on grep/awk/sed. Next: read the handbook section and the other relevant sections (Email Excerpts, Policy Exceptions, and the real ledger near end) to implement correct rules and exception codes; inspect output writers to fix JSON/CSV shapes and columns; update reconciliation_report ordering by notice_id and include only winning correction notices.",
+  "plan": "1) Re-open meetings.js completely (was truncated) and inspect normalize/exceptions.js, lib/handbook.js, constants, writers to see existing structures for exception codes and output shapes. 2) Extract the handbook section and the Email Excerpts / Policy Exceptions sections from the markdown using grep line numbers + sed to see exact formats (sent: lines, status precedence ladder, exception codes list, provisional marker). 3) Then implement code changes: replace indexOf section slicing with regex-based heading line matching; fix ledger parsing to match exactly heading line \"## Transaction Ledger\" and ignore \"(working copy)\"; parse provisional: true and skip; handle duplicate txn IDs by keeping last non-provisional in file order; parse amendments and apply after ledger; parse emails from compliance@ and apply only when status moves up precedence ladder and sent condition passes; parse policy exceptions with codes; implement correction notice effective-date resolution and reconciliation report with previous_value. Also fix writers to output required keys and CSV header includes exception_reason.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,160p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "L1=$(grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); L2=$(grep -nE '^## ' /app/data/audit_archive.md | awk -F: -v l=\"$L1\" '$1>l{print $1-1; exit}'); sed -n \"${L1},${L2}p\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "L1=$(grep -nE '^## Email Excerpts$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); L2=$(grep -nE '^## ' /app/data/audit_archive.md | awk -F: -v l=\"$L1\" '$1>l{print $1-1; exit}'); sed -n \"${L1},${L2}p\" /app/data/audit_archive.md | head -n 220\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "L1=$(grep -nE '^## Policy Exceptions$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); L2=$(grep -nE '^## ' /app/data/audit_archive.md | awk -F: -v l=\"$L1\" '$1>l{print $1-1; exit}'); sed -n \"${L1},${L2}p\" /app/data/audit_archive.md | head -n 260\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE '^### TXN-|^provisional:' /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^From:|^sent:|^status:' /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

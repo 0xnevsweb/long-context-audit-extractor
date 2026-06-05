@@ -19,10 +19,13 @@ Status precedence (lowest to highest): pending, approved, rejected, reversed.
 Ledger provides base status (lowercase on output). Email excerpts may change
 status only when the From line contains compliance@ anywhere in the address;
 otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
-change only if sent is greater than or equal to the ledger date.
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
 Correction notices apply last; when multiple notices target the same
 transaction and field, the notice with the lexicographically greatest
-effective date wins.
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
 
 Owner precedence: ledger owner is the default. Meeting note amendments under
 #### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)

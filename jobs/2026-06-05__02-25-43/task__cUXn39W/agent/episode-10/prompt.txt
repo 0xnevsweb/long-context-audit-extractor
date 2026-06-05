@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> +    // Map handbook/notice field names onto our normalized output schema.
+> +    const targetField = field === 'date' ? 'effective_date' : field === 'amount' ? 'amount_usd' : field;
+> +    const previous_value = Object.prototype.hasOwnProperty.call(tx, targetField) ? tx[targetField] : null;
+>
+>      let new_value = n.value;
+>      if (field === 'status') new_value = String(new_value).toLowerCase();
+> -    if (field === 'amount_usd') new_value = Number(Number(new_value).toFixed(2));
+> +    if (targetField === 'amount_usd') new_value = Number(Number(new_value).toFixed(2));
+> @@
+>      report.push({
+>        notice_id: n.notice_id,
+>        transaction_id: n.transaction_id,
+>        field,
+>        previous_value,
+>        new_value,
+>        effective: n.effective,
+>      });
+>
+> -    tx[field] = new_value;
+> +    tx[targetField] = new_value;
+>    }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@48228d095d9c:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@48228d095d9c:/app# grep -nF 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f' -n /app/output/transactions.csv
+32:TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f,asmith,reversed,2024-04-16,1601.30,
+root@48228d095d9c:/app# sed -n '1,10p' /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"asmith","new_value":"dlee","effective
+":"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":null,"new_value":"2024-08-01","effectiv
+e":"2024-08-01"}
+root@48228d095d9c:/app# jq '.items[] | select(.transaction_id=="TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f")' /app/output/transactions.json
+bash: jq: command not found
+root@48228d095d9c:/app# jq '.items[] | select(.transaction_id=="TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0") | .amount_usd' /app/output/exceptions.json
+bash: jq: command not found
+root@48228d095d9c:/app#

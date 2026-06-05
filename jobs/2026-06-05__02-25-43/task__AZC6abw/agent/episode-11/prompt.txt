@@ -1,0 +1,80 @@
+New Terminal Output:
+
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js
+const fs = require("node:fs");
+const path = require("node:path");
+
+function loadDefaults() {
+  const file = path.join(__dirname, "..", "..", "config", "defaults.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+module.exports = { loadDefaults };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,200p' /app/audit-extractor/src/lib/constants.js
+module.exports = {
+  SECTION_LEDGER: "## Transaction Ledger",
+  SECTION_MEETINGS: "## Meeting Notes",
+  SECTION_EMAILS: "## Email Excerpts",
+  SECTION_POLICY: "## Policy Exceptions",
+  SECTION_CORRECTIONS: "## Correction Notices",
+};
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,200p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,120p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@666bc8f9d84a:/app/audit-extractor#

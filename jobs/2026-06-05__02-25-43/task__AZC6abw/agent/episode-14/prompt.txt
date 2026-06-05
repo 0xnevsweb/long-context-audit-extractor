@@ -1,0 +1,170 @@
+New Terminal Output:
+
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,220p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@666bc8f9d84a:/app/audit-extractor# sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@666bc8f9d84a:/app/audit-extractor# node - <<'NODE'
+> const fs=require('fs');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const {parseCorrections}=require('/app/audit-extractor/src/parser/corrections');
+> const res=parseCorrections(md);
+> console.log('corrections_count',res.length);
+> console.log(res.slice(0,10));
+> NODE
+corrections_count 0
+[]
+root@666bc8f9d84a:/app/audit-extractor# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function escapeRe(s) {
+>   return s.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
+> }
+>
+> function findSection(markdown, headingLine) {
+>   const re = new RegExp(`^${escapeRe(headingLine)}$`, "m");
+>   const match = markdown.match(re);
+>   if (!match) return null;
+>   const startIdx = match.index + match[0].length;
+>   const rest = markdown.slice(startIdx);
+>   const next = rest.match(/^##\s+/m);
+>   const endIdx = next ? startIdx + next.index : markdown.length;
+>   return markdown.slice(startIdx, endIdx);
+> }
+>
+> function parseCorrections(markdown) {
+>   const slice = findSection(markdown, "## Correction Notices");
+>   if (!slice) return [];
+>
+>   const notices = [];
+>   const blocks = slice.split(/^###\s+/m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const notice_id = (lines[0] || "").trim();
+>     if (!/^CORR-[0-9a-f]+$/i.test(notice_id)) continue;
+>
+>     const entry = { notice_id };
+>     for (const line of lines) {
+>       const t = line.trim();
+>       if (!t) continue;
+>       if (/^targets:\s*/i.test(t)) entry.transaction_id = t.split(":").slice(1).join(":").trim();
+>       if (/^field:\s*/i.test(t)) entry.field = t.split(":").slice(1).join(":").trim();
+>       if (/^value:\s*/i.test(t)) entry.value = t.split(":").slice(1).join(":").trim();
+>       if (/^effective:\s*/i.test(t)) entry.effective = t.split(":").slice(1).join(":").trim();
+>     }
+>     notices.push(entry);
+>   }
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@666bc8f9d84a:/app/audit-extractor# node - <<'NODE'
+> const fs=require('fs');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const {parseCorrections}=require('/app/audit-extractor/src/parser/corrections');
+> const res=parseCorrections(md);
+> console.log('corrections_count',res.length);
+> console.log(res);
+> NODE
+corrections_count 5
+[
+  {
+    notice_id: 'CORR-7f2a91bc',
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    field: 'status',
+    value: 'reversed',
+    effective: '2024-05-10'
+  },
+  {
+    notice_id: 'CORR-8e3b02cd',
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    field: 'status',
+    value: 'approved',
+    effective: '2024-06-01'
+  },
+  {
+    notice_id: 'CORR-9f4c13de',
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    field: 'status',
+    value: 'reversed',
+    effective: '2024-06-15'
+  },
+  {
+    notice_id: 'CORR-a05d24ef',
+    transaction_id: 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f',
+    field: 'owner',
+    value: 'dlee',
+    effective: '2024-04-20'
+  },
+  {
+    notice_id: 'CORR-b16e35f0',
+    transaction_id: 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f',
+    field: 'date',
+    value: '2024-08-01',
+    effective: '2024-08-01'
+  }
+]
+root@666bc8f9d84a:/app/audit-extractor# rm -rf /tmp/audit_out && mkdir -p /tmp/audit_out && node /app/audit-extractor/src/cli.js extract --input /app/data/audit
+_archive.md --outdir /tmp/audit_out && wc -l /tmp/audit_out/reconciliation_report.jsonl && head -n 20 /tmp/audit_out/reconciliation_report.jsonl
+3 /tmp/audit_out/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@666bc8f9d84a:/app/audit-extractor#

@@ -1,0 +1,31 @@
+{
+  "analysis": "Outputs are much closer: JSON now has {items}, CSV includes exception_reason and amounts formatted to 2 decimals in CSV. exceptions.json includes only exception rows. reconciliation_report.jsonl is populated and appears sorted by notice_id. Remaining issues: exceptions.json shows amount_usd as 8468.4 (should be JSON number with two decimals; JSON numbers don’t preserve formatting but we can ensure rounding to 2 decimals for consistency). Also reconciliation report for CORR-b16e35f0 uses field 'date' but required report field is 'effective' and transactions require field 'effective_date' (we applied correction to tx['date'] not tx['effective_date']). Need mapping: correction field 'date' should modify effective_date. Similarly ledger parser used effective_date; correction should address that. Also previous_value for CORR-b16e35f0 is null because tx.date missing; should be previous effective_date value (2024-04-16) before correction. We should implement field mapping in reconcile.js (date -> effective_date, amount -> amount_usd maybe) and ensure report 'field' uses the original field name from notice per spec? Spec says report has field (likely same as notice field). We'll keep field as in notice ('date') but apply to effective_date internally while reporting previous/new values of effective_date. Finally ensure amount_usd rounding for all items in JSON.",
+  "plan": "1) Patch reconcile.js to map correction notice fields to internal transaction fields: 'date' => 'effective_date', 'amount' => 'amount_usd' (if appears), otherwise unchanged. Ensure previous_value and new_value are taken from the internal field value. 2) When applying corrections, update tx.effective_date not tx.date. 3) Ensure amount_usd is always rounded to two decimals in all outputs. 4) Re-run extractor and re-check reconciliation_report.jsonl and affected transaction (TXN-e637... effective_date).",
+  "commands": [
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: /app/audit-extractor/src/normalize/reconcile.js\n@@\n function reconcileTransactions(parsed) {\n@@\n   const report = [];\n@@\n   for (const n of winners) {\n     const tx = byId.get(n.transaction_id);\n     if (!tx) continue;\n \n-    const field = n.field;\n-    const previous_value = Object.prototype.hasOwnProperty.call(tx, field) ? tx[field] : null;\n+    const field = n.field;\n+    // Map handbook/notice field names onto our normalized output schema.\n+    const targetField = field === 'date' ? 'effective_date' : field === 'amount' ? 'amount_usd' : field;\n+    const previous_value = Object.prototype.hasOwnProperty.call(tx, targetField) ? tx[targetField] : null;\n \n     let new_value = n.value;\n     if (field === 'status') new_value = String(new_value).toLowerCase();\n-    if (field === 'amount_usd') new_value = Number(Number(new_value).toFixed(2));\n+    if (targetField === 'amount_usd') new_value = Number(Number(new_value).toFixed(2));\n@@\n     report.push({\n       notice_id: n.notice_id,\n       transaction_id: n.transaction_id,\n       field,\n       previous_value,\n       new_value,\n       effective: n.effective,\n     });\n \n-    tx[field] = new_value;\n+    tx[targetField] = new_value;\n   }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "grep -nF 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f' -n /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,10p' /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "jq '.items[] | select(.transaction_id==\"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f\")' /app/output/transactions.json\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "jq '.items[] | select(.transaction_id==\"TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0\") | .amount_usd' /app/output/exceptions.json\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

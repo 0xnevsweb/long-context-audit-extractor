@@ -1,0 +1,44 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected after JSON object
+
+Current Terminal Screen:
+2278:Subject: weekly metrics 50
+2281:From: ops51@vendor.example
+2282:Subject: weekly metrics 51
+2285:From: ops52@vendor.example
+2286:Subject: weekly metrics 52
+2289:From: ops53@vendor.example
+2290:Subject: weekly metrics 53
+2293:From: ops54@vendor.example
+2294:Subject: weekly metrics 54
+2297:From: ops55@vendor.example
+2298:Subject: weekly metrics 55
+2301:From: ops56@vendor.example
+2302:Subject: weekly metrics 56
+root@48228d095d9c:/app# grep -nE 'From: compliance@|Subject: Re: TXN-|#### Amendment for TXN-' /app/data/audit_archive.md | head -n 120
+31:#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+2049:#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+2054:#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+2058:#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+2063:#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+5277:From: compliance@corp.internal
+5278:Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+5283:Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+5286:From: compliance@audit.corp
+5287:Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+5290:From: compliance@corp.internal
+5291:Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+5295:From: compliance@corp.internal
+5296:Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+root@48228d095d9c:/app# grep -nE '^#### Amendment for TXN-' /app/data/audit_archive.md
+31:#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+2049:#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+2054:#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+2058:#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+2063:#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+root@48228d095d9c:/app# grep -nE '^From: compliance@' /app/data/audit_archive.md | head
+5277:From: compliance@corp.internal
+5286:From: compliance@audit.corp
+5290:From: compliance@corp.internal
+5295:From: compliance@corp.internal
+root@48228d095d9c:/app#

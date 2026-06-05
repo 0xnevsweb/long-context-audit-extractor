@@ -1,0 +1,55 @@
+{
+  "analysis": "Current implementation is fundamentally misaligned with the task requirements. All parsers use indexOf for section boundaries and ledger selection; sections.js just calls them directly without robust heading parsing. emails.js ignores sent/date and status precedence; corrections.js uses end indexOf(\"## Transaction Ledger\") which will hit working copy, and ignores “greatest effective date wins per txn+field” needing date comparison. policy.js only returns IDs, but exception logic requires codes and fields from handbook. reconcile.js currently contains an embedded copy of the handbook text (!!) and likely wrong logic; also output shapes are wrong elsewhere (jsonWriter probably writes {transactions:...}). Need to rework: implement section extraction by exact whole-line heading matches; rewrite ledger/amendment/email/correction parsing to produce structured events; rewrite reconcile.js to apply precedence rules; adjust writers to required JSON envelopes and formatting.",
+  "plan": "1) Inspect output writers (jsonWriter/csvWriter/reportWriter) and schema/validate.js to see current expected shapes and adjust to graded shapes. 2) Read enough of audit_archive.md around the handbook and each section format (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) to implement exact parsing. 3) Implement a robust section splitter in src/parser/sections.js that returns text for each named section by regex matching heading lines. 4) Update individual parsers to consume only their section text (not whole markdown) and to avoid false matches. 5) Rewrite reconcile.js to: build canonical ledger from exact '## Transaction Ledger' section, skip provisional:true, handle duplicate IDs by keeping last non-provisional; apply signed amendments (owner changes); apply compliance@ status changes only when moving up precedence ladder with sent-date constraint; apply corrections last with greatest effective date winning per txn+field; generate report JSONL for winning corrections with correct previous_value. 6) Fix normalize/exceptions.js to compute exception_reason per handbook and output null/semicolon-joined. 7) Fix writers to emit transactions.json and exceptions.json as {\"items\":[...]}, transactions.csv header and empty exception_reason when null, and reconciliation_report.jsonl sorted by notice_id. 8) Run extract to /app/output and verify file shapes and sample rows.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/package.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2060,2125p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '5290,5385p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '5350,5500p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

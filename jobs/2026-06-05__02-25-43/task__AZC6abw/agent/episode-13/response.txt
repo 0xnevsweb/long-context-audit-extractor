@@ -1,0 +1,31 @@
+{
+  "analysis": "Major fixes are now applied: transactions.json is {\"items\":...}; exceptions.json is {\"items\":...}; CSV header includes exception_reason and amount has 2 decimals. exception_reason is being computed (over_limit appears). Remaining issue: reconciliation_report.jsonl is still empty (0 lines). That implies either corrections parser didn’t return notices due to section slicing (it uses indexOf and end at '## Transaction Ledger' which now points to working copy vs canonical; but still should include) or reconcile is not seeing parsed.corrections. Need to inspect src/parser/corrections.js and confirm it finds the Correction Notices section via regex on whole heading lines and parses blocks. Also need to ensure ledger parsing stops at next '## ' heading; ok. Also need to ensure exceptions.json contains only rows with exception_reason set; currently writer writes items passed from buildExceptions; check index.js pipeline. Next: inspect index.js and parser/corrections.js; then rewrite corrections.js to use findSection similar to others and ensure effective dates parsed and returned. Then rerun and ensure reconciliation_report has winning notices (should include CORR-7f2a91bc, CORR-a05d24ef, CORR-b16e35f0, maybe etc but only winning per txn+field).",
+  "plan": "1) View src/index.js and src/parser/corrections.js to see current parsing and why corrections might be empty. 2) Rewrite src/parser/corrections.js to use regex heading lines and parse within Correction Notices section only. 3) Re-run extractor and verify reconciliation_report.jsonl has expected number of lines and sorted by notice_id, and that previous_value is correct (value immediately before notice applies).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst {parseCorrections}=require('/app/audit-extractor/src/parser/corrections');\nconst res=parseCorrections(md);\nconsole.log('corrections_count',res.length);\nconsole.log(res.slice(0,10));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction escapeRe(s) {\n  return s.replace(/[.*+?^${}()|[\\\\]\\\\]/g, \"\\\\$&\");\n}\n\nfunction findSection(markdown, headingLine) {\n  const re = new RegExp(`^${escapeRe(headingLine)}$`, \"m\");\n  const match = markdown.match(re);\n  if (!match) return null;\n  const startIdx = match.index + match[0].length;\n  const rest = markdown.slice(startIdx);\n  const next = rest.match(/^##\\s+/m);\n  const endIdx = next ? startIdx + next.index : markdown.length;\n  return markdown.slice(startIdx, endIdx);\n}\n\nfunction parseCorrections(markdown) {\n  const slice = findSection(markdown, \"## Correction Notices\");\n  if (!slice) return [];\n\n  const notices = [];\n  const blocks = slice.split(/^###\\s+/m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const notice_id = (lines[0] || \"\").trim();\n    if (!/^CORR-[0-9a-f]+$/i.test(notice_id)) continue;\n\n    const entry = { notice_id };\n    for (const line of lines) {\n      const t = line.trim();\n      if (!t) continue;\n      if (/^targets:\\s*/i.test(t)) entry.transaction_id = t.split(\":\").slice(1).join(\":\").trim();\n      if (/^field:\\s*/i.test(t)) entry.field = t.split(\":\").slice(1).join(\":\").trim();\n      if (/^value:\\s*/i.test(t)) entry.value = t.split(\":\").slice(1).join(\":\").trim();\n      if (/^effective:\\s*/i.test(t)) entry.effective = t.split(\":\").slice(1).join(\":\").trim();\n    }\n    notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst {parseCorrections}=require('/app/audit-extractor/src/parser/corrections');\nconst res=parseCorrections(md);\nconsole.log('corrections_count',res.length);\nconsole.log(res);\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out && mkdir -p /tmp/audit_out && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out && wc -l /tmp/audit_out/reconciliation_report.jsonl && head -n 20 /tmp/audit_out/reconciliation_report.jsonl\n",
+      "duration": 2.0
+    }
+  ],
+  "task_complete": false
+}

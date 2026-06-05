@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+From: ops60@vendor.example
+Subject: weekly metrics 60
+(no transaction references)
+
+From: ops61@vendor.example
+Subject: weekly metrics 61
+(no transaction references)
+
+From: ops62@vendor.example
+Subject: weekly metrics 62
+(no transaction references)
+
+From: ops63@vendor.example
+Subject: weekly metrics 63
+(no transaction references)
+
+From: ops64@vendor.example
+Subject: weekly metrics 64
+root@48228d095d9c:/app# awk 'BEGIN{p=0} /^## Policy Exceptions$/{p=1} p{print} p && /^## / && $0!~/^## Policy Exceptions$/{exit}' /app/data/audit_archive.md | s
+ed -n '1,220p'
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+root@48228d095d9c:/app#

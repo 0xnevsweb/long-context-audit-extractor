@@ -1,0 +1,35 @@
+{
+  "analysis": "We now have the compliance@ email excerpt format and evidence of sent/status lines. Emails appear as blocks with From:, Subject: Re: TXN-..., optional sent:, and status:. Some emails lack sent: (e.g., compliance@audit.corp rejected at 5288) which per spec apply unconditionally, and compliance_hold exception requires the email block includes sent:. We still need the status precedence ladder from the handbook to implement 'apply status changes when status moves up precedence ladder'. Also need amendments parsing (owner changes) and ledger duplicate/provisional logic. Next: open handbook.js/constants to see intended precedence; inspect meetings.js for amendments; then implement reconciliation logic and output writer shape changes. Also update parsers to use regex heading line detection, not indexOf.",
+  "plan": "1) Inspect lib/handbook.js and constants for status precedence ladder definition. 2) Inspect meetings.js fully to confirm amendment format (signed, owner). 3) Inspect normalize/exceptions.js and output writers; then modify them plus reconcile.js and parser modules. We’ll start editing files using apply_patch. Core changes: ledger parser finds exact heading line '^## Transaction Ledger$' and parses ### blocks until next '## ' heading; keep last non-provisional per id. emails parser parses within Email Excerpts section using heading boundaries; parse from_addr, transaction_id, status, sent (nullable), and only for From compliance@? (we can parse all but filter later). policy parser returns map txn->approved_by. reconcile.js implements: start canonical ledger; apply amendments (owner) only if signed present?; apply compliance emails: only if from starts with compliance@ and status higher precedence than current; if sent present then only apply if sent>=ledger date; else apply. Then apply corrections: per txn+field, choose correction with greatest effective date; apply after prior changes; produce jsonl for winning corrections with previous_value as value before applying; sort report by notice_id. Finally compute exception_reason per handbook and output shape and csv columns and formatting.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

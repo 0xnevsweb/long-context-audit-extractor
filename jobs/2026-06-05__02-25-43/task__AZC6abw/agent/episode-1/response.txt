@@ -1,0 +1,83 @@
+{
+  "analysis": "Current extractor runs but outputs are wrong per spec: transactions.json uses {\"transactions\":...} not {\"items\":...}; exceptions.json uses {\"exceptions\":...} not {\"items\":...}; CSV is missing exception_reason column; reconciliation_report.jsonl is empty and reconciliation logic is simplistic (meetings override owner, emails override status, corrections override fields without precedence/date rules and previous_value is always empty). Also ripgrep (rg) is not installed, so we must use grep/sed/awk. Need to inspect existing parser modules (ledger/emails/corrections/sections/policy/meetings) more carefully (previous output got truncated), and read the handbook and actual section formats in /app/data/audit_archive.md (top policy + relevant sections). Then implement: heading parsing via regex on whole heading lines; ledger selection exactly \"## Transaction Ledger\" (skip working copy); ignore provisional rows; handle repeated IDs keeping last non-provisional block; apply amendments (owner changes) after ledger; apply compliance@ email status changes only when moving up precedence ladder and only if sent>=ledger date (if sent exists) else unconditional; apply correction notices last with greatest effective date winning per transaction+field; generate reconciliation_report.jsonl one per winning correction notice with correct previous_value; output formatting and sorting requirements; exceptions derived from handbook codes and semicolon-joined. Next step: open the parser files and the markdown sections around headings.",
+  "plan": "1) View current parser implementations fully to understand current assumptions/bugs. 2) Use grep to locate exact section headings and sample blocks for ledger, amendments, emails, policy exceptions, and correction notices within the markdown. 3) Read the full handbook section at the top to capture precedence ladder and exception codes/logic required. Then we’ll start editing code (likely: src/parser/sections.js to use regex line matches; src/parser/ledger.js to pick correct ledger and handle provisional/repeats; src/parser/emails.js for sent date and precedence; src/parser/meetings.js to parse amendments; src/parser/corrections.js to parse notices and effective dates; src/normalize/reconcile.js to apply rules, compute exceptions, and build report).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^## ' /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^## Transaction Ledger(\\b| \\()' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^## (Email Excerpts|Policy Exceptions|Correction Notices)$' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE '^#### Amendment for TXN-' /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "L1=$(grep -nE '^## Reconciliation and Exception Policy \\(FY24 Audit Handbook\\)$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); L2=$(grep -nE '^## ' /app/data/audit_archive.md | awk -F: -v l=\"$L1\" '$1>l{print $1; exit}'); echo \"$L1 $L2\"; sed -n \"${L1},${L2}p\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "L=$(grep -nE '^## Transaction Ledger$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); echo \"ledger_line=$L\"; sed -n \"$((L-5)),$((L+120))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "L=$(grep -nE '^## Email Excerpts$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); echo \"emails_line=$L\"; sed -n \"$((L)),$((L+140))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "L=$(grep -nE '^## Correction Notices$' /app/data/audit_archive.md | cut -d: -f1 | head -n1); echo \"corrections_line=$L\"; sed -n \"$((L)),$((L+200))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

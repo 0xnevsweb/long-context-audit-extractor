@@ -1,0 +1,45 @@
+New Terminal Output:
+
+]
+root@915627c498db:/app# python3 - <<'PY'
+> import json
+> items=json.load(open('/app/output/transactions.json'))['items']
+> by={x['transaction_id']:x for x in items}
+> for tid in ['TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f','TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15','TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb','TXN-51cc9d8a-ea1
+3-56ab-af16-c55e1716132f','TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f','TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4']:
+>     print(tid, by.get(tid))
+> PY
+TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f {'transaction_id': 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f', 'owner': 'dlee', 'status': 'approved', 'effective_date':
+ '2024-09-09', 'amount_usd': 11487.36, 'exception_reason': 'over_limit'}
+TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15 {'transaction_id': 'TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15', 'owner': 'bwong', 'status': 'rejected', 'effective_date'
+: '2024-03-03', 'amount_usd': 3246.84, 'exception_reason': None}
+TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb {'transaction_id': 'TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb', 'owner': 'finalowner', 'status': 'approved', 'effective_
+date': '2024-04-04', 'amount_usd': 4620.26, 'exception_reason': None}
+TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f {'transaction_id': 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f', 'owner': 'asmith', 'status': 'reversed', 'effective_date
+': '2024-06-15', 'amount_usd': 1873.42, 'exception_reason': None}
+TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f {'transaction_id': 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f', 'owner': 'asmith', 'status': 'reversed', 'effective_date
+': '2024-08-01', 'amount_usd': 1601.3, 'exception_reason': None}
+TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4 {'transaction_id': 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4', 'owner': 'dlee', 'status': 'rejected', 'effective_date':
+ '2024-05-05', 'amount_usd': 5993.68, 'exception_reason': 'compliance_hold'}
+root@915627c498db:/app# cat /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@915627c498db:/app# python3 - <<'PY'
+> import json
+> parsed=json.load(open('/app/output/transactions.json'))
+> assert list(parsed)==['items']
+> exc=json.load(open('/app/output/exceptions.json'))
+> assert list(exc)==['items']
+> print('ok: json top-level keys are items')
+> PY
+ok: json top-level keys are items
+root@915627c498db:/app# head -n 2 /app/output/transactions.csv && tail -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f,asmith,reversed,2024-08-01,1601.30,
+TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4,dlee,rejected,2024-05-05,5993.68,compliance_hold
+root@915627c498db:/app#

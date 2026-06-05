@@ -1,0 +1,334 @@
+New Terminal Output:
+
+root@4be5beddfa9b:/app# awk 'NR==5{p=1} p{print} /^## / && NR>5{exit}' /app/data/audit_archive.md | sed -n '1,200p'
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review when final status is reversed,
+amount_usd > 5000, and a winning correction notice changed status for that txn.
+Multiple reasons join with semicolon in lexical order of the reason codes.
+
+## Meeting Notes
+root@4be5beddfa9b:/app# grep -nE '^## Meeting Notes\s*$' /app/data/audit_archive.md | head
+47:## Meeting Notes
+root@4be5beddfa9b:/app# sed -n '5,80p' /app/data/audit_archive.md
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+effective_date on output is YYYY-MM-DD. Start from the ledger date field.
+When a correction notice sets field date or status, use the notice effective
+date as effective_date only if that correction modified status or date;
+otherwise keep ledger date.
+
+Use only the section whose heading is exactly ## Transaction Ledger.
+Ignore other ledger-like sections and any ledger block with provisional: true.
+
+If the same transaction id appears in more than one ledger block, the last
+non-provisional block in file order is the base row for that id.
+
+Status precedence (lowest to highest): pending, approved, rejected, reversed.
+Ledger provides base status (lowercase on output). Email excerpts may change
+status only when the From line contains compliance@ anywhere in the address;
+otherwise ignore. When an excerpt includes sent: YYYY-MM-DD, apply the status
+change only if sent is greater than or equal to the ledger date. When no sent:
+line is present, apply the status change if precedence allows.
+Correction notices apply last; when multiple notices target the same
+transaction and field, the notice with the lexicographically greatest
+effective date wins. For each winning notice, previous_value in
+reconciliation_report.jsonl is the field value immediately before that
+notice applies (after ledger, amendments, and emails).
+
+Owner precedence: ledger owner is the default. Meeting note amendments under
+#### Amendment for TXN-<uuid> replace owner when signed: true (case insensitive)
+and, when the amendment includes effective: YYYY-MM-DD, only if that date is
+greater than or equal to the ledger date. Correction notices for field owner
+override both when applied after other steps.
+
+amount_usd is numeric from ledger, two decimal places in CSV, JSON number.
+
+exception_reason is null unless an exception applies: set over_limit when
+amount_usd strictly exceeds 10000; set compliance_hold when final status is
+rejected, a qualifying compliance@ email referenced that txn, and that email
+block includes sent:; set policy_waiver when final status is approved,
+amount_usd > 10000, and a Policy Exception block exists for that txn with
+approved_by: compliance; set retroactive_review
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+rom: ops22@vendor.example
+Subject: weekly metrics 22
+(no transaction references)
+
+From: ops23@vendor.example
+Subject: weekly metrics 23
+(no transaction references)
+
+From: ops24@vendor.example
+Subject: weekly metrics 24
+(no transaction references)
+
+From: ops25@vendor.example
+Subject: weekly metrics 25
+(no transaction references)
+
+From: ops26@vendor.example
+Subject: weekly metrics 26
+(no transaction references)
+
+From: ops27@vendor.example
+Subject: weekly metrics 27
+(no transaction references)
+
+From: ops28@vendor.example
+Subject: weekly metrics 28
+(no transaction references)
+
+From: ops29@vendor.example
+Subject: weekly metrics 29
+(no transaction references)
+
+From: ops30@vendor.example
+Subject: weekly metrics 30
+(no transaction references)
+
+From: ops31@vendor.example
+Subject: weekly metrics 31
+(no transaction references)
+
+From: ops32@vendor.example
+Subject: weekly metrics 32
+(no transaction references)
+
+From: ops33@vendor.example
+Subject: weekly metrics 33
+(no transaction references)
+
+From: ops34@vendor.example
+Subject: weekly metrics 34
+(no transaction references)
+
+From: ops35@vendor.example
+Subject: weekly metrics 35
+(no transaction references)
+
+From: ops36@vendor.example
+Subject: weekly metrics 36
+(no transaction references)
+
+From: ops37@vendor.example
+root@4be5beddfa9b:/app# sed -n '5300,5335p' /app/data/audit_archive.md
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+root@4be5beddfa9b:/app# sed -n '5317,5358p' /app/data/audit_archive.md
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+root@4be5beddfa9b:/app# sed -n '5349,5385p' /app/data/audit_archive.md
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 1873.42
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+root@4be5beddfa9b:/app# sed -n '5357,5420p' /app/data/audit_archive.md
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 1873.42
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+status: pending
+date: 2024-05-05
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+root@4be5beddfa9b:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   return { items: itemList, report };
+> }
+>
+> module.exports = { reconcileTransactions };
+> EOF
+root@78de76cd218c:/app# rm -rf /app/output && mkdir -p /app/output
+root@78de76cd218c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output; echo EXIT:$?
+items.sort is not a function
+EXIT:1
+root@78de76cd218c:/app# ls -la /app/output
+total 12
+drwxr-xr-x 2 root root 4096 Jun  5 09:30 .
+drwxr-xr-x 1 root root 4096 Jun  5 09:30 ..
+root@78de76cd218c:/app# head -n 3 /app/output/transactions.csv
+head: cannot open '/app/output/transactions.csv' for reading: No such file or directory
+root@78de76cd218c:/app# node -e 'const fs=require("fs"); const x=JSON.parse(fs.readFileSync("/app/output/transactions.json","utf8")); console.log(Object.keys(x)
+); console.log(x.items.length); console.log(x.items[0]);'
+node:fs:453
+    return binding.readFileUtf8(path, stringToFlags(options.flag));
+                   ^
+
+Error: ENOENT: no such file or directory, open '/app/output/transactions.json'
+    at Object.readFileSync (node:fs:453:20)
+    at [eval]:1:47
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [eval]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10)
+    at node:internal/main/eval_string:51:3 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/app/output/transactions.json'
+}
+
+Node.js v20.11.1
+root@78de76cd218c:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 20 /app/output/reconciliation_report.jsonl
+wc: /app/output/reconciliation_report.jsonl: No such file or directory
+root@78de76cd218c:/app#
