@@ -1,0 +1,39 @@
+{
+  "analysis": "We can see the tail of normalize/reconcile.js: it applies correction notices by directly mutating a target row and emits a report with previous_value always empty (violates contract). It only handles correction fields owner/status/date and sets date into target.date, later mapped to effective_date. It builds items with exception_reason always null, so exceptions.json will always be empty. exceptions.js just filters by exception_reason, so missing exception flagging entirely. We also previously observed output writers violate the contract (wrong JSON envelope keys, CSV missing exception_reason column). We still need full reconcile.js (top part) plus parsers (ledger/emails/policy/meetings/sections) and the Brief 01–09 extracted files to implement correct policy, especially compliance hold timing and exception flags. Next, inspect reconcile.js from the top, inspect remaining parsers, and view /tmp/brief09.txt etc. Then implement fixes across: reconcile logic (determinism, hold/mail timing, corrections precedence, report previous_value), exception flag calculation, and output writers.",
+  "plan": "1) View full reconcile.js and parser files to understand current data model and where drift arises (likely Map insertion order depending on parse order). 2) Inspect extracted briefs in /tmp, especially Brief 09 and exception flag briefs 07/08, to implement exception_reason and compliance_hold timing. 3) Patch code: jsonWriter/csvWriter/reportWriter to match contract; reconcile to: choose canonical ledger rows per policy, apply meeting amendments, apply status precedence, incorporate compliance emails with dates, apply correction notices in correct order with previous_value and notice ordering, and ensure stable sorting (transactions by id, report by notice_id). 4) Run extractor and verify output shapes and determinism by running twice and diffing transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '=== Brief 07 ==='; sed -n '1,220p' /tmp/brief07.txt; echo '=== Brief 08 ==='; sed -n '1,260p' /tmp/brief08.txt; echo '=== Brief 09 ==='; sed -n '1,260p' /tmp/brief09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "echo '=== Brief 01 ==='; sed -n '1,220p' /tmp/brief01.txt; echo '=== Brief 02 ==='; sed -n '1,220p' /tmp/brief02.txt; echo '=== Brief 03 ==='; sed -n '1,260p' /tmp/brief03.txt; echo '=== Brief 04 ==='; sed -n '1,220p' /tmp/brief04.txt; echo '=== Brief 05 ==='; sed -n '1,240p' /tmp/brief05.txt; echo '=== Brief 06 ==='; sed -n '1,220p' /tmp/brief06.txt\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

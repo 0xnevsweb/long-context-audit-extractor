@@ -1,0 +1,27 @@
+{
+  "analysis": "We can see output now. brief01 has no matching binding keywords in first 210 lines we captured; likely rules are written without those keywords or appear later than our extracted ranges (but /tmp/brief01.md is only 210 lines, so it may be mostly filler). brief09 has key lines 6-11 describing the amendment: compliance_hold uses a specific comparison and is applied after ledger load, meeting amendments, and compliance mail merges, but before mail-driven status changes; amendment governs only hold flag. We need the exact compliance_hold comparison definition (lines around 1-20 in brief09). Also, likely our extraction ranges for briefs are incorrect: we cut fixed line windows that include lots of narrative but may have missed binding rule blocks if they are beyond those windows in the archive. Better: directly extract from audit_archive.md between each brief heading and the next heading, rather than fixed ranges, then search within those accurate slices.",
+  "plan": "1) Print the start of /tmp/brief09.md to capture the exact compliance_hold rule. 2) Re-extract each brief section precisely from the main archive using awk: from '## Investigation Brief 0X' until the next '## Investigation Brief' heading. Save to /tmp/briefXX.full.md. 3) Search those full brief sections for concrete rule statements (often in bullet lists or tables) and display them. This will give us authoritative rules to implement. Then we’ll update parsers/reconcile accordingly.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,40p' /tmp/brief09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'BEGIN{out=\"\"}\n/^## Investigation Brief 0[1-9] /{out=sprintf(\"/tmp/brief%02d.full.md\", substr($4,1,2)+0)}\n{if(out!=\"\") print > out}\n' /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/brief*.full.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0*.full.md; do echo \"\\n===== $f headings =====\"; grep -nE '^## |^### |^\\* |^[0-9]+\\.' \"$f\" | head -n 80; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0*.full.md; do echo \"\\n===== $f key lines =====\"; grep -nE \"(Extractor|extractor|must |shall |MUST|SHALL|Policy|policy|Ignore|ignore|last such block|provisional|compliance_hold|exception_reason|overlay|precedence|effective_date|status)\" \"$f\" | head -n 80; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

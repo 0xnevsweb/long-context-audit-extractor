@@ -1,0 +1,51 @@
+{
+  "analysis": "We are at /app with no prior commands run. Need to inspect the audit-extractor project, read the output contract, and read the full /app/data/audit_archive.md to understand authoritative reconciliation policy (Investigation Briefs 01–09 with Brief 09 overriding hold wording). Then fix Node sources so extraction is deterministic across reruns, compliance holds correctly account for later mail per amended rules, and correction notices map to correct ledger rows. Finally run the CLI with required args behavior (missing args => stderr + exit 1) and generate outputs into /app/output without hand-copying. Tests folder must remain unchanged.",
+  "plan": "1) Inspect repository structure and locate relevant source files (CLI, parser, reconciliation logic). 2) Read extractor-output-contract.md to know required artifacts and schemas. 3) Read /app/data/audit_archive.md focusing on authoritative sections (Briefs 01–09, especially 09 amendment) and the structured data near end to understand how holds, mail, corrections, and ledger rows should reconcile. 4) Identify and fix bugs causing drift (likely non-deterministic ordering, unstable IDs, date parsing, or stateful merging), missed later mail for holds (rule application order), and incorrect correction->ledger matching (key choice). 5) Run extractor to /app/output and validate artifacts match contract. If needed, iterate by inspecting generated outputs and adjusting logic.",
+  "commands": [
+    {
+      "keystrokes": "ls -ლა /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor -maxdepth 3 -type f -name '*.js' -o -name '*.ts' -o -name '*.json' | sed 's#^#/app/#' | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/docs\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "wc -l /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Brief 0[1-9]|Brief 09|mid-year|amend\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

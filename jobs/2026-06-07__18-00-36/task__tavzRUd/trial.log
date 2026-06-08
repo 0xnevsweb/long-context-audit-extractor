@@ -1,0 +1,20 @@
+Skipping image OS validation for hb__task: docker inspect returned 1
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Unknown Error in LLM interaction: litellm.APIError: APIError: OpenAIException - Portkey Error: Portkey API Key Usage Limit Exceeded. Error Code: 04
+Unknown Error in LLM interaction: litellm.APIError: APIError: OpenAIException - Portkey Error: Portkey API Key Usage Limit Exceeded. Error Code: 04
+Unknown Error in LLM interaction: litellm.APIError: APIError: OpenAIException - Portkey Error: Portkey API Key Usage Limit Exceeded. Error Code: 04
+Trajectory dumped to jobs/2026-06-07__18-00-36/task__tavzRUd/agent/trajectory.json
+Trial task__tavzRUd failed: litellm.APIError: APIError: OpenAIException - Portkey Error: Portkey API Key Usage Limit Exceeded. Error Code: 04

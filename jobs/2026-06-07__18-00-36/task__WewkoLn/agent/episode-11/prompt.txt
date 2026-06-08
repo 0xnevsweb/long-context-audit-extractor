@@ -1,0 +1,58 @@
+New Terminal Output:
+
+root@b5558c31e8a7:/app# sed -n '1857,3849p' /app/data/audit_archive.md | grep -B5 -A10 'compliance@'
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+status: approved
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 0
+--
+
+Internal coordination on FX revaluation lag. No transaction identifiers appear
+in this message. Investigators archived it to preserve mailbox ordering around
+compliance threads.
+
+From: compliance@audit.corp
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+sent: 2024-08-15
+status: rejected
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 0
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+--
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+root@b5558c31e8a7:/app#

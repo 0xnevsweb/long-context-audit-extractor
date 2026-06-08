@@ -1,0 +1,23 @@
+{
+  "analysis": "We have the key binding rules from Brief 08: policy_waiver and retroactive_review exception flags; exact output artifact shapes; reconciliation_report.jsonl definition; and that retroactive_review depends on a winning correction notice changing status. We already captured Brief 06 effective_date, Brief 07 over_limit/compliance_hold, and Brief 09 compliance_hold timing comparison. Still missing: Brief 01 ledger sourcing (exact heading rule), Brief 03 compliance mail timing (including sent date logic), Brief 04 correction notice precedence/winning selection, and Brief 05 signed amendment owner override specifics. Next we should print those precise sections (the earlier sed calls for 1-40, 252-275, 450-510, 685-735, 820-860 likely scrolled off; we need to re-run them one by one and capture). After we have them, we can implement the code fixes. We already know ledger exact heading requirement exists at line ~17 and that working copy is decoy; correction precedence must define 'winning correction'.",
+  "plan": "1) Re-print Brief 01 directives (1-25). 2) Print Brief 03 directives (468 area plus around line 476) and any specific mail timing rules. 3) Print Brief 04 directives for how to pick winning correction notices (likely by effective date, field, notice_id). 4) Print Brief 05 directives (lines around 832-840) for signed amendment and effective usage. 5) Then implement: strict section extraction, deterministic reconciliation order, winning correction selection with previous_value tracking, email filtering by compliance@ and sent date parsing, owner amendments signed-only, exception flags, and output writer/validation contract compliance. We'll start by extracting the remaining directives.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,30p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,505p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,725p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '820,845p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

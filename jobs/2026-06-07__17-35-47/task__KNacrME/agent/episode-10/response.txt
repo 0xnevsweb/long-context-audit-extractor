@@ -1,0 +1,19 @@
+{
+  "analysis": "Keyword grep is mostly hitting repetitive non-binding narrative lines, not the binding rule bullets. The brief files likely contain a lot of filler; we need to locate the actual binding rule subsection markers (maybe '### Binding Rules', '### Extractor Rules', numbered lists, or code-style blocks). Next, use more targeted searches for patterns like 'BINDING RULES', 'Extractor:', 'Rule:' with colon, or list markers '1.' near the top of each brief, and also inspect later parts of each brief beyond the first ~200 lines we initially viewed.",
+  "plan": "Search within each /tmp/brief for headings and structural markers: lines starting with ###, ####, 'BINDING', 'Authoritative', 'Extractor must:', and numbered rules. Then print larger slices around where those markers appear (using sed with those line numbers). Also, as fallback, print the tail portions of each brief where rules may be summarized after field notes.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n==== HEADINGS in $f ====\"; grep -nE \"^#{2,6} \" \"$f\" | head -n 80; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n==== POSSIBLE RULE MARKERS in $f ====\"; grep -nE \"BINDING|Authoritative|AUTHORITATIVE|Extractor|EXTRACTOR|Rules|RULES|Semantics|precedence|Precedence\" \"$f\" | head -n 40; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n==== TAIL of $f ====\"; tail -n 80 \"$f\"; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

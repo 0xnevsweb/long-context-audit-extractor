@@ -1,0 +1,43 @@
+{
+  "analysis": "We’ve confirmed the CLI already enforces missing --input/--outdir with stderr + exit 1, matching contract. The extractor code is in src/parser/* and src/normalize/reconcile.js + exceptions.js. The environment lacks ripgrep (rg), so we need to use grep/sed/python for searching. We located byte offsets for Investigation Briefs 01–09 inside /app/data/audit_archive.md. Next we must read those briefs (especially Brief 09 override) to implement correct reconciliation semantics and determinism, then inspect current reconcile/corrections/email/ledger parsers to fix: (1) drifting statuses across reruns (non-deterministic ordering), (2) compliance holds missing later mail (mail timing/hold logic), (3) correction notices applied to wrong ledger rows (matching/precedence).",
+  "plan": "1) Read current reconciliation implementation (normalize/reconcile.js) and parsers for ledger, emails, corrections to see current behavior and potential nondeterminism. 2) Extract the authoritative rules text from Investigation Briefs 01–09 by slicing the markdown around the discovered offsets; pay special attention to Brief 09 amendment that overrides earlier hold wording. 3) Identify structured data region near the end (ledger rows, notices) and verify parser assumptions. 4) Implement fixes: ensure deterministic sort/application order (stable sorts by ids/dates), apply holds based on full mail timeline per amended rule, and match correction notices to ledger rows using the contract/policy-defined keys with correct precedence; produce byte-identical transactions.json across reruns. 5) Run extractor twice and diff outputs to confirm stability; inspect report and exceptions for correctness.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport io\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    lines=f.readlines()\n# print headings and line numbers for first ~2500 lines to locate briefs quickly\nfor i,line in enumerate(lines[:2600], start=1):\n    if line.lstrip().startswith('#') and ('Brief' in line or 'brief' in line):\n        print(f\"{i}: {line.strip()}\")\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    txt=f.read()\n# Grab Investigation Brief 01-09 sections by heading and print first ~120 lines of each\nfor i in range(1,10):\n    # heading\n    m=re.search(rf\"(^|\\n)#+\\s*Investigation\\s*Brief\\s*0?{i}\\b.*\",txt,re.IGNORECASE)\n    if not m:\n        continue\n    start=m.start()+ (1 if txt[m.start()]=='\\n' else 0)\n    # end at next Investigation Brief heading or end\n    m2=re.search(r\"\\n#+\\s*Investigation\\s*Brief\\s*\\d+\\b\", txt[m.end():], re.IGNORECASE)\n    end = (m.end()+m2.start()) if m2 else len(txt)\n    sec=txt[start:end]\n    print(\"\\n\"+\"=\"*80)\n    print(f\"BRIEF {i}\")\n    print(\"=\"*80)\n    # print first 120 lines\n    lines=sec.splitlines()\n    for L in lines[:140]:\n        print(L)\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    txt=f.read()\n# specifically dump the tail of Brief 09 to catch amendment language\nm=re.search(r\"(^|\\n)#+\\s*Investigation\\s*Brief\\s*0?9\\b.*\",txt,re.IGNORECASE)\nif m:\n    start=m.start()+ (1 if txt[m.start()]=='\\n' else 0)\n    m2=re.search(r\"\\n#+\\s*(Appendix|Ledger|Structured|Committee|Mail|End)\\b\", txt[m.end():], re.IGNORECASE)\n    end=(m.end()+m2.start()) if m2 else len(txt)\n    sec=txt[start:end]\n    lines=sec.splitlines()\n    # print last 220 lines\n    for L in lines[-240:]:\n        print(L)\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "tail -n 120 /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^#+\\s*(Ledger|LEDGER|Transactions|Structured|Correction|Corrections|Notices|Mail)\" /app/data/audit_archive.md | tail -n 80\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

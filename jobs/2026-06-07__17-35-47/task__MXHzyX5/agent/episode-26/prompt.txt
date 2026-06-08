@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  1892  Internal coordination on capital project capitalization. No transaction
+  1893  identifiers appear in this message. Investigators archived it to preserve
+  1894  mailbox ordering around compliance threads.
+  1895
+  1896  From: treasury-ops@corp.internal
+  1897  Subject: wire desk weekend coverage — thread 5
+  1898
+  1899  Internal coordination on payroll accrual true-up. No transaction identifiers
+  1900  appear in this message. Investigators archived it to preserve mailbox ordering
+  1901  around compliance threads.
+  1902
+  1903  From: treasury-ops@corp.internal
+  1904  Subject: wire desk weekend coverage — thread 6
+  1905
+  1906  Internal coordination on SOX sampling mismatch. No transaction identifiers
+  1907  appear in this message. Investigators archived it to preserve mailbox ordering
+  1908  around compliance threads.
+  1909
+  1910  From: hr-payroll@corp.internal
+  1911  Subject: accrual true-up schedule — thread 7
+  1912
+  1913  Internal coordination on treasury wire cutoff failures. No transaction
+  1914  identifiers appear in this message. Investigators archived it to preserve
+  1915  mailbox ordering around compliance threads.
+  1916
+  1917  From: hr-payroll@corp.internal
+  1918  Subject: accrual true-up schedule — thread 8
+  1919
+  1920  Internal coordination on capital project capitalization. No transaction
+  1921  identifiers appear in this message. Investigators archived it to preserve
+  1922  mailbox ordering around compliance threads.
+  1923
+  1924  From: hr-payroll@corp.internal
+  1925  Subject: accrual true-up schedule — thread 9
+  1926
+  1927  Internal coordination on inventory obsolescence reserve. No transaction
+  1928  identifiers appear in this message. Investigators archived it to preserve
+  1929  mailbox ordering around compliance threads.
+  1930
+root@e1953a1e27da:/app#

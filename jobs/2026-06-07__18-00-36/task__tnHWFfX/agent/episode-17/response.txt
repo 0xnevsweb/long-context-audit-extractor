@@ -1,0 +1,18 @@
+{
+  "analysis": "I found the Policy Exceptions section. Now let me read the Correction Notices section.",
+  "plan": "Read Correction Notices and the full canonical Transaction Ledger.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '3866,3911p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '3912,4000p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '4000,4118p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

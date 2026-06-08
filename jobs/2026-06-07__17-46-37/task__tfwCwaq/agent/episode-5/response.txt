@@ -1,0 +1,23 @@
+{
+  "analysis": "Brief 03 defines mail-driven status changes: apply only if email sent date >= ledger date for that transaction; if no sent line, apply if precedence allows. Correction notices apply after ledger rows, meeting amendments, and mail excerpts merged. Brief 09 amends hold timing specifically: compliance_hold compare qualifying email sent date against pre-correction ledger date (after ledger load + meeting amendments + mail merges, before corrections). Missing outputs: reconcile.js content and artifact hash diffs didn’t appear; but we can proceed to inspect reconcile.js directly again and then implement ordering: merge ledger, meetings, mail; compute holds; then apply corrections. Need to locate where holds and correction mapping are done and adjust accordingly. Also policy.js not found; rules likely embedded in reconcile.js/constants.",
+  "plan": "1) Display reconcile.js fully and identify current order of operations and where holds are computed vs corrections applied. 2) If compliance_hold currently uses final effective_date (post-correction), refactor to capture preCorrectionDate per txn and use that for hold determination. 3) Ensure mail status changes follow Brief 03 using sent date compared to pre-correction ledger date? (Brief 03 says compare sent date to ledger date for that transaction—since corrections apply after mail, the relevant ledger date is pre-correction anyway). 4) Fix correction notice application to target correct transaction rows (likely by transaction_id); and ensure report sorted by notice_id. 5) Run extractor to /app/output and validate via existing validateOutputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/lib\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

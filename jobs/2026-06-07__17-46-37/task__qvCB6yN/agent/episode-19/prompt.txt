@@ -1,0 +1,41 @@
+Current Terminal Screen:
+738:Memo WP-1664 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overrid
+e ledger owners; Brief 05 resolves that question for the extractor.
+784:Memo WP-4781 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+798:Memo WP-4415 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+808:Memo WP-3515 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+812:Memo WP-2813 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+832:Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+834:owner when `signed: true` (case insensitive) and, when the amendment includes
+890:Memo WP-3214 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+928:Memo WP-7032 summarizes stakeholder interviews about lease modification restatement. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+968:Memo WP-5231 summarizes stakeholder interviews about lease modification restatement. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+1026:Memo WP-5595 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override led
+ger owners; Brief 05 resolves that question for the extractor.
+1042:Memo WP-2910 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override led
+ger owners; Brief 05 resolves that question for the extractor.
+1046:Memo WP-4484 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override led
+ger owners; Brief 05 resolves that question for the extractor.
+1073:Memo WP-3912 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override led
+ger owners; Brief 05 resolves that question for the extractor.
+1077:Memo WP-9083 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override led
+ger owners; Brief 05 resolves that question for the extractor.
+root@7a65087374e8:/app# grep -n "Effective Dates on Output" -n /app/data/audit_archive.md
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+root@7a65087374e8:/app# grep -nEi "effective_date" /app/data/audit_archive.md | head -n 60
+1062:Auditors compared effective_date columns to correction paperwork. Start from the
+1065:`effective_date` only if that correction modified status or date; otherwise
+1431:(lowercase), effective_date, amount_usd, exception_reason (null or
+1433:transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+root@7a65087374e8:/app# grep -nEi "Brief 09.*supersedes|amendment supersedes" /app/data/audit_archive.md | head -n 20
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+1675:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+root@7a65087374e8:/app#

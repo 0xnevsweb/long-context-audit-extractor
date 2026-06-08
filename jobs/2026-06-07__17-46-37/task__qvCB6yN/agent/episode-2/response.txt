@@ -1,0 +1,55 @@
+{
+  "analysis": "CLI already enforces missing --input/--outdir to stderr and exit 1, matching contract. The parser is implemented in separate modules (ledger/emails/corrections/meetings/policy/sections). We saw ledger.js: it finds \"## Transaction Ledger\" and then splits on /^### /m, taking first line as transaction id. This may accidentally consume other ### headings after ledger section, or fail if the canonical structured section is different near file end. Output contract mismatches are likely in output writers: transactions.csv missing exception_reason column, exceptions.json uses wrong envelope key, and reportWriter may be filtering everything out or parsing corrections incorrectly. Need to inspect output writers, reconcile logic, and remaining parsers (sections.js, corrections.js, emails.js, policy.js, meetings.js), plus inspect the bottom of the archive to see exact canonical structured formats and where they begin/end so parsers can slice correctly.",
+  "plan": "1) Inspect output writers (jsonWriter, csvWriter, reportWriter) and schema/validate to see why contract mismatches weren't caught. 2) Inspect parser/sections.js to see what it extracts and whether it's including non-authoritative narrative. 3) Inspect corrections/emails/policy parsers and normalize/reconcile.js to understand current precedence and sources. 4) View the actual structured sections near the end of audit_archive.md (Transaction Ledger, Correction Notices, etc.) to adapt regex/slicing. 5) After understanding formats, implement: strict section slicing, deterministic sorting, correct envelopes/headers, and correction application/report generation per contract.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Correction\" -n /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "tail -n 260 /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

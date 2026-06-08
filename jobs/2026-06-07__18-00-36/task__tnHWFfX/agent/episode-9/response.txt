@@ -1,0 +1,14 @@
+{
+  "analysis": "I now have all the Investigation Briefs. Let me summarize the rules:\n\n1. **Brief 01 - Ledger Sourcing**: Only use `## Transaction Ledger` section. Ignore blocks with `provisional: true`. Last non-provisional block per transaction_id wins. Use regex anchored to line start for section boundaries.\n\n2. **Brief 02 - Status Precedence**: Status precedence: pending < approved < rejected < reversed. Only emails from `compliance@` can change status.\n\n3. **Brief 03 - Compliance Mail Timing**: Apply email status change only if `sent:` date >= ledger date. If no `sent:` line, apply if precedence allows. Correction notices apply after ledger, amendments, and mail.\n\n4. **Brief 04 - Correction Notice Precedence**: When multiple notices target same transaction+field, greatest `effective` date wins. `previous_value` is the value before that notice applies. Owner corrections override ledger and meeting amendments.\n\n5. **Brief 05 - Meeting Amendments and Owners**: `#### Amendment for TXN-<uuid>` replaces owner when `signed: true` and effective date >= ledger date.\n\n6. **Brief 06 - Effective Dates**: Start from ledger date. Use correction's `effective` date as `effective_date` only if correction modified status or date.\n\n7. **Brief 07 - Exception Flags Part I**: `over_limit` when amount > 10000. `compliance_hold` when final status is `rejected`, qualifying compliance@ email referenced that txn, and email has `sent:` line. Sent-date comparison per Brief 09.\n\n8. **Brief 08 - Exception Flags Part II**: `policy_waiver` when status=approved, amount>10000, and Policy Exception block with `approved_by: compliance`. `retroactive_review` when status=reversed, amount>5000, and a winning correction changed status.\n\n9. **Brief 09 - Mid-Year Amendment**: For `compliance_hold` only, compare email's `sent:` date against the transaction's ledger date *before* correction notices are applied.",
+  "plan": "Now I need to find the structured data sections near the end of the file (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) and read the existing source code.",
+  "commands": [
+    {
+      "keystrokes": "grep -n '^## ' /app/data/audit_archive.md | tail -30\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "wc -l /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ]
+}

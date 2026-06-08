@@ -1,0 +1,41 @@
+Current Terminal Screen:
+d-year amendment later in this archive supersedes that draft practice.
+
+Site visit #319 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Memo WP-1664 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever override le
+dger owners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-5948 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+commentary as authoritative transaction sources.
+
+Interview #991 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer L. Bergstrom noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially
+ blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #512 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agains
+t amendment minutes before accepting any owner change.
+
+Lead reviewer R. Okonkwo noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially b
+lamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+## Case Study 07 — Capital Project Capitalization
+
+Follow-up #812 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Follow-up #906 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+During July review, R. Okonkwo circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cac
+he state; QA reproduced the drift on a cold run the next morning.
+root@7a65087374e8:/app#

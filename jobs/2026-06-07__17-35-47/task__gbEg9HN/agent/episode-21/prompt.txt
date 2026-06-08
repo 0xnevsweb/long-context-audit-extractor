@@ -1,0 +1,41 @@
+Current Terminal Screen:
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 22
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 23
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 24
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 25
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 26
+
+Internal coordination on vendor onboarding backlog. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+root@9416c0dee655:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>    }
+> +
+> +  // Brief 08 flags
+> +  for (const row of byId.values()) {
+> +    const amount = Number(row.amount);
+> +    const status = String(row.status).toLowerCase();
+> +
+> +    const policy = parsed.policyExceptions?.get?.(row.transaction_id) || null;
+> +    if (status === "approved" && amount > 10000 && policy?.approved_by === "compliance") {
+> +      row._flags.add("policy_waiver");
+> +    }
+> +    if (status === "reversed" && amount > 5000 && row._flags.has("_status_changed_by_correction")) {
+> +      row._flags.add("retroactive_review");
+> +    }
+> +    row._flags.delete("_status_changed_by_correction");
+> +  }
+> @@
+>    const items = sortByTransactionId(
+>      [...byId.values()].map((row) => ({
+>        transaction_id: row.transaction_id,
+>        owner: row.owner,
+>        status: String(row.status).toLowerCase(),
+>        effective_date: row.date,
+> -      amount_usd: Number(row.amount),
+> -      exception_reason: null,
+> +      amount_usd: round2(row.amount),
+> +      exception_reason:
+> +        row._flags && row._flags.size
+> +          ? [...row._flags].sort().join(";")
+> +          : null,
+>      })),
+>    );
+>
+>    return { items, report };
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@0f1e383a7916:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@0f1e383a7916:/app#

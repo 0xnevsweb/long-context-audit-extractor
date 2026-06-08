@@ -1,0 +1,43 @@
+{
+  "analysis": "We still can’t see the email section sample output due to truncation, but we can proceed with reconciling core issues: corrections now parse correctly, ledger sourcing fixed, writers fixed. Next we should rewrite reconcile.js to (1) apply meetings (signed only), (2) apply corrections with previous_value and deterministic order, (3) incorporate policyExceptions into exception_reason, and (4) ensure report includes previous_value and is deterministic. Even if compliance_hold/mail timing isn’t fully implemented yet, these fixes address correction misplacement and drift. We also need to ensure report only contains winning corrections (one per notice_id) — current approach will, but we must sort and compute previous_value. We'll also adjust exceptions.js to compute exception_reason string rather than filter.",
+  "plan": "Rewrite normalize/reconcile.js to:\n- Build base rows map from parsed.ledger.\n- Apply meeting amendments: only if signed === true and owner non-empty.\n- Apply corrections: sort by effective (YYYY-MM-DD) then notice_id; for each, compute previous_value from current target field; apply change; record report row.\n- Build items array with fields as required and compute exception_reason: include 'policy_exception' when transaction_id in parsed.policyExceptions; (placeholder for compliance_hold later).\n- Sort items by transaction_id.\nAlso update normalize/exceptions.js: output exceptions.json should include only rows where exception_reason != null (already) but now exception_reason will be set.\nThen run extractor to /app/output and sanity-check artifact headers and envelopes; run twice and diff transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\n// Lower number means higher precedence if/when we need status precedence merges.\n// Kept for compatibility; real precedence rules are described in Brief 02.\nconst STATUS_ORDER = {\n  reversed: 0,\n  rejected: 1,\n  approved: 2,\n  pending: 3,\n};\n\nfunction getFieldValue(row, field) {\n  if (field === \"owner\") return row.owner ?? \"\";\n  if (field === \"status\") return row.status ?? \"\";\n  if (field === \"date\") return row.date ?? \"\";\n  return row[field] ?? \"\";\n}\n\nfunction setFieldValue(row, field, value) {\n  if (field === \"owner\") row.owner = value;\n  else if (field === \"status\") row.status = value;\n  else if (field === \"date\") row.date = value;\n  else row[field] = value;\n}\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n\n  // 1) Base rows from canonical ledger\n  for (const row of parsed.ledger || []) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // 2) Meeting amendments (Brief 05): apply only signed amendments\n  for (const amend of parsed.meetings || []) {\n    const target = byId.get(amend.transaction_id);\n    if (!target) continue;\n    if (amend.signed && amend.owner) {\n      target.owner = amend.owner;\n    }\n  }\n\n  // 3) Corrections (Brief 04): apply in deterministic order\n  const notices = [...(parsed.corrections || [])].sort((a, b) => {\n    const ea = String(a.effective || \"\");\n    const eb = String(b.effective || \"\");\n    if (ea !== eb) return ea < eb ? -1 : 1;\n    if (a.notice_id === b.notice_id) return 0;\n    return a.notice_id < b.notice_id ? -1 : 1;\n  });\n\n  const report = [];\n  for (const notice of notices) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    const prev = String(getFieldValue(target, notice.field));\n    setFieldValue(target, notice.field, notice.value);\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: prev,\n      new_value: String(notice.value),\n      effective: notice.effective,\n    });\n  }\n\n  // 4) Exception flags\n  const policyExceptions = parsed.policyExceptions || new Set();\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => {\n      const flags = [];\n      if (policyExceptions.has(row.transaction_id)) flags.push(\"policy_exception\");\n\n      flags.sort();\n      return {\n        transaction_id: row.transaction_id,\n        owner: row.owner,\n        status: String(row.status).toLowerCase(),\n        effective_date: row.date,\n        amount_usd: Number(Number(row.amount).toFixed(2)),\n        exception_reason: flags.length ? flags.join(\";\") : null,\n      };\n    }),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'\nfunction buildExceptions(items) {\n  return items.filter((row) => row.exception_reason != null && row.exception_reason !== \"\");\n}\n\nmodule.exports = { buildExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\nnode /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 5 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 3 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sha256sum /app/output/transactions.json > /tmp/txn.sha\nnode /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\nsha256sum /app/output/transactions.json >> /tmp/txn.sha\ncat /tmp/txn.sha\n",
+      "duration": 3.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> +    let previousValue = "";
+>      if (notice.field === "owner") {
+> +      previousValue = String(target.owner ?? "");
+>        target.owner = notice.value;
+>      } else if (notice.field === "status") {
+> +      previousValue = String(target.status ?? "");
+>        target.status = notice.value;
+>      } else if (notice.field === "date") {
+> +      previousValue = String(target.date ?? "");
+>        target.date = notice.value;
+>      }
+>      report.push({
+>        notice_id: notice.notice_id,
+>        transaction_id: notice.transaction_id,
+>        field: notice.field,
+> -      previous_value: "",
+> +      previous_value: previousValue,
+>        new_value: notice.value,
+>        effective: notice.effective,
+>      });
+>    }
+> +
+> +  // Contract: sorted by notice_id ascending.
+> +  report.sort((a, b) => {
+> +    if (a.notice_id === b.notice_id) return 0;
+> +    return a.notice_id < b.notice_id ? -1 : 1;
+> +  });
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@e1953a1e27da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e1953a1e27da:/app# ls -la /app/output
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 00:39 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:39 ..
+-rw-r--r-- 1 root root   22 Jun  8 00:39 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:39 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 00:39 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 00:39 transactions.json
+root@e1953a1e27da:/app#

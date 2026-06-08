@@ -1,0 +1,6 @@
+{
+  "analysis": "All required artifacts are generated under /app/output and match the output contract: JSON envelopes use {items}, transactions are sorted by transaction_id, CSV header includes exception_reason and amount formatting, exceptions.json contains only flagged rows, and reconciliation_report.jsonl is sorted by notice_id with previous_value populated. Determinism requirement is met (transactions.json is byte-identical across reruns). Parsers were fixed to avoid decoy sections by selecting the authoritative (last) structured sections, ledger parsing now ignores provisional blocks and uses last non-provisional per TXN, corrections parsing now correctly uses targets/field/value/effective, and reconciliation logic now applies Brief 02 status precedence and Brief 07/09 compliance_hold computation ordering.",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> -    report.push({
+> -      notice_id: notice.notice_id,
+> -      transaction_id: notice.transaction_id,
+> -      field: notice.field,
+> -      previous_value: "",
+> -      new_value: notice.value,
+> -      effective: notice.effective,
+> -    });
+> +    report.push({
+> +      notice_id: notice.notice_id,
+> +      transaction_id: notice.transaction_id,
+> +      field: notice.field,
+> +      previous_value: prev,
+> +      new_value: String(notice.value),
+> +      effective: notice.effective,
+> +    });
+>    }
+> @@
+> -  return { items, report };
+> +  return { items, report };
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# cp /app/output/transactions.json /tmp/transactions.run1.json
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# diff -u /tmp/transactions.run1.json /app/output/transactions.json || true
+root@9416c0dee655:/app# ls -la /app/output && wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 00:37 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:37 ..
+-rw-r--r-- 1 root root   22 Jun  8 00:37 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:37 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 00:37 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 00:37 transactions.json
+0 /app/output/reconciliation_report.jsonl
+root@9416c0dee655:/app#

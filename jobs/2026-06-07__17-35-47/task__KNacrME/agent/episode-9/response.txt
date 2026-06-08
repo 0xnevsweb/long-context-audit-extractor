@@ -1,0 +1,27 @@
+{
+  "analysis": "The brief content being displayed is still largely non-binding draft narrative (it explicitly says non-binding). We need the actual binding bullet rules inside Briefs 01–09; likely further down within each brief section. Next step is to search within the /tmp/brief files for normative keywords (Binding, Rule, MUST, precedence, extractor must/shall, effective, compliance_hold) and print those parts. Then we can implement the correct reconciliation semantics. Also we need to update parsers to include timestamps/effective dates for emails and corrections as required by those rules.",
+  "plan": "Use grep to find the binding rule subsections within each brief file, then print around those line numbers. Focus on: ledger sourcing (Brief 01), status precedence (Brief 02), compliance mail timing (Brief 03), correction notice precedence (Brief 04), meeting amendments/owners (Brief 05), effective_date (Brief 06), exception flags (Brief 07/08), and Brief 09 mid-year amendment (compliance_hold comparison). We'll use `grep -n` then `sed -n '<start>,<end>p'` to view relevant passages.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n### $f keywords\"; grep -nE \"Binding|BINDING|Rule|RULE|MUST|must |SHALL|shall |precedence|Precedence|exception_reason|exception|compliance_hold|hold|timestamp|effective\" \"$f\" | head -n 80; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"BINDING|Binding|Extractor must|MUST|SHALL\" /tmp/brief03.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"BINDING|Binding|Extractor must|MUST|SHALL|supersede|supersedes|amendment\" /tmp/brief09.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"exception_reason|exception flags|flag\" /tmp/brief07.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"exception_reason|exception flags|flag\" /tmp/brief08.md | head -n 80\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

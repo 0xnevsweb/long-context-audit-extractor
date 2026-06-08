@@ -1,0 +1,23 @@
+{
+  "analysis": "exceptions.json is clearly wrong per the output contract: it should be an envelope {\"items\": [...]} containing flagged transaction rows only, but current file is {\"exceptions\": []}. So normalize/exceptions.js and/or json writer are not following contract. Also, exception_reason in transactions.json rows should be semicolon-joined codes or null; we are currently setting exception_reason null always in reconcile.js and buildExceptions likely returns wrong shape. This is a major remaining requirement and likely related to compliance_hold flags. Next: inspect output/jsonWriter.js, normalize/exceptions.js, and schema/validate.js to adjust outputs to contract. Then implement exception_reason calculation based on Brief 08 (exception flags) and Brief 07/09 (compliance_hold).",
+  "plan": "1) Inspect /app/audit-extractor/src/output/jsonWriter.js and normalize/exceptions.js and schema/validate.js to understand current expected shapes. 2) Update writers to produce envelopes exactly as contract: {items:[...]} for transactions.json and exceptions.json. Verify transactions.json currently matches contract or not. 3) Implement exception_reason computation (likely in buildExceptions) and ensure transactions items include exception_reason populated and in lexical order. Ensure exceptions.json includes only rows with non-null exception_reason and same row shape. 4) Re-run extractor and verify file shapes, and that exceptions.json includes items array. 5) Only after contract compliance, revisit compliance_hold semantics with Briefs 07–09.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 40 /app/output/transactions.json\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

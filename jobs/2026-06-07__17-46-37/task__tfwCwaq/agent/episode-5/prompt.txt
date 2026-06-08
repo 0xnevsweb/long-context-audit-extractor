@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+module.exports = { buildExceptions };
+root@0f1e383a7916:/app# sed -n '1,260p' /app/audit-extractor/src/lib/policy.js
+sed: can't read /app/audit-extractor/src/lib/policy.js: No such file or directory
+root@0f1e383a7916:/app# python3 - <<'PY'
+> import re
+> path='/app/data/audit_archive.md'
+> with open(path,'r',encoding='utf-8') as f:
+>     lines=f.readlines()
+>
+> def brief(n):
+>     pat=re.compile(r'^#+\s*Investigation Brief\s*0?%d\b'%n)
+>     starts=[i for i,l in enumerate(lines,1) if pat.match(l)]
+>     if not starts:
+>         print('Brief',n,'not found'); return
+>     start=starts[0]
+>     end=len(lines)
+>     for i in range(start+1,len(lines)+1):
+>         if re.match(r'^#+\s*Investigation Brief\s*\d+\b', lines[i-1]):
+>             end=i-1; break
+>     print(f"\n=== Brief {n:02d} lines {start}-{end} ===")
+>     for j in range(start, end+1):
+>         print(f"{j}:"+lines[j-1].rstrip('\n'))
+>
+> brief(3)
+> PY
+
+=== Brief 03 lines 468-478 ===
+468:## Investigation Brief 03 — Compliance Mail Timing
+469:
+470:Extract policy (authoritative):
+471:
+472:The March mail-room audit explained missing holds: agents applied compliance
+473:messages without checking dispatch dates. When an excerpt includes
+474:`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+475:equal to the ledger date for that transaction. When no `sent:` line is present,
+476:apply the status change if precedence allows. Correction notices always apply
+477:after ledger rows, meeting amendments, and mail excerpts have been merged.
+478:
+root@0f1e383a7916:/app#

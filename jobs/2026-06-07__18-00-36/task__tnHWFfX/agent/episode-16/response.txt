@@ -1,0 +1,10 @@
+{
+  "analysis": "I can see the canonical Transaction Ledger has entries including one provisional block. Let me get the other sections more clearly by piping to separate commands.",
+  "plan": "Read each section carefully using targeted line ranges, one at a time.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '3849,3865p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

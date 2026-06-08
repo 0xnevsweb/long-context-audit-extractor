@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> const {parseEmails}=require('/app/audit-extractor/src/parser/emails');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const emails=parseEmails(md);
+> console.log('emails', emails.length);
+> console.log(emails.slice(0,5));
+> NODE
+emails 6
+[
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',
+    sent: '2024-06-15',
+    status: 'rejected'
+  },
+  {
+    from_addr: 'alice@corp.internal',
+    transaction_id: 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',
+    sent: null,
+    status: 'approved'
+  },
+  {
+    from_addr: 'compliance@audit.corp',
+    transaction_id: 'TXN-de3b42d7-919c-5839-a490-b039d9c97092',
+    sent: null,
+    status: 'rejected'
+  },
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-de3b42d7-919c-5839-a490-b039d9c97092',
+    sent: '2024-08-15',
+    status: 'rejected'
+  },
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-1b083448-63e3-5527-a20a-edd71416341c',
+    sent: '2024-08-10',
+    status: 'rejected'
+  }
+]
+root@e1953a1e27da:/app#

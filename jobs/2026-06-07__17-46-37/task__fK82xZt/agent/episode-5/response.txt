@@ -1,0 +1,23 @@
+{
+  "analysis": "We’re viewing part of the archive around the meeting amendments and the start of Email Excerpts. Meeting amendment format includes an `effective:` field too (parseMeetings currently ignores it). Email excerpt section includes lots of non-transaction messages; only compliance-addressed threads with TXN subjects should affect merge logic. Current parseEmails accepts any From line and any status line, not restricted to compliance sender, and ignores `sent:` date needed for timing/holds. We still haven’t captured the binding brief rulings (01–08) due to screen truncation; we need to extract those sections more carefully, especially the exact rule statements. Also need the top note about authoritative ledger heading exactly `## Transaction Ledger` and likely other decoy headings to avoid.",
+  "plan": "1) Extract the binding 'Committee ruling (binding for extract):' paragraphs for Briefs 01–08 using a Python script that isolates between the brief heading and the 'field notes' heading, then further extracts from 'Committee ruling' onward. 2) Inspect the early lines about authoritative ledger heading and decoys. 3) Inspect a compliance email excerpt containing TXN to see exact fields (From, Subject, sent, status, possibly hold keywords). 4) Then implement parser and reconcile changes accordingly.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    txt=f.read()\nfor i in range(1,9):\n    h=re.search(rf\"^##\\s*Investigation\\s*Brief\\s*0?{i}\\b.*$\", txt, re.M|re.I)\n    if not h:\n        continue\n    # end at the corresponding field notes heading for same brief\n    hn=re.search(rf\"^##\\s*Investigation\\s*Brief\\s*0?{i}\\b.*field notes.*$\", txt[h.end():], re.M|re.I)\n    end = h.end()+hn.start() if hn else None\n    sec=txt[h.start():end]\n    m=re.search(r\"Committee ruling \\(binding for extract\\):\\s*\\n\", sec, re.I)\n    body=sec[m.end():] if m else sec\n    # limit to first ~1200 chars\n    print('\\n'+'='*80)\n    print(f'BRIEF {i} BINDING')\n    print('='*80)\n    print(body.strip()[:1400])\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,30p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"From: compliance@corp.internal\" /app/data/audit_archive.md | head\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '3600,3885p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

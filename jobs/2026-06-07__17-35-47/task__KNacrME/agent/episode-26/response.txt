@@ -1,0 +1,27 @@
+{
+  "analysis": "We updated parsers to use lastIndexOf for authoritative sections, and updated reconcile.js to apply mail-driven status changes from compliance@ with precedence. Extractor runs and outputs contract envelope. Remaining key missing feature from task description: compliance_hold exception flag and hold timing per Brief 09, plus ensuring mail timing uses sent date vs effective dates and that later mail is not missed. We added parsing of email sent date, but we haven't used it. Also correction vs mail order likely specified (Brief 09 says hold computed after compliance mail merges but before correction notice changes date/status, and Brief 03 governs mail-driven status). We currently apply mail before corrections, which may be wrong for status; and hold not implemented at all. Next: locate binding text in Brief 03/07/08/09 regarding compliance_hold and implement using email.sent and row.date comparisons (with Brief 09 override). We'll need to extract those lines from archive around Brief 03, Brief 07, Brief 08, and Brief 09 beginnings using small sed windows.",
+  "plan": "1) Print small excerpts around Brief 03 (line 468) and Brief 07 (1201) and Brief 08 (1419) and the top of Brief 09 (1670) to capture explicit compliance_hold rule, exception codes, and ordering. 2) Implement compliance_hold computation in reconcile.js: determine for each transaction if there's a compliance@ email whose sent date is after some comparison date (defined in Brief 09) and flag it; ensure hold is computed at the correct point in the overlay order per Brief 09. 3) Add 'compliance_hold' to exception_reason codes (lexical ordering). 4) Re-run extractor and ensure determinism and that exceptions.json includes compliance_hold flagged rows.",
+  "commands": [
+    {
+      "keystrokes": "echo '--- Brief03 excerpt ---'; sed -n '468,525p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief07 excerpt ---'; sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief08 excerpt ---'; sed -n '1419,1485p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief09 excerpt (start) ---'; sed -n '1670,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"compliance_hold\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

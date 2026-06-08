@@ -1,0 +1,41 @@
+Current Terminal Screen:
+/tmp/brief09.txt:51:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checke
+d mail excerpts against amendment minutes before accepting any owner change.
+/tmp/brief09.txt:65:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when fl
+agging holds. The mid-year amendment later in this archive supersedes that draft practice.
+/tmp/brief09.txt:67:Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments s
+hould ever override ledger owners; Brief 05 resolves that question for the extractor.
+/tmp/brief09.txt:71:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checke
+d mail excerpts against amendment minutes before accepting any owner change.
+root@30aa72376025:/app# grep -nE "status|pending|approved|rejected|reversed" /tmp/brief02.txt /tmp/brief09.txt | head -n 200
+/tmp/brief02.txt:5:Interview notes with the compliance desk confirmed status fights between mail,
+/tmp/brief02.txt:6:amendments, and corrections. Ledger rows provide the base status (lowercase on
+/tmp/brief02.txt:7:output). Status precedence from lowest to highest is: pending, approved,
+/tmp/brief02.txt:8:rejected, reversed. Email excerpts may change status only when the From line
+/tmp/brief02.txt:15:Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:19:Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:29:Working paper WP-3893 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:41:Working paper WP-2952 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:57:Working paper WP-2260 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:93:Working paper WP-6664 documents a three-way match failure tied to SOX sampling mismatch. The team escalated when repeated extractor runs pro
+duced different status columns for the same transaction id.
+/tmp/brief02.txt:115:Working paper WP-9554 documents a three-way match failure tied to SOX sampling mismatch. The team escalated when repeated extractor runs pr
+oduced different status columns for the same transaction id.
+/tmp/brief02.txt:169:Working paper WP-8158 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor
+runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:183:Working paper WP-1199 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor
+runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:213:Working paper WP-7822 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor
+runs produced different status columns for the same transaction id.
+/tmp/brief02.txt:215:Working paper WP-8334 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor
+runs produced different status columns for the same transaction id.
+/tmp/brief09.txt:10:before any correction notice changes `date` or `status`. Brief 03 still governs
+/tmp/brief09.txt:11:mail-driven status changes; this amendment governs only the hold flag.
+/tmp/brief09.txt:59:Working paper WP-1770 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor
+ runs produced different status columns for the same transaction id.
+root@30aa72376025:/app#

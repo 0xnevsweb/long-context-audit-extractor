@@ -1,0 +1,47 @@
+{
+  "analysis": "Writers do not follow the contract: jsonWriter uses keys transactions/exceptions instead of items; csvWriter header missing exception_reason column and does not format amount to two decimals or handle null exception_reason blank. validate.js is minimal and doesn’t catch these. Corrections parser uses indexOf for section boundaries and searches for '## Transaction Ledger' substring, which will match the working copy heading and cause slice to end too early, likely excluding correction notices or truncating them depending on ordering; also Brief 01 requires regex anchored headings (though for corrections briefs don’t state it, but should mirror for correctness). We must fix jsonWriter.js, csvWriter.js, and parser/corrections.js to use anchored regex and find exact authoritative ledger heading line `## Transaction Ledger`.\n\nAfter these changes, rerun extractor and verify:\n- transactions.json: {\"items\":[...]} sorted by transaction_id.\n- exceptions.json: {\"items\":[...]} only flagged.\n- transactions.csv header includes exception_reason and blank when null, amount formatted with 2 decimals.\n- reconciliation_report.jsonl non-empty and sorted by notice_id; previous_value filled.\n",
+  "plan": "1) Overwrite jsonWriter.js to emit {items: items} for both transactions and exceptions, with pretty formatting stable. 2) Overwrite csvWriter.js to emit correct header and rows, format amount_usd with exactly 2 decimal places, and render exception_reason as empty when null. 3) Overwrite parser/corrections.js to locate Correction Notices section and end at exact heading line `## Transaction Ledger` using anchored regex; avoid matching working copy heading. 4) Rerun extractor to /tmp/out and inspect artifacts; ensure report has content and JSON envelopes are correct; then rerun to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeTransactionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + \"\\n\");\n}\n\nfunction writeExceptionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + \"\\n\");\n}\n\nmodule.exports = { writeTransactionsJson, writeExceptionsJson };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction esc(v) {\n  // Contract inputs are simple; still, escape commas/quotes minimally.\n  const s = String(v ?? \"\");\n  if (/[\\n\\r,\\\"]/g.test(s)) return `\"${s.replace(/\\\"/g, '\"\"')}\"`;\n  return s;\n}\n\nfunction fmt2(n) {\n  const num = Number(n);\n  return num.toFixed(2);\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const ex = row.exception_reason == null ? \"\" : row.exception_reason;\n    return [\n      esc(row.transaction_id),\n      esc(row.owner),\n      esc(row.status),\n      esc(row.effective_date),\n      fmt2(row.amount_usd),\n      esc(ex),\n    ].join(\",\");\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\") + \"\\n\");\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const startRe = /^## Correction Notices\\s*$/m;\n  const endRe = /^## Transaction Ledger\\s*$/m;\n\n  const ms = startRe.exec(markdown);\n  if (!ms) return [];\n  const afterStart = markdown.slice(ms.index + ms[0].length);\n\n  const me = endRe.exec(afterStart);\n  const slice = me ? afterStart.slice(0, me.index) : afterStart;\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\").slice(1).join(\":\").trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\").slice(1).join(\":\").trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\").slice(1).join(\":\").trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\").slice(1).join(\":\").trim();\n      }\n    }\n    notices.push(entry);\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/jsonWriter.js && node -c /app/audit-extractor/src/output/csvWriter.js && node -c /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out && mkdir -p /tmp/out\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/out\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 5 /tmp/out/transactions.json && head -n 3 /tmp/out/transactions.csv && head -n 5 /tmp/out/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "wc -l /tmp/out/reconciliation_report.jsonl && head -n 10 /tmp/out/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

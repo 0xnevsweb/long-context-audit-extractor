@@ -1,0 +1,47 @@
+{
+  "analysis": "The terminal output is showing narrative filler around grant compliance attestation and repeated disclaimers; it’s not giving us the code or the exact Investigation Brief headings/line numbers we need. We need to precisely extract the authoritative brief sections and inspect the Node source files directly. Also, the grep for brief headings didn’t show in the captured output, likely due to scroll; we should rerun targeted commands with smaller outputs (head/tail) and/or redirect to temp files for viewing. Next: capture heading line numbers, then sed exact ranges for Brief 04, 05, 07, 09, plus view reconcile.js and parsers; then implement fixes.",
+  "plan": "1) Re-run grep for brief headings and store line numbers. 2) Use sed with tight ranges around Brief 04 (corrections), Brief 05 (amendments/owner), Brief 07 (holds), Brief 09 (amendment) based on the line numbers obtained. 3) Dump reconcile.js and parsers to understand current logic. 4) After rules are clear, edit reconcile.js and maybe parsers/util sort/output to fix deterministic ordering, previous_value, correction mapping, and compliance hold timing.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | sed -n '1,20p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | tail -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 04\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 05\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '660,740p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '740,820p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -p \"require('fs').readFileSync('/app/audit-extractor/src/normalize/reconcile.js','utf8').split('\\n').slice(0,220).join('\\n')\"\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -p \"require('fs').readFileSync('/app/audit-extractor/src/normalize/reconcile.js','utf8').split('\\n').slice(220,520).join('\\n')\"\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

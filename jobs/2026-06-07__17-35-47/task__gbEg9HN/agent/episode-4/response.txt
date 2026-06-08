@@ -1,0 +1,27 @@
+{
+  "analysis": "We’re seeing the authoritative Transaction Ledger section content (end of archive). It includes a duplicated transaction_id (TXN-ba9e6ade…) with a provisional row (owner: stale, status: pending, provisional: true) followed by a non-provisional row (owner: finalowner, status: approved). This is a likely source of status drift and wrong correction mapping if the code picks an arbitrary row when multiple ledger rows share the same transaction_id. Next we must inspect reconcile.js and ledger/corrections parsers to see how duplicates and provisional rows are handled, and ensure deterministic selection rules consistent with the briefs (likely: ignore provisional rows when a final row exists; or select latest authoritative row by some ordering). We also need to examine correction notices section and Brief 04 precedence rules, and Brief 09 compliance hold timing amendment. The earlier code views didn’t come through; we need to re-open reconcile.js and parsers now.",
+  "plan": "1) Inspect parser/ledger.js to see how ledger entries are parsed and whether duplicates are preserved, deduped, or overwritten in a Map/Object (which could cause nondeterministic outcome if insertion order changes). 2) Inspect parser/corrections.js and normalize/reconcile.js to see how corrections are matched to ledger rows and applied, and how report previous_value is computed. 3) Search within reconcile.js for 'provisional', 'hold', 'compliance', and correction application order. 4) Read the Correction Notices section from the archive to identify fields used to match (notice_id, transaction_id, field, new value, effective date).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"provisional|duplicate|dedup|Map\\(|Object\\.keys|sort\\(\" /app/audit-extractor/src/normalize/reconcile.js /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3840,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,31 @@
+{
+  "analysis": "Output contract confirms reconciliation_report.jsonl must include previous_value (value immediately before correction applies) and only winning correction notices, sorted by notice_id. Current reconcile.js sets previous_value to empty string and includes all corrections indiscriminately. We still need parser outputs for sections/emails/ledger/meetings/policy to implement authoritative reconciliation rules. Also exceptions.json currently just filters on exception_reason, but reconcile never sets any, so exceptions are missing. We must implement exception_reason flag codes as specified by policy exceptions in archive (in Investigation Briefs 01–09).",
+  "plan": "1) Re-open parser files (sections.js, ledger.js, emails.js, meetings.js, policy.js) since their output wasn’t captured; ensure we see parsed shapes and any current filtering mistakes (e.g., including non-authoritative email excerpt section). 2) Extract Investigation Briefs 01–09 to derive exact flag codes and precedence rules (especially correction precedence, mail precedence, hold definition). 3) Implement reconciliation properly in normalize/reconcile.js: apply meeting amendments, then mail with sent-date gating, compute compliance_hold using Brief 09 pre-correction date, then apply corrections selecting the winning correction per field (likely by effective date or notice ordering per briefs), recording previous/new values. 4) Populate exception_reason as semicolon-joined sorted codes; ensure amount_usd has two decimals; ensure deterministic sort for outputs; then run extractor to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\n# print briefs 1-9 (cap each to 200 lines to avoid huge output)\nfor n in range(1,10):\n    pat=re.compile(r'^#+\\s*Investigation Brief\\s*0?%d\\b'%n)\n    starts=[i for i,l in enumerate(lines,1) if pat.match(l)]\n    if not starts:\n        print('Brief',n,'not found');\n        continue\n    start=starts[0]\n    end=len(lines)\n    for i in range(start+1,len(lines)+1):\n        if re.match(r'^#+\\s*Investigation Brief\\s*\\d+\\b', lines[i-1]):\n            end=i-1; break\n    print(f\"\\n=== Brief {n:02d} lines {start}-{end} (show up to 200 lines) ===\")\n    for j in range(start, min(end, start+199)+1):\n        print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

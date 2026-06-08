@@ -1,0 +1,23 @@
+{
+  "analysis": "We now see Correction Notices format (### CORR-... blocks with targets/field/value/effective). We also see there is a decoy '## Transaction Ledger (working copy)' section that must be ignored; only the exact heading line '## Transaction Ledger' is authoritative (Brief 01). This explains rerun drift if parsers use indexOf and latch onto the first occurrence. Next we must implement heading-anchored section slicing to select correct sections and ignore working copy. We also need binding brief texts from /tmp/binding-brief*.md (not shown here but should exist) to implement status precedence, correction precedence, exception flags. Then update reconciliation logic and output writers.",
+  "plan": "1) Inspect /tmp/binding-brief02..08.md content via grep for key rules and show them. 2) Implement a shared section-slicing utility that finds headings using regex anchored to start of line, matching exact headings, and returns the slice between headings. Update ledger/emails/policy/corrections to use it. Ledger parser must pick only canonical '## Transaction Ledger' and ignore blocks containing 'provisional: true' and keep last non-provisional per transaction id. 3) Update email parser to parse sent date and status and classify which emails affect status vs holds per Brief 03 and Brief 09. 4) Update reconcile.js to apply meeting amendments only if signed true and effective >= ledger date when present; apply email-driven status changes with precedence; compute compliance_hold flag before applying corrections; apply corrections with precedence and produce report with previous_value and sorted by notice_id; compute exceptions and set exception_reason properly; fix writers to match output contract envelopes and sorting and deterministic formatting.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/binding-brief0{2,3,4,6,7,8}.md; do echo \"\\n===== $f key rules =====\"; grep -nE \"(binding|must |Ignore|only|default|precedence|sort|status|email|sent:|hold|compliance_hold|correction|effective_date|exception_reason|artifact|overlay)\" \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

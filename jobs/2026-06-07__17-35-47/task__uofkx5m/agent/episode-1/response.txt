@@ -1,0 +1,31 @@
+{
+  "analysis": "We successfully inspected the CLI and output contract. CLI already enforces missing --input/--outdir => stderr + exit 1. The contract requires deterministic transactions.json, sorted by transaction_id, and reconciliation_report.jsonl sorted by notice_id. Next we must read the authoritative rules in Investigation Briefs 01–09 inside /app/data/audit_archive.md, but ripgrep (rg) is not installed, so we need to use grep/sed/awk to locate those sections and the structured ledger/corrections near the end.",
+  "plan": "1) Use grep to find the line numbers for Investigation Briefs 01–09 and for likely structured sections (Ledger, Mail, Correction Notice). 2) Extract those ranges with sed to read the policy, especially Brief 09 amendments. 3) Inspect source code in src/index.js and the lib/parser/normalize/output code paths to locate current reconciliation implementation and where drift could occur (nondeterministic iteration/sorting, date/timing logic, correction application order, joining correction notices to ledger rows).",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Investigation Brief\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Brief 0[1-9]|Investigation Brief 0[1-9]\" /app/data/audit_archive.md | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Brief 09|Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Ledger|LEDGER|ledger rows|Correction Notice|CORRECTION|mail excerpt|Mail Excerpt|COMPLIANCE HOLD|hold\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f | sed 's|^|FILE: |'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

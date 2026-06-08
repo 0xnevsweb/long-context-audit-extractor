@@ -1,0 +1,35 @@
+{
+  "analysis": "We still haven’t captured reconcile.js top nor /tmp/briefs.txt output; current view is still narrative filler around lines 1275-1300, not the Investigation Brief headings. To proceed, we should directly display /tmp/briefs.txt and use those line numbers to sed the correct brief ranges. Also we need to inspect parser/ledger.js and reconcile.js top to implement deterministic ledger selection and hold logic. Given clear, code-level contract violations already found (previous_value empty; corrections/report ordering; sort comparator), we can start fixing those immediately while we continue extracting Brief 09 hold timing rules afterward.",
+  "plan": "1) Display /tmp/briefs.txt and also print around each brief heading using nl+sed with correct ranges. 2) Print reconcile.js top (1-120) and parser/ledger.js to handle provisional duplicates. 3) Implement immediate fixes:\n- utils/sort.js comparator return 0 for equal.\n- reconcile.js: sort corrections by notice_id; compute previous_value; sort report by notice_id.\n- parseCorrections: ensure all required fields exist; keep deterministic.\nThen run extractor and validate deterministic transactions.json. After that, we’ll address compliance hold timing once we can read Brief 07/09 text and check current implementation.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /tmp/briefs.txt && sed -n '1,40p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/utils/sort.js\n@@\n function sortByTransactionId(items) {\n-  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));\n+  return items.sort((a, b) => {\n+    if (a.transaction_id === b.transaction_id) return 0;\n+    return a.transaction_id < b.transaction_id ? -1 : 1;\n+  });\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/normalize/reconcile.js\n@@\n function reconcileTransactions(parsed) {\n@@\n-  const report = [];\n-  for (const notice of parsed.corrections) {\n+  const report = [];\n+  const sortedNotices = [...parsed.corrections].sort((a, b) => {\n+    if (a.notice_id === b.notice_id) return 0;\n+    return a.notice_id < b.notice_id ? -1 : 1;\n+  });\n+\n+  for (const notice of sortedNotices) {\n     const target = byId.get(notice.transaction_id);\n     if (!target) {\n       continue;\n     }\n+\n+    // Contract: previous_value is the field value immediately before this\n+    // correction applies.\n+    let previousValue = \"\";\n     if (notice.field === \"owner\") {\n+      previousValue = String(target.owner ?? \"\");\n       target.owner = notice.value;\n     } else if (notice.field === \"status\") {\n+      previousValue = String(target.status ?? \"\");\n       target.status = notice.value;\n     } else if (notice.field === \"date\") {\n+      previousValue = String(target.date ?? \"\");\n       target.date = notice.value;\n     }\n     report.push({\n       notice_id: notice.notice_id,\n       transaction_id: notice.transaction_id,\n       field: notice.field,\n-      previous_value: \"\",\n+      previous_value: previousValue,\n       new_value: notice.value,\n       effective: notice.effective,\n     });\n   }\n+\n+  // Contract: sorted by notice_id ascending.\n+  report.sort((a, b) => {\n+    if (a.notice_id === b.notice_id) return 0;\n+    return a.notice_id < b.notice_id ? -1 : 1;\n+  });\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

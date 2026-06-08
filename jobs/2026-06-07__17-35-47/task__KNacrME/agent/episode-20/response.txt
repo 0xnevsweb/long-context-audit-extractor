@@ -1,0 +1,31 @@
+{
+  "analysis": "We successfully inspected meetings.js and policy.js. Meetings parser finds `#### Amendment for TXN-...` blocks and extracts owner and signed boolean; it uses a fixed 400-char slice, which may miss fields if longer. Policy exceptions parser returns a Set of transaction IDs between Policy Exceptions and Correction Notices sections. We still need email/corrections formats (our sed sample output got truncated to ledger lines), but we can proceed to inspect parser/sections.js to see what’s parsed and then adjust reconcile.js to incorporate meetings and policy exceptions (exception flags). We also need to fix output sorting/envelopes already. Next: open parser/sections.js and index.js to confirm flow, then implement deterministic reconciliation with meetings/policy exceptions integrated; also fix reconciliation_report sorting and previous_value. Even without full email/correction formats, we can at least correct contract + determinism issues and integrate existing parsed fields.",
+  "plan": "1) Inspect parser/sections.js and index.js to see current parseArchive and runExtract pipeline and ensure meetings/policy included. 2) Inspect parser/corrections.js and parser/emails.js again; then locate and view small samples of those sections in the markdown by first finding line numbers and then printing very narrow ranges to avoid truncation. 3) Rewrite normalize/reconcile.js to: create base rows from ledger, apply signed meeting amendments to owner, attach policy exceptions as exception flags, apply corrections with previous_value tracking and ensure report contains only winning corrections, sorted by notice_id. Apply status precedence order if defined. 4) Update normalize/exceptions.js to compute exception_reason string (semicolon-joined codes) rather than just filter.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/emails.js\nsed -n '1,140p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "email_line=$(grep -n \"^## Email Excerpts\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"$((email_line+1)),$((email_line+35))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "corr_line=$(grep -n \"^## Correction Notices\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"$((corr_line+1)),$((corr_line+60))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

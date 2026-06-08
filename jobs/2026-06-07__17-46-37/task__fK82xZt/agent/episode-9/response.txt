@@ -1,0 +1,15 @@
+{
+  "analysis": "We now have Brief 07 and 08 binding rules clearly (exception flags): over_limit (amount>10000), compliance_hold (final status rejected + qualifying compliance email with sent line; sent-date comparison per Brief 09), policy_waiver (final approved + amount>10000 + policy exception approved_by compliance), retroactive_review (final reversed + amount>5000 + winning correction changed status). We still need Briefs 01–06 (ledger sourcing, status precedence, mail timing, correction precedence, meeting amendments, effective date output). /tmp/briefs.txt appears to only include briefs 07-08 in the visible range; likely earlier lines contain 01-06 but weren’t printed due to we started mid-file. We should print lines 1-120 to capture 01-06. Then implement code changes.\n\nKey required fixes identified already:\n- Parse authoritative ledger heading exact match and handle duplicates/provisional.\n- Parse emails only from compliance@corp.internal with sent date.\n- Apply meeting amendments only if signed true.\n- Status precedence/order and mail timing per briefs.\n- Corrections: determine winning corrections, compute previous_value, sort by notice_id.\n- Determinism: stable sort comparator, deterministic application order.\n- Compute exception_reason codes and join lexically.\n",
+  "plan": "1) Display /tmp/briefs.txt from the beginning to capture Briefs 01–06 binding rules. 2) Implement parser fixes (ledger, emails, meetings if needed) according to those rules. 3) Rewrite reconcile.js to follow overlay order and compute exception flags and report correctly, incorporating Brief 09 for compliance_hold timing. 4) Run extractor twice and diff outputs; then run final to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /tmp/briefs.txt | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/briefs.txt | sed -n '120,240p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

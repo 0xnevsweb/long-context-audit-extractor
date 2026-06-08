@@ -1,0 +1,55 @@
+{
+  "analysis": "CLI argument validation already meets the requirement: missing command or missing --input/--outdir writes to stderr and exits 1. We still need to inspect reconcile.js and parsers (their outputs weren’t shown in the latest terminal screen), and we still need to read the actual authoritative Brief 01–09 rules from audit_archive.md (especially Brief 09). The core bugs mentioned (status drift across reruns, compliance holds missing later mail, correction notices applied to wrong ledger rows) will be in normalize/reconcile.js and/or parser/corrections.js plus ordering/sorting in writers.",
+  "plan": "1) Re-run the file views for reconcile.js and key parsers to capture current logic. 2) Inspect output writers to ensure stable ordering and consistent numeric formatting. 3) Read the relevant parts of audit_archive.md: Brief 03/07/09 (hold logic timing) and Brief 04 (correction precedence) plus the structured Correction Notices and authoritative Transaction Ledger sections near the end. Then implement code changes accordingly and verify determinism by running extractor twice and diffing transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,620p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '640,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '920,1120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1560,1760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1760,1960p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3720,4120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

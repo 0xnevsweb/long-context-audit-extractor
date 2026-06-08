@@ -1,0 +1,41 @@
+Current Terminal Screen:
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 27
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 28
+
+Internal coordination on treasury wire cutoff failures. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 29
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 30
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 31
+
+Internal coordination on treasury wire cutoff failures. No transaction
+root@0f1e383a7916:/app# rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2
+root@0f1e383a7916:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1
+root@0f1e383a7916:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@0f1e383a7916:/app# sha256sum /tmp/out1/transactions.json /tmp/out2/transactions.json || true
+2ddfba78666d53e689d3e804de67a868a96cd533cd8bc8339286aab00e517fb1  /tmp/out1/transactions.json
+2ddfba78666d53e689d3e804de67a868a96cd533cd8bc8339286aab00e517fb1  /tmp/out2/transactions.json
+root@0f1e383a7916:/app# diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json | head
+root@0f1e383a7916:/app#

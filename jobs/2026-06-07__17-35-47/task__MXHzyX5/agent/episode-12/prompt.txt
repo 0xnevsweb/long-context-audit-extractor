@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       continue;
+>     }
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: previousValue,
+>       new_value: notice.value,
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   report.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => ({
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       effective_date: row.date,
+>       amount_usd: Number(row.amount),
+>       exception_reason: null,
+>     })),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@e1953a1e27da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e1953a1e27da:/app# rm -rf /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@e1953a1e27da:/app# diff -u /app/output/transactions.json /tmp/out2/transactions.json || true
+root@e1953a1e27da:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+0 /app/output/reconciliation_report.jsonl
+root@e1953a1e27da:/app#

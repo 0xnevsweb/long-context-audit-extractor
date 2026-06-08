@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@3f2a24e5dabd:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@3f2a24e5dabd:/app# ls -la /app/output
+total 36
+drwxr-xr-x 2 root root 4096 Jun  8 00:43 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:43 ..
+-rw-r--r-- 1 root root 4354 Jun  8 00:43 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 00:43 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2703 Jun  8 00:43 transactions.csv
+-rw-r--r-- 1 root root 7576 Jun  8 00:43 transactions.json
+root@3f2a24e5dabd:/app# head -n 5 /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@3f2a24e5dabd:/app# head -n 5 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-09-01,10113.94,compliance_hold;over_limit
+root@3f2a24e5dabd:/app# head -n 5 /app/output/exceptions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@3f2a24e5dabd:/app# head -n 5 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+{"notice_id":"CORR-c27e46a1","transaction_id":"TXN-1b083448-63e3-5527-a20a-edd71416341c","field":"date","previous_value":"2024-08-08","new_value":"2024-09-01","
+effective":"2024-09-01"}
+root@3f2a24e5dabd:/app# cp /app/output/transactions.json /tmp/transactions.json.run1
+root@3f2a24e5dabd:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@3f2a24e5dabd:/app# diff -u /tmp/transactions.json.run1 /app/output/transactions.json || true
+root@3f2a24e5dabd:/app#

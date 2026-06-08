@@ -1,0 +1,35 @@
+{
+  "analysis": "The sed outputs for Brief 01/03/04 did not appear in the visible screen; likely scrolled past due to lots of filler in the displayed section. We still need the exact directive lines for Brief 01 (canonical ledger heading), Brief 03 (mail timing/status merge), and Brief 04 (winning correction selection and ordering). We'll extract these directives by directly grepping for distinctive sentences known to exist: Brief 01 mentions 'line is exactly `## Transaction Ledger` as authoritative'; Brief 03 likely mentions 'From line contains compliance@' and uses sent date relative to ledger date; Brief 04 likely mentions how to choose between multiple corrections (latest effective? highest precedence?) and defines winning corrections. We'll use grep to find exact line numbers for these sentences and then sed around them.",
+  "plan": "1) Grep for 'line is exactly `## Transaction Ledger`' and print around it. 2) Grep for 'From line contains' and 'sent:' rules and print around them. 3) Grep for 'winning correction' and within Brief 04 range print from the heading down until before field notes (line 696) to capture the whole directive, since it's short (685-695). 4) With these in hand, start code edits.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"line is exactly `## Transaction Ledger`\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Structured source data appears near the file end\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '10,25p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"From line contains\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"sent:\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,700p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,490p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

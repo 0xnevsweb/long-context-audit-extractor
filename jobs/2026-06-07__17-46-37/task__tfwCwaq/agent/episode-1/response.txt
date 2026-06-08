@@ -1,0 +1,43 @@
+{
+  "analysis": "Repository is present at /app/audit-extractor. CLI already enforces required `extract` command and missing --input/--outdir => stderr + exit 1, so that part likely OK. Output contract requires determinism (byte-identical transactions.json across runs) and sorting by transaction_id / notice_id. We still need to inspect the rest of extractor-output-contract.md (was truncated), and read authoritative policy in Investigation Briefs 01–09 inside /app/data/audit_archive.md (especially Brief 09 amendment). Then inspect source logic for parsing handbook, sorting, reconciliation, corrections, holds, and mapping to ledger. Likely causes: non-deterministic iteration over object keys / Map insertion, unstable sort, or dependence on current time; and incorrect correction matching keys and hold timing rules not updated to Brief 09.",
+  "plan": "1) View full output contract sections that were truncated to understand reconciliation_report.jsonl fields. 2) Locate Investigation Brief sections 01–09 in the archive and extract those text ranges for rule implementation, focusing on hold timing amendment in Brief 09. 3) Identify where in code these rules are implemented (handbook parser, normalize, reconciliation logic). 4) Run extractor twice to reproduce drift and diff outputs to pinpoint nondeterminism. 5) Patch code to: enforce stable deterministic sorting at every output boundary; apply Brief 09 hold timing semantics and ensure later mail updates holds correctly; and map correction notices to ledger rows using the canonical keys per archive structured data. Then rerun extractor to confirm deterministic outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '200,400p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '400,800p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"^# Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\n# find headings for Investigation Brief 01-09\nidx=[]\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^(#+)\\s*Investigation Brief\\s*0?([1-9])\\b',l)\n    if m:\n        idx.append((int(m.group(2)),i,l.strip()))\nidx=sorted(idx)\nprint('Found briefs:', idx)\n# print ranges for each brief\nfor n,start,_ in idx:\n    # end is next start-1 else end of file\n    next_starts=[s for nn,s,_ in idx if s>start]\n    end=(min(next_starts)-1) if next_starts else len(lines)\n    print(f\"\\n=== Brief {n:02d}: lines {start}-{min(end,start+220)} (show first ~220 lines) ===\")\n    for j in range(start, min(end,start+220)+1):\n        print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/lib /app/audit-extractor/src/parser /app/audit-extractor/src/normalize\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

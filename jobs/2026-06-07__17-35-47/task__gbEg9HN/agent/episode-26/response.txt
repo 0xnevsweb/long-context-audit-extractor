@@ -1,0 +1,6 @@
+{
+  "analysis": "All four required artifacts are being written to /app/output with the correct filenames. transactions.json now has the required envelope {\"items\": [...]}, items are sorted by transaction_id, and repeated runs were verified byte-identical earlier. reconciliation_report.jsonl is non-empty, includes previous_value, and is sorted by notice_id. exceptions.json contains only flagged rows with exception_reason populated, and transactions.csv has the exact required header including exception_reason and formats amount_usd to two decimals. We also fixed major reconciliation issues: canonical ledger section selection (ignoring working copy), deterministic handling of duplicate/provisional ledger rows, deterministic correction application and report generation, and compliance_hold detection using email 'sent' date plus policy_exception flags.",
+  "plan": "No further changes needed; proceed to grading.",
+  "commands": [],
+  "task_complete": true
+}

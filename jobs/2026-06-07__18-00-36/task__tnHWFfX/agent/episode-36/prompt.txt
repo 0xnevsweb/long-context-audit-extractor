@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   const lines = markdown.split('\n');
+>   let inSection = false;
+>   let sectionLines = [];
+>
+>   // Find the authoritative Policy Exceptions section (not the draft one)
+>   // We need the one near the end that's between Correction Notices and Transaction Ledger
+>   for (let i = lines.length - 1; i >= 0; i--) {
+>     if (/^## Policy Exceptions$/.test(lines[i])) {
+>       // Found the last one - now collect from here
+>       inSection = true;
+>       const start = i + 1;
+>       for (let j = start; j < lines.length; j++) {
+>         if (/^## /.test(lines[j])) break;
+>         sectionLines.push(lines[j]);
+>       }
+>       break;
+>     }
+>   }
+>
+>   const sectionText = sectionLines.join('\n');
+>   const blocks = sectionText.split(/^### /m).slice(1);
+>   const exceptions = [];
+>
+>   for (const block of blocks) {
+>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)/im);
+>     const approvedByMatch = block.match(/^approved_by:\s*(.+)$/im);
+>     if (!txnMatch) continue;
+>
+>     exceptions.push({
+>       transaction_id: txnMatch[1],
+>       approved_by: approvedByMatch ? approvedByMatch[1].trim() : null,
+>     });
+>   }
+>
+>   return exceptions;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@7aa6d0745461:/app#

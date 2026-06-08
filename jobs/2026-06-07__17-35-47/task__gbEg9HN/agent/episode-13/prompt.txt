@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> m=pat.search(s)
+> if not m:
+>     print('pattern not found; leaving reconcile.js unchanged')
+> else:
+>     repl=(
+> "// Build a deterministic base ledger view. The ledger may contain multiple rows per\n"
+> "// transaction_id (e.g. provisional + final). Prefer non-provisional when present;\n"
+> "// otherwise prefer the last occurrence.\n"
+> "const grouped = new Map();\n"
+> "for (const row of parsed.ledger) {\n"
+> "  if (!grouped.has(row.transaction_id)) grouped.set(row.transaction_id, []);\n"
+> "  grouped.get(row.transaction_id).push({ ...row });\n"
+> "}\n"
+> "\n"
+> "const byId = new Map();\n"
+> "for (const [transactionId, rows] of grouped.entries()) {\n"
+> "  const finals = rows.filter((r) => !r.provisional);\n"
+> "  const pickFrom = finals.length ? finals : rows;\n"
+> "  const chosen = pickFrom[pickFrom.length - 1];\n"
+> "  byId.set(transactionId, chosen);\n"
+> "}\n"
+>     )
+>     s=s[:m.start()]+repl+s[m.end():]
+>     p.write_text(s)
+>     print('updated base ledger selection in reconcile.js')
+> PY
+updated base ledger selection in reconcile.js
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# head -n 5 /app/output/transactions.json
+{
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@9416c0dee655:/app# cp /app/output/transactions.json /tmp/transactions.run1.json
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# diff -u /tmp/transactions.run1.json /app/output/transactions.json || true
+root@9416c0dee655:/app#

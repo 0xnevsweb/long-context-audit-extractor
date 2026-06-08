@@ -1,0 +1,41 @@
+Current Terminal Screen:
+mendment minutes before accepting any owner change.
+362:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+364:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+370:Memo WP-7131 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+378:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+384:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+388:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+390:Memo WP-6022 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+396:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+406:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+416:Memo WP-6978 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overrid
+e ledger owners; Brief 05 resolves that question for the extractor.
+424:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+426:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+440:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+452:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+458:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+460:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+472:The March mail-room audit explained missing holds: agents applied compliance
+483:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+485:Memo WP-3037 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+grep: write error: Broken pipe
+root@9416c0dee655:/app#

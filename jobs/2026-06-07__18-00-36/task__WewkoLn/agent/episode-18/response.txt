@@ -1,0 +1,22 @@
+{
+  "analysis": "The output looks correct. Let me verify a few things:\n\n1. TXN-ba9e6ade: Has 'finalowner' because the last non-provisional ledger entry has that owner, and the meeting amendment (effective: 2020-01-01) doesn't apply since it's before ledger date (2024-04-04). ✓\n2. TXN-51cc9d8a: Status 'reversed' from winning correction CORR-9f4c13de (effective 2024-06-15 > other corrections), retroactive_review flag ✓\n3. TXN-caf3e53e: Owner 'dlee' from correction overriding meeting amendment 'evans', effective_date stays 2024-09-09 since correction only changed owner ✓\n4. TXN-f4d0252e: compliance_hold because final=rejected, compliance@ email with sent ≥ pre-correction date ✓\n5. TXN-de3b42d7: No compliance_hold because sent(2024-08-15) < pre-correction date(2024-12-12) ✓\n\nNow I need to verify idempotency (byte-identical on re-run) and check the CSV format.",
+  "plan": "Run the extractor again to verify byte-identical output, and check the CSV.",
+  "commands": [
+    {
+      "keystrokes": "md5sum /app/output/transactions.json\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "md5sum /app/output/transactions.json\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/output/transactions.csv\n",
+      "duration": 0.5
+    }
+  ]
+}

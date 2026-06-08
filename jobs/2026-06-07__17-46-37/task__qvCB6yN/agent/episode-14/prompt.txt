@@ -1,0 +1,41 @@
+Current Terminal Screen:
+actor must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief08.md:194: Follow-up #161 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extr
+actor must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief08.md:196: Follow-up #547 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extr
+actor must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief08.md:226: In April settlement, external advisors reviewed intercompany netting dispute and asked for a machine-readable reconciliation trace. The arc
+hive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief08.md:248: Follow-up #174 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extr
+actor must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief08.md:250: Follow-up #785 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extr
+actor must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:6: amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+/tmp/brief09.md:8: ledger date immediately before correction notices are applied — that is, the date
+/tmp/brief09.md:10: before any correction notice changes `date` or `status`. Brief 03 still governs
+/tmp/brief09.md:21: Follow-up #977 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor m
+ust instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:49: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive
+ preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief09.md:53: Follow-up #775 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor m
+ust instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:87: Follow-up #634 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor m
+ust instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:91: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive
+ preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief09.md:95: Follow-up #106 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor m
+ust instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:107: Follow-up #449 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor
+must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:109: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archiv
+e preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief09.md:115: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archiv
+e preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief09.md:119: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archiv
+e preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+/tmp/brief09.md:139: Follow-up #439 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor
+must instead derive rows only from the canonical ledger and structured sections at file end.
+/tmp/brief09.md:171: signed: true
+/tmp/brief09.md:176: signed: false
+/tmp/brief09.md:180: signed: true
+root@7a65087374e8:/app#

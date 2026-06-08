@@ -1,0 +1,44 @@
+Previous response had warnings:
+WARNINGS: - Extra text detected before JSON object
+
+Current Terminal Screen:
+> const fs = require("node:fs");
+>
+> function escapeCsv(value) {
+>   if (value === null || value === undefined) return '';
+>   const str = String(value);
+>   if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+>     return '"' + str.replace(/"/g, '""') + '"';
+>   }
+>   return str;
+> }
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header = 'transaction_id,owner,status,effective_date,amount_usd,exception_reason';
+>   const lines = items.map((row) => {
+>     return [
+>       row.transaction_id,
+>       row.owner,
+>       row.status,
+>       row.effective_date,
+>       row.amount_usd.toFixed(2),
+>       row.exception_reason || '',
+>     ].map(escapeCsv).join(',');
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join('\n') + '\n');
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@b5558c31e8a7:/app# cat > /app/audit-extractor/src/output/reportWriter.js << 'EOF'
+> const fs = require("node:fs");
+>
+> function writeReconciliationReport(filePath, report) {
+>   // Report should already be sorted by notice_id ascending
+>   const lines = report.map((row) => JSON.stringify(row));
+>   fs.writeFileSync(filePath, lines.length > 0 ? lines.join('\n') + '\n' : '');
+> }
+>
+> module.exports = { writeReconciliationReport };
+> EOF
+root@b5558c31e8a7:/app#

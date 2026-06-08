@@ -304,9 +304,12 @@ def pipeline_output(archive_text: str) -> Path:
 
 
 def test_archive_is_long_context(archive_text: str) -> None:
-    """Verify that the audit archive meets the long-context size requirement."""
+    """Verify the shipped handbook meets long-context size and depth requirements."""
     assert len(archive_text) >= 200_000, (
         f"archive too small for long-context task: {len(archive_text)} chars"
+    )
+    assert len(archive_text) // 4 >= 50_000, (
+        f"archive below ~50k token estimate: {len(archive_text) // 4}"
     )
     assert "Investigation Brief 01" in archive_text
     brief_09_heading = "## Investigation Brief 09 — Mid-Year Amendment"
@@ -314,6 +317,24 @@ def test_archive_is_long_context(archive_text: str) -> None:
     brief_09_at = archive_text.find(brief_09_heading)
     assert brief_09_at >= 120_000, "policy amendment should be deep in the archive"
     assert "weekly metrics" not in archive_text
+
+
+def test_archive_policy_is_distributed(archive_text: str) -> None:
+    """Binding rules use varied brief markers and structured sections, not one grep hook."""
+    markers = (
+        "Committee ruling (binding for extract):",
+        "Auditor directive (mandatory for extract):",
+        "Extract policy (authoritative):",
+        "Controller memo (binding reconciliation rule):",
+    )
+    assert sum(marker in archive_text for marker in markers) >= 3
+    for section in (
+        "## Email Excerpts",
+        "## Policy Exceptions",
+        "## Correction Notices",
+        "## Transaction Ledger",
+    ):
+        assert section in archive_text, f"missing structured section {section}"
 
 
 def test_cli_requires_arguments() -> None:

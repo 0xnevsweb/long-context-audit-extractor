@@ -1,0 +1,41 @@
+Current Terminal Screen:
+pts against amendment minutes before accepting any owner change.
+   295
+   296  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+   297
+   298  Site visit #156 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batche
+s. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+   299
+   300  During July review, R. Okonkwo circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was trans
+ient cache state; QA reproduced the drift on a cold run the next morning.
+   301
+   302  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+   303
+   304  Interview #611 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advis
+ed preserving the full thread because downstream exception coding depends on mail timestamps.
+   305
+   306  Follow-up #540 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+   307
+   308  Working paper WP-2260 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+   309
+   310  The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+   311
+   312  During July review, J. Huang circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transie
+nt cache state; QA reproduced the drift on a cold run the next morning.
+   313
+   314  The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+   315
+   316  Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blame
+d tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+   317
+   318  Interview #340 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advis
+ed preserving the full thread because downstream exception coding depends on mail timestamps.
+   319
+   320  ## Case Study 03 — Sox Sampling Mismatch
+root@e1953a1e27da:/app#

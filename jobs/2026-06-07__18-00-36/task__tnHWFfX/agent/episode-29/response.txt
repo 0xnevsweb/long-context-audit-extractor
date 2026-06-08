@@ -1,0 +1,18 @@
+{
+  "analysis": "I can see bugs in the email parser - it doesn't extract `sent:` date and doesn't filter by `compliance@`. Let me read the remaining source files.",
+  "plan": "Read corrections, policy, meetings parsers and the reconcile/exceptions modules.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.5
+    }
+  ]
+}

@@ -1,0 +1,150 @@
+New Terminal Output:
+
+root@3f2a24e5dabd:/app# for f in /tmp/binding-brief0{2,3,4,6,7,8}.md; do echo "\n===== $f key rules ====="; grep -nE "(binding|must |Ignore|only|default|precede
+nce|sort|status|email|sent:|hold|compliance_hold|correction|effective_date|exception_reason|artifact|overlay)" "$f"; done
+\n===== /tmp/binding-brief02.md key rules =====
+5:Interview notes with the compliance desk confirmed status fights between mail,
+6:amendments, and corrections. Ledger rows provide the base status (lowercase on
+7:output). Status precedence from lowest to highest is: pending, approved,
+8:rejected, reversed. Email excerpts may change status only when the From line
+\n===== /tmp/binding-brief03.md key rules =====
+5:The March mail-room audit explained missing holds: agents applied compliance
+7:`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+8:equal to the ledger date for that transaction. When no `sent:` line is present,
+9:apply the status change if precedence allows. Correction notices always apply
+\n===== /tmp/binding-brief04.md key rules =====
+3:Controller memo (binding reconciliation rule):
+5:The corrections desk ships multiple notices per field. When several notices
+9:applies (after ledger, amendments, and emails). Owner corrections override
+\n===== /tmp/binding-brief06.md key rules =====
+5:Auditors compared effective_date columns to correction paperwork. Start from the
+6:ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+7:sets field `date` or `status`, use that notice's `effective` date as
+8:`effective_date` only if that correction modified status or date; otherwise
+\n===== /tmp/binding-brief07.md key rules =====
+5:Exception coding review: `exception_reason` is null unless a code applies. Set
+6:`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+7:when final status is `rejected`, a qualifying `compliance@` email referenced
+8:that transaction, and that email block includes a `sent:` line. The sent-date
+9:comparison used for `compliance_hold` is defined in Investigation Brief 09
+\n===== /tmp/binding-brief08.md key rules =====
+3:Controller memo (binding reconciliation rule):
+5:Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+8:final status is `reversed`, `amount_usd` > 5000, and a winning correction
+9:notice changed status for that transaction.
+11:`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+12:by `transaction_id` ascending with fields transaction_id, owner, status
+13:(lowercase), effective_date, amount_usd, exception_reason (null or
+15:transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+16:same rows; leave exception_reason blank when null. `exceptions.json` is
+17:`{"items":[...]}` with only rows where exception_reason is set.
+18:`reconciliation_report.jsonl` is one JSON object per winning correction with
+19:notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+root@3f2a24e5dabd:/app# sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@3f2a24e5dabd:/app# sed -n '1,120p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@3f2a24e5dabd:/app# sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@3f2a24e5dabd:/app#

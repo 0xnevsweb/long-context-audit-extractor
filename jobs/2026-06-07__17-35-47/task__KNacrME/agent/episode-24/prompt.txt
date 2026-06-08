@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+> function buildExceptions(items) {
+>   return items.filter((row) => row.exception_reason != null && row.exception_reason !== "");
+> }
+>
+> module.exports = { buildExceptions };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/normalize/exceptions.js
+root@e13b9ef9896e:/app# rm -rf /app/output && mkdir -p /app/output
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# ls -la /app/output
+total 32
+drwxr-xr-x 2 root root 4096 Jun  8 00:41 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:41 ..
+-rw-r--r-- 1 root root 1000 Jun  8 00:41 exceptions.json
+-rw-r--r-- 1 root root 1094 Jun  8 00:41 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2551 Jun  8 00:41 transactions.csv
+-rw-r--r-- 1 root root 7452 Jun  8 00:41 transactions.json
+root@e13b9ef9896e:/app# head -n 5 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-09-01,10113.94,
+root@e13b9ef9896e:/app# head -n 3 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"reversed","new_value":"approved","ef
+fective":"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json > /tmp/txn.sha
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json >> /tmp/txn.sha
+root@e13b9ef9896e:/app# cat /tmp/txn.sha
+cd43e51d2240ce7e38d090b3a0a6f77b62e6628019f13f769225a3ada746d1e9  /app/output/transactions.json
+cd43e51d2240ce7e38d090b3a0a6f77b62e6628019f13f769225a3ada746d1e9  /app/output/transactions.json
+root@e13b9ef9896e:/app#

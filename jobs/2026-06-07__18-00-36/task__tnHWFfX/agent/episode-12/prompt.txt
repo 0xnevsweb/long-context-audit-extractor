@@ -1,0 +1,34 @@
+New Terminal Output:
+
+
+root@7aa6d0745461:/app# sed -n '1857,3848p' /app/data/audit_archive.md | grep -n -B5 'compliance@'
+980-
+981-Internal coordination on revenue cutoff testing. No transaction identifiers
+982-appear in this message. Investigators archived it to preserve mailbox ordering
+983-around compliance threads.
+984-
+985:From: compliance@corp.internal
+--
+1549-
+1550-Internal coordination on FX revaluation lag. No transaction identifiers appear
+1551-in this message. Investigators archived it to preserve mailbox ordering around
+1552-compliance threads.
+1553-
+1554:From: compliance@audit.corp
+1555-Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+1556-status: rejected
+1557-
+1558:From: compliance@corp.internal
+--
+1978-
+1979-Internal coordination on capital project capitalization. No transaction
+1980-identifiers appear in this message. Investigators archived it to preserve
+1981-mailbox ordering around compliance threads.
+1982-
+1983:From: compliance@corp.internal
+1984-Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+1985-sent: 2024-08-10
+1986-status: rejected
+1987-
+1988:From: compliance@corp.internal
+root@7aa6d0745461:/app#

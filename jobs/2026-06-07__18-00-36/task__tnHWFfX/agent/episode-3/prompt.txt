@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Risk assessment WP-2788 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+ commentary as authoritative transaction sources.
+
+Site visit #188 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers
+flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-3037 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced differ
+ent status columns for the same transaction id.
+
+Site visit #133 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers
+flagged the gap because effective-date logic must honor notice precedence.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #278 with treasury highlighted how treasury wire cutoff failures statements were forwarded without the matching ledger row. Counsel advised preserving
+ the full thread because downstream exception coding depends on mail timestamps.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Site visit #518 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers
+flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-8858 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+ commentary as authoritative transaction sources.
+
+Memo WP-4162 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #592 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows o
+nly from the canonical ledger and structured sections at file end.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+root@7aa6d0745461:/app#

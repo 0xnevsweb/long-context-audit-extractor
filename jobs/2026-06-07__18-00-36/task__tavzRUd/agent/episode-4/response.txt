@@ -1,0 +1,10 @@
+{
+  "analysis": "I can see the beginning of the audit archive. Investigation Brief 01 says to use regex anchored to whole heading lines (not indexOf), only the `## Transaction Ledger` section is authoritative, ignore `provisional: true` blocks, and last non-provisional block wins. Brief 02 says status precedence is pending < approved < rejected < reversed, and emails can only change status if From contains `compliance@`. I need to continue reading to get Briefs 03-09.",
+  "plan": "Continue reading the audit archive to get the remaining investigation briefs and the structured data sections.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '300,600p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

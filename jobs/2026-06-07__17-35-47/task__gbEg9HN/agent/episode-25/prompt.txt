@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      "exception_reason": "policy_exception"
+    },
+    {
+      "transaction_id": "TXN-c7416874-b91b-5c2d-92de-0098b1224d18",
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "policy_exception"
+    },
+    {
+      "transaction_id": "TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f",
+      "owner": "asmith",
+      "status": "reversed",
+      "effective_date": "2024-08-01",
+      "amount_usd": 1601.3,
+      "exception_reason": "compliance_hold"
+    },
+    {
+      "transaction_id": "TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-05-05",
+      "amount_usd": 5993.68,
+      "exception_reason": "compliance_hold"
+    }
+  ]
+}
+root@9416c0dee655:/app# grep -n "compliance_hold\|policy_exception" /app/output/transactions.csv | head
+5:TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-09-01,10113.94,compliance_hold
+7:TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0,frost,pending,2024-09-21,8468.40,policy_exception
+14:TXN-68b5423c-1abb-59e6-947e-7e56011cec58,frost,approved,2024-07-07,8740.52,policy_exception
+28:TXN-c7416874-b91b-5c2d-92de-0098b1224d18,asmith,rejected,2024-11-23,11215.24,policy_exception
+32:TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f,asmith,reversed,2024-08-01,1601.30,compliance_hold
+33:TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4,dlee,rejected,2024-05-05,5993.68,compliance_hold
+root@9416c0dee655:/app# cp /app/output/transactions.json /tmp/transactions.run1.json
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# diff -u /tmp/transactions.run1.json /app/output/transactions.json || true
+root@9416c0dee655:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "We now have authoritative text for Investigation Brief 08. It defines two exception flags: policy_waiver and retroactive_review, with precise conditions. policy_waiver: final status approved AND amount_usd > 10000 AND a Policy Exception block exists for txn with 'approved_by: compliance' line. retroactive_review: final status reversed AND amount_usd > 5000 AND a winning correction notice changed status for that txn. It also reiterates output contract we already implemented. Next we need Brief 07 (continued) for compliance_hold flag definition and Brief 09 amendment about hold timing. Also our policy parser currently only captures transaction IDs, not whether approved_by is compliance; we must parse full blocks to check approved_by line. We also must know which correction notice is 'winning' (already sorted by notice_id and applied sequentially; likely last applied for a field wins). For retroactive_review we specifically need if any winning correction changed status (i.e., correction field=status applied). We'll track that per txn. Then implement exception_reason computation and populate in transactions. Finally update exceptions.json accordingly.\n",
+  "plan": "1) Extract Brief 07 and Brief 09 text similarly (use grep to find line numbers and nl+sed to display). 2) Update parser/policy.js to return a map from transaction_id -> {approved_by, reason,...} or at least a set of txns where approved_by is compliance. Make end heading search robust (find '## Correction Notices' after start). 3) Update reconcile.js to keep track of whether a status correction was applied for each txn (for retroactive_review), and after final statuses computed, compute exception codes:\n- If policy waiver conditions met -> add 'policy_waiver'\n- If retroactive review conditions met -> add 'retroactive_review'\n- Plus any additional flags from Brief 07/09 (likely compliance_hold)\nSort codes lexicographically and join with ';' else null.\n4) Rerun extractor and verify exceptions.json now has items and transaction rows have exception_reason.\n",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+240)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+240)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '3740,3866p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  const start = markdown.indexOf(\"## Policy Exceptions\");\n  if (start < 0) return [];\n\n  // Avoid decoy headings earlier in the archive by searching forward.\n  const end = markdown.indexOf(\"## Correction Notices\", start + 1);\n  const slice = end >= 0 ? markdown.slice(start, end) : markdown.slice(start);\n\n  const blocks = slice.split(/^### /m).slice(1);\n  const entries = [];\n\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    // first line after ### is expected to be TXN-...\n    const txn = (lines[0] || \"\").trim();\n    if (!txn.startsWith(\"TXN-\")) continue;\n\n    const entry = { transaction_id: txn, approved_by: null, reason: null };\n    for (const line of lines) {\n      const t = line.trim();\n      if (t.startsWith(\"approved_by:\")) entry.approved_by = t.split(\":\")[1].trim();\n      if (t.startsWith(\"reason:\")) entry.reason = t.split(\":\")[1].trim();\n    }\n    entries.push(entry);\n  }\n\n  return entries;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

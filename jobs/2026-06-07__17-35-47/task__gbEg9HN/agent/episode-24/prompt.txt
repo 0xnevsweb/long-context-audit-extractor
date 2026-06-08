@@ -1,0 +1,41 @@
+Current Terminal Screen:
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Follow-up #632 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+Memo WP-6380 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-3664 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Site visit #815 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Working paper WP-2585 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Risk assessment WP-6962 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+root@9416c0dee655:/app# python3 - <<'PY'
+> import pathlib
+> p=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')
+> s=p.read_text().splitlines()
+> out=[]
+> for line in s:
+>     out.append(line)
+> # no-op: we'll do a targeted manual edit using a full rewrite of reconcileTransactions exception section next step
+> p.write_text('\n'.join(out)+"\n")
+> print('ok')
+> PY
+ok
+root@9416c0dee655:/app#

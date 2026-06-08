@@ -1,0 +1,10 @@
+{
+  "analysis": "All source files have been written. Let me now run the extractor to test it and see if there are any issues.",
+  "plan": "Run the extractor and check the output for correctness.",
+  "commands": [
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    }
+  ]
+}

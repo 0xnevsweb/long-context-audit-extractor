@@ -1,0 +1,6 @@
+{
+  "analysis": "Outputs in /app/output now match the contract: four artifacts exist; transactions.json uses the {\"items\":[...]} envelope; transactions.csv header includes exception_reason and amount_usd is formatted with two decimals; reconciliation_report.jsonl is populated and sorted by notice_id; exceptions.json contains only flagged rows (verified). Reconciliation logic was updated to follow Briefs 01–09 including the Brief 09 hold-timing amendment, and parsers were fixed to avoid decoy headings and non-compliance emails. Determinism was checked by running twice and diffing outputs earlier.",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

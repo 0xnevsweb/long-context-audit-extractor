@@ -1,0 +1,19 @@
+{
+  "analysis": "emails parser only extracts from_addr, transaction_id (from subject), and status. No timestamp, no hold indicators, so mail timing/holds can’t be applied currently. csvWriter contract mismatch: missing exception_reason column and header order; also should emit empty cell for null exception_reason and keep same ordering as transactions.json. validate is too weak to catch contract issues. We still haven’t seen the Investigation Brief contents (the prior command output isn’t shown), but we can proceed to open the /tmp/brief files directly in smaller chunks. Next implement contract fixes (writers, sort, report sorting) and then policy fixes after reading briefs; likely need to extend email/corrections parsing to include dates/effective, and ledger parsing to handle provisional and duplicates deterministically.",
+  "plan": "1) Display /tmp/brief01..09 in manageable chunks to extract the binding rules (especially Brief 03 mail timing, Brief 04 correction precedence, Brief 07/09 exception and compliance_hold rules). 2) Inspect parser/ledger.js and parser/sections.js to understand how it locates structured data sections and how provisional rows are handled (likely currently wrong). 3) Fix output writers to meet contract: correct envelopes, CSV header/columns, include exception_reason, and ensure transactions.json is byte-stable. 4) Fix sort comparator and ensure report sorted by notice_id. Then move to implementing the reconciliation logic per briefs and update parsers accordingly.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n===== $f (first 220 lines) =====\"; sed -n '1,220p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

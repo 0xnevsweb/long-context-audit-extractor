@@ -1,0 +1,27 @@
+{
+  "analysis": "We saw parseMeetings (unsigned amendments included but stores signed boolean), parsePolicyExceptions returns Set of transaction IDs, and sortByTransactionId comparator is non-total (doesn’t return 0 when equal) but likely okay; still could cause nondeterminism with equal ids. We still need sections.js and ledger.js and reconcile.js full, plus actual brief rules (first 80 lines command output not shown due to scroll). Next implement core fixes in reconciliation and parsing: ensure deterministic sorting including equality, parseEmails with date, apply meeting amendments only when signed per Brief 05, incorporate policy exceptions into exception_reason, compute compliance_hold per Brief 09 with proper timing, apply corrections with precedence and report previous_value, and sort report by notice_id. Also fix output artifacts to exactly match contract (already fixed for JSON/CSV; need exceptions.json and transactions.json ordering and report sorting).",
+  "plan": "1) View sections.js and ledger.js and full reconcile.js again in manageable chunks to understand current flow. 2) Update utils/sort.js to provide stable comparator with equality. 3) Update reportWriter to sort by notice_id. 4) Update parser/emails.js to parse Date and broaden Subject parsing, and possibly include from_addr normalization. 5) Rewrite normalize/reconcile.js implementing policy using parsed sections: ledger rows, emails, meetings, policy exceptions, corrections. Set exception_reason codes in lexical order and null when none. Track previous_value in report. Ensure deterministic order (sort corrections by notice_id, etc.). 6) Run extractor twice and diff /app/output/transactions.json to confirm determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/utils/sort.js <<'EOF'\nfunction sortByTransactionId(items) {\n  return items.sort((a, b) => {\n    if (a.transaction_id === b.transaction_id) return 0;\n    return a.transaction_id < b.transaction_id ? -1 : 1;\n  });\n}\n\nfunction sortByNoticeId(items) {\n  return items.sort((a, b) => {\n    if (a.notice_id === b.notice_id) return 0;\n    return a.notice_id < b.notice_id ? -1 : 1;\n  });\n}\n\nmodule.exports = { sortByTransactionId, sortByNoticeId };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\nconst { sortByNoticeId } = require(\"../utils/sort\");\n\nfunction writeReconciliationReport(filePath, report) {\n  const ordered = sortByNoticeId([...report]);\n  const body = ordered.map((row) => JSON.stringify(row)).join(\"\\n\");\n  fs.writeFileSync(filePath, body ? `${body}\\n` : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\nEOF\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

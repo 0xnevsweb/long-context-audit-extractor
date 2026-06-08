@@ -1,0 +1,22 @@
+{
+  "analysis": "I can see many issues in the output writers:\n1. `writeTransactionsJson` uses `{transactions: items}` instead of `{items: [...]}`\n2. `writeExceptionsJson` uses `{exceptions: items}` instead of `{items: [...]}`\n3. CSV is missing `exception_reason` column\n4. JSON writer uses pretty-printing which may be fine but needs correct envelope\n\nI also need to see the reconcile module.",
+  "plan": "Read the reconcile module, then the remaining utility files.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.5
+    }
+  ]
+}

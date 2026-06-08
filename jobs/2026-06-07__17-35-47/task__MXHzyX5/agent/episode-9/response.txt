@@ -1,0 +1,43 @@
+{
+  "analysis": "reconcile.js is shorter than 120 lines (sed 120-240 produced nothing), so we need sed 1-120 to see the full file. parseCorrections parses correction notices between headings and returns notices in file order, unsorted, with fields as strings. reconcile.js currently applies corrections in parsed order and records previous_value as empty string, and does not sort report. This explains wrong ledger row mapping (if duplicates and order matters) and incorrect report values; also nondeterminism can arise if Map insertion/overwrites depend on parse order of duplicate rows or unstable sort comparator. Next: view reconcile.js fully and parsers for ledger/emails/meetings/sections; then implement deterministic reconciliation rules and sorting per contract/briefs.",
+  "plan": "1) Print entire reconcile.js (1-140 just in case) and ledger/email/meetings parsers. 2) Extract Investigation Brief 04 (correction precedence) and Brief 09 (mid-year amendment on hold timing) using heading line numbers from /tmp/briefs.txt (we still need to display that file; prior command output didn’t show). 3) Implement code fixes:\n- utils/sort.js: comparator returns 0 on equal.\n- parser/corrections.js: sort notices by notice_id ascending before returning (or in reconcile).\n- reconcile.js: apply corrections in notice_id order; for each, capture previous_value from current target field before overwriting; push report line with that previous_value; after loop, sort report by notice_id.\n- reconcile.js: ensure ledger duplicate transaction_ids resolve deterministically and per rules (likely: ignore provisional: true when a non-provisional exists; otherwise choose last canonical row in ledger section).\n- Add stability: when building byId, iterate ledger rows in deterministic order.\n4) Run extractor to /app/output twice and diff transactions.json to confirm byte-identical output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,160p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "test -f /tmp/briefs.txt && cat /tmp/briefs.txt || (grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | tee /tmp/briefs.txt)\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 04\" /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '660,760p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1120,1300p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

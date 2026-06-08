@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@0f1e383a7916:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/policy.js
+sed: can't read /app/audit-extractor/src/normalize/policy.js: No such file or directory
+root@0f1e383a7916:/app# rg -n "Brief 09" -n /app/data/audit_archive.md
+bash: rg: command not found
+root@0f1e383a7916:/app# python3 - <<'PY'
+> import re
+> path='/app/data/audit_archive.md'
+> with open(path,'r',encoding='utf-8') as f:
+>     lines=f.readlines()
+> # find Brief 09 heading line
+> start=None
+> for i,l in enumerate(lines,1):
+>     if re.match(r'^#+\s*Investigation Brief\s*0?9\b', l):
+>         start=i; break
+> if not start:
+>     raise SystemExit('Brief 09 not found')
+> # end at next Investigation Brief heading or EOF
+> end=len(lines)
+> for i in range(start+1, len(lines)+1):
+>     if re.match(r'^#+\s*Investigation Brief\s*\d+\b', lines[i-1]):
+>         end=i-1; break
+> print(f'Brief 09 lines {start}-{end}')
+> # print a manageable slice: first 220 lines of Brief 09
+> for j in range(start, min(end, start+219)+1):
+>     print(f"{j}:"+lines[j-1].rstrip('\n'))
+> PY
+Brief 09 lines 1670-1681
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1671:
+1672:Committee ruling (binding for extract):
+1673:
+1674:Mid-year QA found compliance holds disappearing after date corrections. This
+1675:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+1676:only, compare each qualifying email's `sent:` date against the transaction's
+1677:ledger date immediately before correction notices are applied — that is, the date
+1678:in effect after ledger load, meeting amendments, and compliance mail merges, but
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+1680:mail-driven status changes; this amendment governs only the hold flag.
+1681:
+root@0f1e383a7916:/app#

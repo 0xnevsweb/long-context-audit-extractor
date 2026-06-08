@@ -1,0 +1,15 @@
+{
+  "analysis": "We successfully computed term-hit line numbers within each brief file, but we still haven't printed the actual directive blocks (and the earlier script output shows lines 78-83 from some context, not the directive). Next, we should print the beginning of each brief (first ~60 lines) since directives are likely near the top, and also print around the specific term-hit lines (e.g., earliest hits) to capture the actual rules. We'll focus on Briefs 01-06 first (core reconciliation), then 07-08 (exception flags + artifacts), then 09 (override).",
+  "plan": "1) Print first 80 lines of each brief file to capture directive paragraphs. 2) For each brief, print a few small context windows around the earliest term-hit lines to capture the key rules without huge filler. 3) Particularly for Brief 09, print around lines 1-80 and around the 'supersedes' mention. Once we have rules, we can implement code changes.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief01.md /tmp/brief02.md /tmp/brief03.md /tmp/brief04.md /tmp/brief05.md /tmp/brief06.md /tmp/brief07.md /tmp/brief08.md /tmp/brief09.md; do echo \"\\n===== TOP $f\"; nl -ba \"$f\" | sed -n '1,90p'; done\n",
+      "duration": 2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nbriefs=['01','02','03','04','05','06','07','08','09']\nterms=[r'precedence',r'overlay',r'exception',r'compliance_hold',r'byte-identical',r'supersedes',r'must',r'ignore']\nfor b in briefs:\n    f=f'/tmp/brief{b}.md'\n    lines=open(f,'r',encoding='utf8').read().splitlines()\n    # grab first 5 interesting hits by term\n    hits=[]\n    for i,l in enumerate(lines,1):\n        if any(re.search(t,l,re.I) for t in terms):\n            hits.append(i)\n    hits=hits[:5]\n    if not hits: continue\n    print('\\n=====',f,'windows around',hits)\n    for h in hits:\n        s=max(1,h-3); e=min(len(lines),h+12)\n        print(f'-- around line {h} --')\n        for j in range(s,e+1):\n            print(f\"{j:4d}: {lines[j-1]}\")\nPY\n",
+      "duration": 2
+    }
+  ],
+  "task_complete": false
+}

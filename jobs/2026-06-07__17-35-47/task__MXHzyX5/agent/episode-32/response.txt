@@ -1,0 +1,32 @@
+{
+  "analysis": "Email parser fix worked: it now finds 6 emails in the authoritative section after Meeting Notes, including some from non-compliance (alice@corp.internal) which should be ignored for status changes per Brief 02. It captures sent date for some. Next we must implement filtering in reconcile.js so only from_addr containing 'compliance@' affects status and hold logic. We still need to read Brief 03 (Compliance Mail Timing) plus Brief 07 and Brief 09 to implement compliance_hold exception flag and its amended date comparison. We'll extract these brief sections by line numbers now that we have them (468, 1201, 1670).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1260,1325p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1735,1795p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "analysis": "We need the actual text of Brief 03/07/09 to implement compliance_hold and mail timing rules. After that we will update reconcile.js: filter email senders to compliance@, apply status precedence using STATUS_ORDER, and compute compliance_hold exception flag per brief rules and amended comparison. Then rerun extractor and verify exceptions.json includes compliance_hold when appropriate and outputs remain deterministic.",
+  "plan": "Extract and read the brief sections (03/07/09) in manageable chunks with sed, then implement the described rules in reconcile.js using parsed email.sent dates and correction effective dates as required by Brief 09. Finally rerun extractor and validate.",
+  "task_complete": false
+}

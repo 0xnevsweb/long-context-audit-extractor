@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@7aa6d0745461:/app# sed -n '1857,3848p' /app/data/audit_archive.md | grep -n -A10 'compliance@'
+985:From: compliance@corp.internal
+986-Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+987-sent: 2024-06-15
+988-status: rejected
+989-
+990-From: alice@corp.internal
+991-Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+992-status: approved
+993-
+994-From: controller@corp.internal
+995-Subject: close calendar revision — thread 0
+--
+1554:From: compliance@audit.corp
+1555-Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+1556-status: rejected
+1557-
+1558:From: compliance@corp.internal
+1559-Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+1560-sent: 2024-08-15
+1561-status: rejected
+1562-
+1563-From: hr-payroll@corp.internal
+1564-Subject: accrual true-up schedule — thread 0
+1565-
+1566-Internal coordination on revenue cutoff testing. No transaction identifiers
+1567-appear in this message. Investigators archived it to preserve mailbox ordering
+1568-around compliance threads.
+--
+1983:From: compliance@corp.internal
+1984-Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+1985-sent: 2024-08-10
+1986-status: rejected
+1987-
+1988:From: compliance@corp.internal
+1989-Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+1990-sent: 2024-09-01
+1991-status: reversed
+1992-
+root@7aa6d0745461:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  };
+}
+
+module.exports = { parseArchive };
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function csvEscape(value) {
+>   const s = value == null ? "" : String(value);
+>   if (/[",\n]/.test(s)) {
+>     return `"${s.replace(/"/g, '""')}"`;
+>   }
+>   return s;
+> }
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const amount = Number(row.amount_usd);
+>     const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : "";
+>     return [
+>       csvEscape(row.transaction_id),
+>       csvEscape(row.owner),
+>       csvEscape(row.status),
+>       csvEscape(row.effective_date),
+>       csvEscape(amountStr),
+>       csvEscape(row.exception_reason == null ? "" : row.exception_reason),
+>     ].join(",");
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n") + "\n", "utf8");
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@e1953a1e27da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e1953a1e27da:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+root@e1953a1e27da:/app#

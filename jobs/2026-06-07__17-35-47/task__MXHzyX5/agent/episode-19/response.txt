@@ -1,0 +1,27 @@
+{
+  "analysis": "parser/policy.js extracts a Set of transaction IDs that appear under Policy Exceptions between headings. It uses markdown.indexOf(\"## Correction Notices\") for end; unlike corrections, this likely works because the Correction Notices heading is near the end and probably not decoyed earlier (but could be). We still need to implement exception_reason: likely include a flag for policy exceptions for any txn in parsed.policyExceptions. Also we must implement compliance_hold flag derived from compliance emails and timing rules. Currently reconcile.js ignores parsed.policyExceptions entirely and exceptions builder just filters by exception_reason. Next step: read Investigation Brief 08 for exact flag codes (e.g., maybe \"policy_exception\" or \"policy_exception_executive_waiver\") and Brief 07/09 for compliance_hold logic. Then implement exception_reason assignment in reconcile.js (or separate module) in lexical order with semicolons.",
+  "plan": "1) Extract the text of Investigation Brief 08 and Brief 09 from the markdown with nl+sed around their headings (we saw Brief 08 heading at line 1419). Also extract Brief 07 (hold logic) wherever it is. 2) Update policy parser to be robust against decoy headings similar to corrections (use indexOf with fromIndex). 3) Implement exception_reason assignment in reconcile.js:\n- Start with empty list of codes per txn.\n- If txn in policyExceptions Set: push the policy exception flag code defined by Brief 08.\n- If compliance_hold condition met per Brief 07/09: push compliance_hold.\n- Sort codes lexicographically and join with ';' or set null if none.\n4) Rerun extractor and verify exceptions.json has items and that transactions.json rows have exception_reason populated and sorted.\n",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1410,1660p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '860,1120p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1660,1860p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

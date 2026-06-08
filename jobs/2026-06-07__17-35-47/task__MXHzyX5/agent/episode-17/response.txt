@@ -1,0 +1,51 @@
+{
+  "analysis": "We updated transactions.json and exceptions.json envelopes to use {\"items\": [...]}, matching the contract. However transactions.csv header is still missing the exception_reason column, and rows don’t include it. Also amount_usd should have two decimal places; CSV currently prints raw JS number (e.g., 15335.5). exceptions.json currently empty because exception_reason is still always null; we still need to implement exception_reason flags per Investigation Briefs 01–09/08 and compliance hold rules. Next: fix csvWriter.js to include exception_reason column and formatting, and implement exception_reason calculation. We must read Brief 08 (exception flags) and Brief 07/09 (holds) to know which flags to set and under what conditions, and update reconcile/exceptions accordingly.",
+  "plan": "1) Update csvWriter.js to exactly match contract header order and include exception_reason; ensure empty cell when null; format amount_usd with two decimals. 2) Extract authoritative text for Investigation Brief 08 (exception flags) and Brief 07/09 (hold timing) from the archive using nl+sed around their heading lines from /tmp/briefs.txt. 3) Implement exception_reason population: compute flag codes for each transaction based on parsed structured sections (policy exceptions, compliance mail timing, etc.), join in lexical order with semicolons, else null. This likely belongs in normalize/exceptions.js (mutating rows) or in reconcile.js before writing items. Given contract expects exception_reason in transactions items, we’ll implement a new normalize step that returns updated items and separate exceptions list. 4) Rerun extractor and verify CSV header/values and exceptions.json now contains flagged items. 5) Confirm determinism again by diffing transactions.json across reruns.",
+  "commands": [
+    {
+      "keystrokes": "cat /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 08\" /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1180,1520p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1520,1760p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction csvEscape(value) {\n  const s = value == null ? \"\" : String(value);\n  if (/[\",\\n]/.test(s)) {\n    return `\"${s.replace(/\"/g, '\"\"')}\"`;\n  }\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const amount = Number(row.amount_usd);\n    const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : \"\";\n    return [\n      csvEscape(row.transaction_id),\n      csvEscape(row.owner),\n      csvEscape(row.status),\n      csvEscape(row.effective_date),\n      csvEscape(amountStr),\n      csvEscape(row.exception_reason == null ? \"\" : row.exception_reason),\n    ].join(\",\");\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\") + \"\\n\", \"utf8\");\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "head -n 2 /app/output/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,26 @@
+New Terminal Output:
+
+root@b5558c31e8a7:/app# grep -n "Investigation Brief" /app/data/audit_archive.md
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@b5558c31e8a7:/app#

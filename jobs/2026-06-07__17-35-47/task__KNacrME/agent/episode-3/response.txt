@@ -1,0 +1,67 @@
+{
+  "analysis": "We’ve confirmed reconcile.js is incomplete: it doesn’t compute previous_value for report, doesn’t apply any exception flags, doesn’t implement hold/mail timing rules, ignores Brief 09 amendment, and likely mis-associates corrections. exceptions.js just filters, but exception_reason is always null. We still need the contents of Briefs 01–09 (our sed outputs didn’t come through in the last terminal snapshot) and need to review the parsers (ledger/emails/corrections) and writers/sort utilities to address determinism and policy correctness.",
+  "plan": "Re-run targeted `sed` for Brief 01–09 in smaller chunks to ensure we capture the rules in terminal output. Then inspect ledger/emails/corrections parsers and the output writers/sort/date utils. After understanding rules, we’ll implement: (a) correct ledger sourcing (ignore provisional, last base row), (b) deterministic sorting of inputs and outputs, (c) correct overlay order and precedence (per briefs, with Brief 09 override), (d) exception_reason computation and lexical ordering, and (e) reconciliation_report previous_value and winning correction selection; then run extractor and diff across reruns.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '920,1220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1505p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1505,1705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1825p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

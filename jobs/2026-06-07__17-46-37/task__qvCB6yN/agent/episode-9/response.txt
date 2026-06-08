@@ -1,0 +1,19 @@
+{
+  "analysis": "We printed large ranges that include filler and then Meeting Notes, but we need the specific directive paragraphs within each Brief. The output scroll shows Meeting Notes, which is after Brief 09 section end (1853) and suggests we are seeing parts of that range; however we still need to capture the key rule lines from each brief. We'll search within the brief ranges for 'Auditor directive' / 'mandatory' / 'Extractor must' keywords and extract those lines, plus any enumerated rules. We'll also save each brief range to temp files and then grep for key phrases to avoid sifting through filler.",
+  "plan": "1) Save each brief range (01..09) into separate temp files. 2) For each temp file, grep for likely rule markers (Auditor directive, mandatory, must, precedence, compliance_hold, exception_reason, overlay, effective). 3) Print the relevant snippets with context (grep -n + sed around matches) so we can implement exactly. 4) Once rules are distilled, proceed to code edits.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,251p' /app/data/audit_archive.md > /tmp/brief01.md\nsed -n '252,467p' /app/data/audit_archive.md > /tmp/brief02.md\nsed -n '468,684p' /app/data/audit_archive.md > /tmp/brief03.md\nsed -n '685,827p' /app/data/audit_archive.md > /tmp/brief04.md\nsed -n '828,1057p' /app/data/audit_archive.md > /tmp/brief05.md\nsed -n '1058,1200p' /app/data/audit_archive.md > /tmp/brief06.md\nsed -n '1201,1418p' /app/data/audit_archive.md > /tmp/brief07.md\nsed -n '1419,1669p' /app/data/audit_archive.md > /tmp/brief08.md\nsed -n '1670,1853p' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0*.md; do echo \"===== $f\"; grep -nEi \"Auditor directive|mandatory|extractor must|must |supersedes|precedence|overlay|compliance_hold|exception|effective_date|byte-identical\" \"$f\"; done\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "echo '--- Brief09 key lines ---'; nl -ba /tmp/brief09.md | sed -n '1,220p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

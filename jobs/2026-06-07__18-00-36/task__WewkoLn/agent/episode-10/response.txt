@@ -1,0 +1,10 @@
+{
+  "analysis": "Now I have a nearly complete picture. I need to find all compliance@ emails in the Email Excerpts section. Let me also check for the `sent:` field in emails and the policy exception section. The key data:\n\n**Transaction Ledger** (line 3912): Has ~25 transactions, including a duplicate TXN-ba9e6ade with a provisional:true (ignore) and a final one (use last non-provisional).\n\n**Corrections**: 6 notices targeting 4 different transactions.\n\n**Policy Exceptions**: 3 exceptions (TXN-68b5423c with compliance, TXN-2adfa85c with finance, TXN-c7416874 with compliance).\n\n**Meeting Notes**: 4 amendments.\n\nI still need to see all compliance emails in the Email Excerpts section (line 1857-3849).",
+  "plan": "Search for compliance@ emails in the Email Excerpts section to identify which transactions have compliance holds.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1857,3849p' /app/data/audit_archive.md | grep -B5 -A10 'compliance@'\n",
+      "duration": 1.0
+    }
+  ]
+}

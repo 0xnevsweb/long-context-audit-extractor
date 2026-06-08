@@ -1,0 +1,59 @@
+{
+  "analysis": "We have a visible excerpt from the archive around Meeting Notes and the start of Email Excerpts. It states committee minutes include signed amendments affecting owner fields; and only compliance-addressed threads with transaction subjects in this section affect merge logic. This aligns with the earlier contract note that only From containing compliance@ counts. We still need the full content of Investigation Brief 09 (mid-year amendment) and Briefs about holds/corrections, and we need to inspect the parser/reconcile code (not yet shown in this latest screen; previous commands likely produced more output but we only see the tail). Next step is to directly open the key source files and the exact relevant brief sections by line ranges/heading positions.",
+  "plan": "1) Print the entirety of reconcile.js and the parsers to capture how they currently apply meeting amendments, emails, corrections, and ledger sourcing. 2) Locate exact line number for Investigation Brief 09 and print from there through its end (and also Brief 07 if it’s referenced for holds). 3) Print Brief 04 section for correction notice precedence. 4) Based on that, implement concrete fixes: correction application order + previous_value tracking; deterministic ledger base selection when duplicates/provisional; compliance hold timing per Brief 09 (ensure later mail updates not missed); deterministic sorting and report sorting by notice_id.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '660,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '760,900p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1080,1320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

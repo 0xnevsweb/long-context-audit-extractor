@@ -1,0 +1,31 @@
+{
+  "analysis": "Root causes are now clear: output writers don't follow the contract envelopes/headers. validate.js is too weak to catch this. Parser: ledger.js grabs the first occurrence of \"## Transaction Ledger\" which in the archive includes a decoy \"## Transaction Ledger (working copy)\" before the canonical ledger; hence wrong base rows and narrative leakage likely from parsing beyond intended bounds. Ledger parser also dedupes by transaction_id, which would incorrectly keep the first (possibly provisional/stale) entry and ignore later canonical duplicates; the archive shows duplicate TXN-ba9e6ade entries and the later one should win. Corrections parser slices between \"## Correction Notices\" and \"## Transaction Ledger\"; but because the first ledger heading is the working copy, it likely truncates corrections or points to wrong end. Emails parser uses slice from Email Excerpts to Policy Exceptions (good) but reconcile logic must apply Brief rules (only compliance@, timing/holds). Reconciliation report empty likely because reconcile.js isn't producing report rows with required fields (previous_value/new_value) or corrections not applied due to parsing issues.",
+  "plan": "1) Inspect normalize/reconcile.js and normalize/exceptions.js plus utils/sort/date to see current reconciliation and nondeterminism. 2) Implement robust section slicing: pick canonical \"## Transaction Ledger\" heading exactly (not working copy), and canonical end-of-section boundaries. For ledger: parse only within that section until next top-level \"## \" or EOF. 3) Handle duplicate ledger entries: apply policy (likely last occurrence wins, ignore provisional:true) and ensure deterministic. 4) Fix corrections slicing to end at canonical ledger heading, and parse all notices; then apply corrections in effective-date order (and notice_id tie-break) producing report lines sorted by notice_id, with previous_value/new_value. 5) Fix output writers to match contract: {items:[...]} envelopes, CSV header including exception_reason, and ensure amount has 2 decimals numeric. 6) Strengthen validateOutputs to enforce shapes and ordering. 7) Rerun extractor twice to ensure byte-identical transactions.json and correct artifacts.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger (working copy)\" /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

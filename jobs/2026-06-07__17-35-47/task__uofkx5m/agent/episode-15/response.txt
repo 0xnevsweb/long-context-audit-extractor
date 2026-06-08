@@ -1,0 +1,27 @@
+{
+  "analysis": "We can see parser/emails.js uses markdown.indexOf to find section boundaries, which violates Brief 01 requirement to locate section boundaries with regex anchored to whole heading lines. Also it only parses emails whose subject matches 'Subject: Re: TXN-…' and captures status but not sent date, while Brief 09 requires comparing qualifying email sent date to the transaction ledger date (pre-corrections) for compliance_hold; so we must parse 'sent:' fields and identify qualifying compliance emails. We also only saw the tail of ledger parser: likely similar indexOf/naive parsing; it currently doesn't ignore provisional rows nor ensure only canonical ledger section. Next: inspect parser/sections.js and ledger.js fully; inspect corrections and policy exceptions formats; read binding rules from briefs 02–04,06–08 (we haven't successfully surfaced them yet). Then implement fixes in parsers and reconciliation and output writers.",
+  "plan": "1) Print parser/sections.js and full ledger.js to confirm how sections are sliced and parsed, and fix to use regex anchored headings. 2) Inspect correction notices and policy exceptions formats near lines 3849+ to implement exception flags and correction precedence. 3) Extract binding rules from briefs 02–04,06–08 by printing the top parts of /tmp/brief*.md now that they exist, focusing on binding paragraphs. 4) Modify parsers: use regex slicing; emails parse sent date, status, and whether it’s compliance/hold qualifying; ledger parser: parse only canonical ledger section, ignore provisional, last non-provisional per id. 5) Modify reconcile/exceptions/writers/sort accordingly.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3849,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{2,3,4,6,7,8}.md; do echo \"\\n===== $f TOP =====\"; sed -n '1,120p' \"$f\"; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

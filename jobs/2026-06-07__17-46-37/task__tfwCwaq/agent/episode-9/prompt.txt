@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1211:lexical order of the reason codes.
+1212:
+
+=== Brief 08 lines 1419-1439 (show up to 200 lines) ===
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1420:
+1421:Controller memo (binding reconciliation rule):
+1422:
+1423:Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+1424:`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+1425:with `approved_by: compliance` on its own line. Set `retroactive_review` when
+1426:final status is `reversed`, `amount_usd` > 5000, and a winning correction
+1427:notice changed status for that transaction.
+1428:
+1429:`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+1430:by `transaction_id` ascending with fields transaction_id, owner, status
+1431:(lowercase), effective_date, amount_usd, exception_reason (null or
+1432:semicolon-joined codes). `transactions.csv` uses header
+1433:transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+1434:same rows; leave exception_reason blank when null. `exceptions.json` is
+1435:`{"items":[...]}` with only rows where exception_reason is set.
+1436:`reconciliation_report.jsonl` is one JSON object per winning correction with
+1437:notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+1438:by notice_id ascending.
+1439:
+
+=== Brief 09 lines 1670-1681 (show up to 200 lines) ===
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1671:
+1672:Committee ruling (binding for extract):
+1673:
+1674:Mid-year QA found compliance holds disappearing after date corrections. This
+1675:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+1676:only, compare each qualifying email's `sent:` date against the transaction's
+1677:ledger date immediately before correction notices are applied — that is, the date
+1678:in effect after ledger load, meeting amendments, and compliance mail merges, but
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+1680:mail-driven status changes; this amendment governs only the hold flag.
+1681:
+root@0f1e383a7916:/app#

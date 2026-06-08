@@ -1,0 +1,51 @@
+{
+  "analysis": "We now have authoritative section line numbers and the key Brief 09 amendment: compliance_hold is determined by comparing email sent date to the transaction ledger date as of the moment before corrections are applied (after ledger load + meeting amendments + compliance mail merges; but before any correction changes date/status). Current code ignores sent dates entirely (emails parser doesn’t parse sent), doesn’t compute holds/exception flags, and ledger parser mistakenly keeps the first duplicate TXN block (dropping final non-provisional). Corrections parser expects 'targets:' on same line but archive shows 'targets:' then likely a list on next line, so it’s mis-parsing transaction_id, causing wrong ledger rows to get corrected. Also report rows lack previous_value and sorting. We need to read Briefs 01–08 to implement sourcing/precedence/status/effective dates/exception flags, then update parsers and reconcile accordingly, ensuring deterministic ordering and byte-identical output.",
+  "plan": "1) Read Investigation Briefs 01–08 (binding parts, not field notes) to derive exact rules for ledger sourcing (including duplicate/provisional), status precedence between ledger/meeting/email/corrections, mail timing rules (Brief 03), correction notice precedence and targeting format (Brief 04), effective date semantics (Brief 06), and exception flag codes + ordering (Brief 07/08). 2) Update parsers:\n- emails.js: parse `sent:` date and possibly hold qualifiers.\n- corrections.js: correctly parse multi-line `targets:` (and possibly multiple TXNs) and field/value/effective.\n- ledger.js: handle duplicates per Brief 01 (likely select non-provisional or latest authoritative ledger section heading exactly '## Transaction Ledger').\n3) Update normalize/reconcile.js:\n- deterministically build base rows from authoritative ledger.\n- apply meeting amendments only when signed=true per Brief 05.\n- apply email merges per Brief 02/03 (status changes based on timing/precedence).\n- compute exception flags including compliance_hold using Brief 09 timing rule; incorporate policyExceptions set.\n- apply correction notices per Brief 04 precedence/order; compute previous_value; build report sorted by notice_id.\n- ensure transactions.json items sorted and stable.\n4) Run extractor twice and diff outputs; validate via schema validator.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,610p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,825p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1057p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1418p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1669p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1840,1905p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1905,2005p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3866,3905p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

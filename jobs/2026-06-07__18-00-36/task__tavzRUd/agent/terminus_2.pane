@@ -1,0 +1,2426 @@
+[?2004hroot@e8e673637164:/app# asciinema rec --stdin /logs/agent/recording.cast
+[?2004l[0;32masciinema: recording asciicast to /logs/agent/recording.cast[0m
+[0;32masciinema: press <ctrl-d> or type "exit" when you're done[0m
+[?2004hroot@e8e673637164:/app# clear
+[?2004l[H[J[3J[?2004hroot@e8e673637164:/app# find /app -type f | head -80
+[?2004l/app/data/audit_archive.md
+/app/audit-extractor/docs/extractor-output-contract.md
+/app/audit-extractor/docs/architecture.md
+/app/audit-extractor/data/audit_archive.md
+/app/audit-extractor/config/defaults.json
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+/app/audit-extractor/package.json
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/docs/extractor-output-contract.md
+[?2004l# Audit Extractor Output Contract
+
+Service root: `/app/audit-extractor`
+
+## CLI
+
+`node /app/audit-extractor/src/cli.js extract --input <markdown-path> --outdir <directory>`
+
+Missing `--input` or `--outdir`: message on stderr, exit code 1.
+
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes only.
+
+## Artifacts
+
+`extract` writes exactly these files under `--outdir`:
+
+- `transactions.json`
+- `transactions.csv`
+- `exceptions.json`
+- `reconciliation_report.jsonl`
+
+Identical input must produce byte-identical `transactions.json` on repeated runs.
+
+## `transactions.json`
+
+Top-level envelope:
+
+```json
+{ "items": [ /* transaction rows */ ] }
+```
+
+Each row:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `transaction_id` | string | `TXN-…` |
+| `owner` | string | |
+| `status` | string | lowercase: `pending`, `approved`, `rejected`, `reversed` |
+| `effective_date` | string | `YYYY-MM-DD` |
+| `amount_usd` | number | two decimal places |
+| `exception_reason` | string or null | semicolon-joined flag codes in lexical order, or null |
+
+Sort `items` by `transaction_id` ascending.
+
+## `transactions.csv`
+
+Header (exact order):
+
+`transaction_id,owner,status,effective_date,amount_usd,exception_reason`
+
+Same rows as `transactions.json` in the same order. Empty cell when `exception_reason` is null.
+
+## `exceptions.json`
+
+```json
+{ "items": [ /* flagged rows only */ ] }
+```
+
+Same row shape as `transactions.json`. Include only rows where `exception_reason` is non-null. Sort by `transaction_id` ascending.
+
+## `reconciliation_report.jsonl`
+
+One JSON object per line, sorted by `notice_id` ascending. Each line records one winning correction notice:
+
+| Field | Type |
+|-------|------|
+| `notice_id` | string |
+| `transaction_id` | string |
+| `field` | string |
+| `previous_value` | string |
+| `new_value` | string |
+| `effective` | string |
+
+`previous_value` is the field value immediately before that correction applies.
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/package.json
+[?2004l{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/cli.js
+[?2004l#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/index.js
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/lib/constants.js
+[?2004lmodule.exports = {
+  SECTION_LEDGER: "## Transaction Ledger",
+  SECTION_MEETINGS: "## Meeting Notes",
+  SECTION_EMAILS: "## Email Excerpts",
+  SECTION_POLICY: "## Policy Exceptions",
+  SECTION_CORRECTIONS: "## Correction Notices",
+};
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/lib/handbook.js
+[?2004lconst fs = require("node:fs");
+const path = require("node:path");
+
+function loadDefaults() {
+  const file = path.join(__dirname, "..", "..", "config", "defaults.json");
+  return JSON.parse(fs.readFileSync(file, "utf8"));
+}
+
+module.exports = { loadDefaults };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/sections.js
+[?2004lconst { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/ledger.js
+[?2004lfunction parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/corrections.js
+[?2004lfunction parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/emails.js
+[?2004lfunction parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/meetings.js
+[?2004lfunction parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/parser/policy.js
+[?2004lfunction parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/normalize/reconcile.js
+[?2004lconst { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/normalize/exceptions.js
+[?2004lfunction buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/output/jsonWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/output/csvWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/output/reportWriter.js
+[?2004lconst fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/schema/validate.js
+[?2004lfunction validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/utils/sort.js
+[?2004lfunction sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/src/utils/date.js
+[?2004lfunction isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+module.exports = { isIsoDate };
+[?2004hroot@e8e673637164:/app# cat /app/audit-extractor/config/defaults.json
+[?2004l{
+  "inputPath": "/app/data/audit_archive.md",
+  "outputDir": "/app/output"
+}
+[?2004hroot@e8e673637164:/app# wc -l /app/data/audit_archive.md
+[?2004l4118 /app/data/audit_archive.md
+[?2004hroot@e8e673637164:/app# head -300 /app/data/audit_archive.md
+[?2004l# FY24 Internal Audit Archive
+
+Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across the file.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correction Notices, and the canonical Transaction Ledger heading.
+
+Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+
+## Investigation Brief 01 — Ledger Sourcing
+
+Committee ruling (binding for extract):
+
+Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+slice. For extractor output, treat only the markdown section whose heading
+line is exactly `## Transaction Ledger` as authoritative. The archive also
+contains a working-copy ledger and prose that mentions ledger headings; those
+are investigative context only.
+
+Ignore any ledger block that includes a line `provisional: true` (case
+insensitive). When the same transaction id appears in multiple non-provisional
+ledger blocks, the last such block in file order is the base row for that id.
+
+Locate section boundaries with regular expressions anchored to whole heading
+lines at line start. Do not locate sections with indexOf or substring search.
+
+## Investigation Brief 01 — Ledger Sourcing — field notes
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+During October count, L. Bergstrom circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #688 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Lead reviewer R. Okonkwo noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Site visit #891 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Follow-up #763 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Interview #944 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer A. Ndiaye noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Follow-up #818 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer L. Bergstrom noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-7829 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Memo WP-3763 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Memo WP-5953 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Site visit #115 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Working paper WP-8869 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Follow-up #292 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+During October count, M. Chen circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Interview #369 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Site visit #409 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Interview #336 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer M. Chen noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+## Case Study 01 — Vendor Onboarding Backlog
+
+Lead reviewer L. Bergstrom noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Follow-up #228 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+During Q1 close, S. Patel circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Working paper WP-7827 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Memo WP-3161 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-7474 ties vendor onboarding backlog to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Interview #571 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer S. Patel noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-3773 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Lead reviewer L. Bergstrom noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-2579 ties vendor onboarding backlog to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Lead reviewer M. Chen noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-2697 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Working paper WP-3474 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Risk assessment WP-5976 ties vendor onboarding backlog to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+The committee packet references vendor onboarding backlog as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Site visit #912 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+During Q1 close, S. Patel circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Follow-up #313 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Site visit #422 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Working paper WP-3953 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Lead reviewer J. Huang noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Interview #540 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+## Case Study 02 — Treasury Wire Cutoff Failures
+
+Site visit #625 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-2278 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Interview #564 with treasury highlighted how treasury wire cutoff failures statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-6173 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Risk assessment WP-2788 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Site visit #188 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-3037 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Site visit #133 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #278 with treasury highlighted how treasury wire cutoff failures statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Site visit #518 to treasury captured mailbox exports showing how treasury wire cutoff failures correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-8858 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Memo WP-4162 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #592 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+During February recon, R. Okonkwo circulated a draft finding on treasury wire cutoff failures. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Memo WP-3682 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Memo WP-1921 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-8866 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Lead reviewer M. Chen noted that treasury wire cutoff failures created reconciliation noise in treasury during February recon. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-2046 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #736 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-6752 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+
+Auditor directive (mandatory for extract):
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+## Investigation Brief 02 — Status Precedence — field notes
+
+Risk assessment WP-2138 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Lead reviewer J. Huang noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Follow-up #238 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-3893 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Memo WP-2881 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Interview #586 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-4038 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Working paper WP-2952 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Site visit #156 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+During July review, R. Okonkwo circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+[?2004hroot@e8e673637164:/app# sed -n '300,600p' /app/data/audit_archive.md
+[?2004lDuring July review, R. Okonkwo circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #611 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #540 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-2260 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+During July review, J. Huang circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Interview #340 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+## Case Study 03 — Sox Sampling Mismatch
+
+Interview #796 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #231 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Interview #737 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-5795 ties SOX sampling mismatch to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Interview #266 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #130 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Follow-up #559 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Memo WP-7928 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+The committee packet references SOX sampling mismatch as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Follow-up #741 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer R. Okonkwo noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-6664 documents a three-way match failure tied to SOX sampling mismatch. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Memo WP-4151 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer R. Okonkwo noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Lead reviewer R. Okonkwo noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Lead reviewer M. Chen noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Memo WP-1395 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-7751 ties SOX sampling mismatch to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Follow-up #578 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+The committee packet references SOX sampling mismatch as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Working paper WP-9554 documents a three-way match failure tied to SOX sampling mismatch. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Risk assessment WP-2237 ties SOX sampling mismatch to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Memo WP-7131 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+During March walkthrough, A. Ndiaye circulated a draft finding on SOX sampling mismatch. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer S. Patel noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-2430 ties SOX sampling mismatch to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Lead reviewer S. Patel noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #684 to internal audit captured mailbox exports showing how SOX sampling mismatch correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Site visit #687 to internal audit captured mailbox exports showing how SOX sampling mismatch correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Memo WP-6022 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #282 to internal audit captured mailbox exports showing how SOX sampling mismatch correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+## Case Study 04 — Intercompany Netting Dispute
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-7374 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Follow-up #645 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Interview #510 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Site visit #404 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+During April settlement, A. Ndiaye circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Follow-up #395 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Follow-up #690 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer A. Ndiaye noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Memo WP-6978 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+During April settlement, A. Ndiaye circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Working paper WP-8158 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Follow-up #359 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+During April settlement, A. Ndiaye circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Interview #341 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-1189 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Working paper WP-1199 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+During April settlement, L. Bergstrom circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer L. Bergstrom noted that intercompany netting dispute created reconciliation noise in corporate accounting during April settlement. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+During April settlement, A. Ndiaye circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Follow-up #519 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+During April settlement, M. Chen circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Risk assessment WP-5283 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Site visit #175 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Site visit #943 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Interview #147 with corporate accounting highlighted how intercompany netting dispute statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Risk assessment WP-5981 ties intercompany netting dispute to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Working paper WP-7822 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Working paper WP-8334 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+## Investigation Brief 03 — Compliance Mail Timing
+
+Extract policy (authoritative):
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+## Investigation Brief 03 — Compliance Mail Timing — field notes
+
+Lead reviewer M. Chen noted that year-end close checklist drift created reconciliation noise in controller during December freeze. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-3037 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Working paper WP-7415 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Site visit #268 to controller captured mailbox exports showing how year-end close checklist drift correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Risk assessment WP-3524 ties year-end close checklist drift to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Memo WP-3030 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-4438 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Memo WP-1550 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+During December freeze, R. Okonkwo circulated a draft finding on year-end close checklist drift. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+During December freeze, L. Bergstrom circulated a draft finding on year-end close checklist drift. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Follow-up #968 confirmed that controller had been using an informal spreadsheet for year-end close checklist drift. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Site visit #159 to controller captured mailbox exports showing how year-end close checklist drift correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Lead reviewer M. Chen noted that year-end close checklist drift created reconciliation noise in controller during December freeze. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Interview #849 with controller highlighted how year-end close checklist drift statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-7640 ties year-end close checklist drift to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Working paper WP-2453 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #446 with controller highlighted how year-end close checklist drift statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Follow-up #978 confirmed that controller had been using an informal spreadsheet for year-end close checklist drift. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+During December freeze, R. Okonkwo circulated a draft finding on year-end close checklist drift. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+## Case Study 05 — Payroll Accrual True-Up
+
+The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Follow-up #853 confirmed that HR finance had been using an informal spreadsheet for payroll accrual true-up. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer M. Chen noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Lead reviewer A. Ndiaye noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-4596 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Risk assessment WP-4375 ties payroll accrual true-up to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Interview #746 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Memo WP-7945 summarizes stakeholder interviews about payroll accrual true-up. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+During May journal, L. Bergstrom circulated a draft finding on payroll accrual true-up. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer R. Okonkwo noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Working paper WP-2518 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Working paper WP-9312 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Working paper WP-1184 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+Lead reviewer J. Huang noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Memo WP-5976 summarizes stakeholder interviews about payroll accrual true-up. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #755 to HR finance captured mailbox exports showing how payroll accrual true-up correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Interview #601 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Interview #530 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amendment minutes before accepting any owner change.
+
+Interview #479 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-2358 ties payroll accrual true-up to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Memo WP-6359 summarizes stakeholder interviews about payroll accrual true-up. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer M. Chen noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-4618 ties payroll accrual true-up to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Interview #588 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+In May journal, external advisors reviewed payroll accrual true-up and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Interview #592 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-4915 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+[?2004hroot@e8e673637164:/app# grep -n 'Investigation Brief' /app/data/audit_archive.md
+[?2004l7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correction Notices, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+[?2004hroot@e8e673637164:/app# sed -n '468,480p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 03 — Compliance Mail Timing
+
+Extract policy (authoritative):
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+## Investigation Brief 03 — Compliance Mail Timing — field notes
+
+[?2004hroot@e8e673637164:/app# sed -n '685,700p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 04 — Correction Notice Precedence
+
+Controller memo (binding reconciliation rule):
+
+The corrections desk ships multiple notices per field. When several notices
+target the same transaction and field, the notice with the lexicographically
+greatest `effective` date wins. For each winning notice, `previous_value` in
+`reconciliation_report.jsonl` is the field value immediately before that notice
+applies (after ledger, amendments, and emails). Owner corrections override
+both ledger owners and signed meeting amendments when applied in this step.
+
+## Investigation Brief 04 — Correction Notice Precedence — field notes
+
+Site visit #195 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+During April settlement, R. Okonkwo circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+[?2004hroot@e8e673637164:/app# sed -n '828,845p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 05 — Meeting Amendments and Owners
+
+Committee ruling (binding for extract):
+
+Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+owner when `signed: true` (case insensitive) and, when the amendment includes
+`effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+ledger date for the transaction.
+
+## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+
+During October count, R. Okonkwo circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Interview #143 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-4980 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced different status columns for the same transaction id.
+
+[?2004hroot@e8e673637164:/app# sed -n '1058,1075p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 06 — Effective Dates on Output
+
+Auditor directive (mandatory for extract):
+
+Auditors compared effective_date columns to correction paperwork. Start from the
+ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+sets field `date` or `status`, use that notice's `effective` date as
+`effective_date` only if that correction modified status or date; otherwise
+keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+places in CSV and as a JSON number.
+
+## Investigation Brief 06 — Effective Dates on Output — field notes
+
+Follow-up #977 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Memo WP-3912 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #283 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+[?2004hroot@e8e673637164:/app# sed -n '1201,1220p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 07 — Exception Flags (Part I)
+
+Extract policy (authoritative):
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+## Investigation Brief 07 — Exception Flags (Part I) — field notes
+
+Memo WP-7758 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.
+
+During Q1 close, A. Ndiaye circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+[?2004hroot@e8e673637164:/app# sed -n '1419,1450p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+
+Controller memo (binding reconciliation rule):
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+by `transaction_id` ascending with fields transaction_id, owner, status
+(lowercase), effective_date, amount_usd, exception_reason (null or
+semicolon-joined codes). `transactions.csv` uses header
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows; leave exception_reason blank when null. `exceptions.json` is
+`{"items":[...]}` with only rows where exception_reason is set.
+`reconciliation_report.jsonl` is one JSON object per winning correction with
+notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+by notice_id ascending.
+
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Risk assessment WP-5486 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-5276 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+[?2004hroot@e8e673637164:/app# sed -n '1670,1700p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 09 — Mid-Year Amendment
+
+Committee ruling (binding for extract):
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+## Investigation Brief 09 — Mid-Year Amendment — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-7766 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Follow-up #977 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #872 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-9137 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mid-year amendment later in this archive supersedes that draft practice.
+[?2004hroot@e8e673637164:/app# sed -n '1419,1445p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+
+Controller memo (binding reconciliation rule):
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+by `transaction_id` ascending with fields transaction_id, owner, status
+(lowercase), effective_date, amount_usd, exception_reason (null or
+semicolon-joined codes). `transactions.csv` uses header
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows; leave exception_reason blank when null. `exceptions.json` is
+`{"items":[...]}` with only rows where exception_reason is set.
+`reconciliation_report.jsonl` is one JSON object per winning correction with
+notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+by notice_id ascending.
+
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache state; QA reproduced the drift on a cold run the next morning.
+
+Risk assessment WP-5486 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commentary as authoritative transaction sources.
+
+[?2004hroot@e8e673637164:/app# grep -n '^## ' /app/data/audit_archive.md
+[?2004l5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+90:## Case Study 01 — Vendor Onboarding Backlog
+164:## Case Study 02 — Treasury Wire Cutoff Failures
+238:## Email Excerpts (archived thread)
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+320:## Case Study 03 — Sox Sampling Mismatch
+394:## Case Study 04 — Intercompany Netting Dispute
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+537:## Case Study 05 — Payroll Accrual True-Up
+611:## Case Study 06 — Fx Revaluation Lag
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+754:## Case Study 07 — Capital Project Capitalization
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+896:## Case Study 08 — Lease Modification Restatement
+970:## Policy Exceptions (draft)
+984:## Case Study 09 — Revenue Cutoff Testing
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1127:## Case Study 10 — Inventory Obsolescence Reserve
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1271:## Case Study 11 — Grant Compliance Attestation
+1345:## Case Study 12 — Year-End Close Checklist Drift
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1498:## Case Study 01 — Vendor Onboarding Backlog
+1584:## Case Study 04 — Intercompany Netting Dispute
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+1748:## Case Study 07 — Capital Project Capitalization
+1834:## Meeting Notes
+1857:## Email Excerpts
+3849:## Policy Exceptions
+3866:## Correction Notices
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+[?2004hroot@e8e673637164:/app# sed -n '1201,1213p' /app/data/audit_archive.md
+[?2004l## Investigation Brief 07 — Exception Flags (Part I)
+
+Extract policy (authoritative):
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+## Investigation Brief 07 — Exception Flags (Part I) — field notes
+[?2004hroot@e8e673637164:/app# sed -n '1834,1860p' /app/data/audit_archive.md
+[?2004l## Meeting Notes
+
+Committee minutes include signed amendments affecting owner fields.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+effective: 2024-11-01
+
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing context.
+
+[?2004hroot@e8e673637164:/app# sed -n '1857,1950p' /app/data/audit_archive.md
+[?2004l## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing context.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 0
+
+Internal coordination on vendor onboarding backlog. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 1
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 2
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 3
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 4
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 5
+
+Internal coordination on payroll accrual true-up. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 6
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 7
+
+Internal coordination on treasury wire cutoff failures. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 8
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 9
+
+Internal coordination on inventory obsolescence reserve. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 10
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 11
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 12
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+[?2004hroot@e8e673637164:/app# sed -n '3849,3912p' /app/data/audit_archive.md
+[?2004l## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+### CORR-c27e46a1
+targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+field: date
+value: 2024-09-01
+effective: 2024-09-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+[?2004hroot@e8e673637164:/app# sed -n '3912,4118p' /app/data/audit_archive.md
+[?2004l## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 7500.00
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+status: pending
+date: 2024-05-05
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+owner: ckim
+status: pending
+date: 2024-11-11
+
+### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+amount: 15607.62
+owner: dlee
+status: approved
+date: 2024-12-12
+
+### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+amount: 16981.04
+owner: evans
+status: rejected
+date: 2024-01-13
+
+### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+amount: 18354.46
+owner: frost
+status: approved
+date: 2024-02-14
+
+### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+amount: 19727.88
+owner: jdoe
+status: pending
+date: 2024-03-15
+
+### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+amount: 1601.30
+owner: asmith
+status: pending
+date: 2024-04-16
+
+### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+amount: 2974.72
+owner: bwong
+status: approved
+date: 2024-05-17
+
+### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+amount: 4348.14
+owner: ckim
+status: rejected
+date: 2024-06-18
+
+### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+amount: 5721.56
+owner: dlee
+status: approved
+date: 2024-07-19
+
+### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+amount: 7094.98
+owner: evans
+status: pending
+date: 2024-08-20
+
+### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+amount: 8468.40
+owner: frost
+status: pending
+date: 2024-09-21
+
+### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+amount: 9841.82
+owner: jdoe
+status: approved
+date: 2024-10-22
+
+### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+amount: 11215.24
+owner: asmith
+status: rejected
+date: 2024-11-23
+
+### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+amount: 12588.66
+owner: bwong
+status: approved
+date: 2024-12-24
+
+### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+amount: 13962.08
+owner: ckim
+status: pending
+date: 2024-01-25
+
+### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+amount: 15335.50
+owner: dlee
+status: pending
+date: 2024-02-26
+
+### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+amount: 16708.92
+owner: evans
+status: approved
+date: 2024-03-27
+
+### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+amount: 18082.34
+owner: frost
+status: rejected
+date: 2024-04-01
+
+### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+amount: 19455.76
+owner: jdoe
+status: approved
+date: 2024-05-02
+
+### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+amount: 1329.18
+owner: asmith
+status: pending
+date: 2024-06-03
+
+### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+amount: 2702.60
+owner: bwong
+status: pending
+date: 2024-07-04
+
+### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+amount: 4076.02
+owner: ckim
+status: approved
+date: 2024-08-05
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: stale
+status: pending
+date: 2024-04-04
+provisional: true
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: finalowner
+status: approved
+date: 2024-04-04
+
+[?2004hroot@e8e673637164:/app# sed -n '1857,3849p' /app/data/audit_archive.md | grep -B2 -A5 'compliance@'
+[?2004laround compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+--
+compliance threads.
+
+From: compliance@audit.corp
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+sent: 2024-08-15
+status: rejected
+
+From: hr-payroll@corp.internal
+--
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+[?2004hroot@e8e673637164:/app# sed -n '3849,3866p' /app/data/audit_archive.md
+[?2004l## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+[?2004hroot@e8e673637164:/app# sed -n '238,252p' /app/data/audit_archive.md
+[?2004l## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+[?2004hroot@e8e673637164:/app# sed -n '1857,3849p' /app/data/audit_archive.md | grep -n 'compliance@'
+[?2004l985:From: compliance@corp.internal
+1554:From: compliance@audit.corp
+1558:From: compliance@corp.internal
+1983:From: compliance@corp.internal
+1988:From: compliance@corp.internal
+[?2004hroot@e8e673637164:/app# sed -n '1834,1857p' /app/data/audit_archive.md
+[?2004l## Meeting Notes
+
+Committee minutes include signed amendments affecting owner fields.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+effective: 2024-11-01
+
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Email Excerpts
+[?2004hroot@e8e673637164:/app# sed -n '3830,3850p' /app/data/audit_archive.md
+[?2004lmailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 59
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+
+[?2004hroot@e8e673637164:/app# sed -n '1857,3849p' /app/data/audit_archive.md | grep -B5 -A10 'compliance@'
+[?2004l
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+status: approved
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 0
+--
+
+Internal coordination on FX revaluation lag. No transaction identifiers appear
+in this message. Investigators archived it to preserve mailbox ordering around
+compliance threads.
+
+From: compliance@audit.corp
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+sent: 2024-08-15
+status: rejected
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 0
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+--
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/sections.js << 'EOF'
+[?2004l[?2004h> const { parseLedger } = require("./ledger");
+[?2004l[?2004h> const { parseMeetings } = require("./meetings");
+[?2004l[?2004h> const { parseEmails } = require("./emails");
+[?2004l[?2004h> const { parseCorrections } = require("./corrections");
+[?2004l[?2004h> const { parsePolicyExceptions } = require("./policy");
+[?2004l[?2004h> 
+[?2004l[?2004h> function parseArchive(markdown) {
+[?2004l[?2004h>   return {
+[?2004l[?2004h>     ledger: parseLedger(markdown),
+[?2004l[?2004h>     meetings: parseMeetings(markdown),
+[?2004l[?2004h>     emails: parseEmails(markdown),
+[?2004l[?2004h>     corrections: parseCorrections(markdown),
+[?2004l[?2004h>     policyExceptions: parsePolicyExceptions(markdown),
+[?2004l[?2004h>   };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseArchive };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/ledger.js << 'EOF'
+[?2004l[?2004h> function parseLedger(markdown) {
+[?2004l[?2004h>   const lines = markdown.split('\n');
+[?2004l[?2004h>   // Find the authoritative "## Transaction Ledger" section using regex anchored to line start
+[?2004l[?2004h>   let startIdx = -1;
+[?2004l[?2004h>   for (let i = 0; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## Transaction Ledger$/.test(lines[i])) {
+[?2004l[?2004h>       startIdx = i;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   if (startIdx < 0) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Find the end of this section (next ## heading or EOF)
+[?2004l[?2004h>   let endIdx = lines.length;
+[?2004l[?2004h>   for (let i = startIdx + 1; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## /.test(lines[i])) {
+[?2004l[?2004h>       endIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const sectionLines = lines.slice(startIdx, endIdx);
+[?2004l[?2004h>   const section = sectionLines.join('\n');
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Parse blocks split by ### headings
+[?2004l[?2004h>   const blocks = section.split(/^### /m).slice(1);
+[?2004l[?2004h>   const byId = new Map();
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const blockLines = block.split('\n');
+[?2004l[?2004h>     const transactionId = blockLines[0].trim();
+[?2004l[?2004h>     if (!transactionId.startsWith('TXN-')) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     // Check for provisional: true
+[?2004l[?2004h>     let isProvisional = false;
+[?2004l[?2004h>     const row = { transaction_id: transactionId };
+[?2004l[?2004h>     for (const line of blockLines) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (/^provisional:\s*true$/i.test(trimmed)) {
+[?2004l[?2004h>         isProvisional = true;
+[?2004l[?2004h>       }
+[?2004l[?2004h>       if (trimmed.startsWith('amount:')) {
+[?2004l[?2004h>         row.amount = Number(trimmed.slice(7).trim());
+[?2004l[?2004h>       } else if (trimmed.startsWith('owner:')) {
+[?2004l[?2004h>         row.owner = trimmed.slice(6).trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith('status:')) {
+[?2004l[?2004h>         row.status = trimmed.slice(7).trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith('date:')) {
+[?2004l[?2004h>         row.date = trimmed.slice(5).trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     if (isProvisional) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     // Last non-provisional block wins
+[?2004l[?2004h>     byId.set(transactionId, row);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   return [...byId.values()];
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseLedger };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/meetings.js << 'EOF'
+[?2004l[?2004h> function parseMeetings(markdown) {
+[?2004l[?2004h>   const lines = markdown.split('\n');
+[?2004l[?2004h>   // Find the authoritative "## Meeting Notes" section
+[?2004l[?2004h>   let startIdx = -1;
+[?2004l[?2004h>   for (let i = 0; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## Meeting Notes$/.test(lines[i])) {
+[?2004l[?2004h>       startIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   if (startIdx < 0) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   let endIdx = lines.length;
+[?2004l[?2004h>   for (let i = startIdx + 1; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## /.test(lines[i])) {
+[?2004l[?2004h>       endIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const section = lines.slice(startIdx, endIdx).join('\n');
+[?2004l[?2004h>   const meetings = [];
+[?2004l[?2004h>   const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+[?2004l[?2004h>   let match;
+[?2004l[?2004h>   while ((match = re.exec(section)) !== null) {
+[?2004l[?2004h>     const block = section.slice(match.index, match.index + 400);
+[?2004l[?2004h>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+[?2004l[?2004h>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+[?2004l[?2004h>     const effectiveMatch = block.match(/^effective:\s*(.+)$/im);
+[?2004l[?2004h>     meetings.push({
+[?2004l[?2004h>       transaction_id: match[1],
+[?2004l[?2004h>       owner: ownerMatch ? ownerMatch[1].trim() : '',
+[?2004l[?2004h>       signed: signedMatch ? signedMatch[1].trim().toLowerCase() === 'true' : false,
+[?2004l[?2004h>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return meetings;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseMeetings };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/emails.js << 'EOF'
+[?2004l[?2004h> function parseEmails(markdown) {
+[?2004l[?2004h>   const lines = markdown.split('\n');
+[?2004l[?2004h>   // Find the authoritative "## Email Excerpts" section (exact match)
+[?2004l[?2004h>   let startIdx = -1;
+[?2004l[?2004h>   for (let i = 0; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## Email Excerpts$/.test(lines[i])) {
+[?2004l[?2004h>       startIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   if (startIdx < 0) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   let endIdx = lines.length;
+[?2004l[?2004h>   for (let i = startIdx + 1; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## /.test(lines[i])) {
+[?2004l[?2004h>       endIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const slice = lines.slice(startIdx, endIdx).join('\n');
+[?2004l[?2004h>   const emails = [];
+[?2004l[?2004h>   // Split by double newline to get blocks
+[?2004l[?2004h>   const blocks = slice.split(/\n\n+/);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+[?2004l[?2004h>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+[?2004l[?2004h>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+[?2004l[?2004h>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const fromAddr = fromMatch[1].trim();
+[?2004l[?2004h>     // Only compliance@ emails qualify (Brief 02)
+[?2004l[?2004h>     if (!fromAddr.includes('compliance@')) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const sentMatch = block.match(/^sent:\s*(\S+)/im);
+[?2004l[?2004h>     emails.push({
+[?2004l[?2004h>       from_addr: fromAddr,
+[?2004l[?2004h>       transaction_id: subjectMatch[1],
+[?2004l[?2004h>       status: statusMatch[1].trim().toLowerCase(),
+[?2004l[?2004h>       sent: sentMatch ? sentMatch[1].trim() : null,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return emails;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseEmails };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/corrections.js << 'EOF'
+[?2004l[?2004h> function parseCorrections(markdown) {
+[?2004l[?2004h>   const lines = markdown.split('\n');
+[?2004l[?2004h>   // Find "## Correction Notices" section
+[?2004l[?2004h>   let startIdx = -1;
+[?2004l[?2004h>   for (let i = 0; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## Correction Notices$/.test(lines[i])) {
+[?2004l[?2004h>       startIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   if (startIdx < 0) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   let endIdx = lines.length;
+[?2004l[?2004h>   for (let i = startIdx + 1; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## /.test(lines[i])) {
+[?2004l[?2004h>       endIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const section = lines.slice(startIdx, endIdx).join('\n');
+[?2004l[?2004h>   const notices = [];
+[?2004l[?2004h>   const blocks = section.split(/^### /m).slice(1);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const blockLines = block.split('\n');
+[?2004l[?2004h>     const noticeId = blockLines[0].trim();
+[?2004l[?2004h>     if (!noticeId.startsWith('CORR-')) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     const entry = { notice_id: noticeId };
+[?2004l[?2004h>     for (const line of blockLines) {
+[?2004l[?2004h>       const trimmed = line.trim();
+[?2004l[?2004h>       if (trimmed.startsWith('targets:')) {
+[?2004l[?2004h>         entry.transaction_id = trimmed.slice(8).trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith('field:')) {
+[?2004l[?2004h>         entry.field = trimmed.slice(6).trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith('value:')) {
+[?2004l[?2004h>         entry.value = trimmed.slice(6).trim();
+[?2004l[?2004h>       } else if (trimmed.startsWith('effective:')) {
+[?2004l[?2004h>         entry.effective = trimmed.slice(10).trim();
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h>     notices.push(entry);
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return notices;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parseCorrections };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/parser/policy.js << 'EOF'
+[?2004l[?2004h> function parsePolicyExceptions(markdown) {
+[?2004l[?2004h>   const lines = markdown.split('\n');
+[?2004l[?2004h>   // Find "## Policy Exceptions" section (exact match, not draft)
+[?2004l[?2004h>   let startIdx = -1;
+[?2004l[?2004h>   for (let i = 0; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## Policy Exceptions$/.test(lines[i])) {
+[?2004l[?2004h>       startIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   if (startIdx < 0) return [];
+[?2004l[?2004h> 
+[?2004l[?2004h>   let endIdx = lines.length;
+[?2004l[?2004h>   for (let i = startIdx + 1; i < lines.length; i++) {
+[?2004l[?2004h>     if (/^## /.test(lines[i])) {
+[?2004l[?2004h>       endIdx = i;
+[?2004l[?2004h>       break;
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const section = lines.slice(startIdx, endIdx).join('\n');
+[?2004l[?2004h>   const exceptions = [];
+[?2004l[?2004h>   const blocks = section.split(/^### /m).slice(1);
+[?2004l[?2004h>   for (const block of blocks) {
+[?2004l[?2004h>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)/im);
+[?2004l[?2004h>     const approvedByMatch = block.match(/^approved_by:\s*(.+)$/im);
+[?2004l[?2004h>     if (txnMatch) {
+[?2004l[?2004h>       exceptions.push({
+[?2004l[?2004h>         transaction_id: txnMatch[1],
+[?2004l[?2004h>         approved_by: approvedByMatch ? approvedByMatch[1].trim() : null,
+[?2004l[?2004h>       });
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h>   return exceptions;
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { parsePolicyExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/normalize/reconcile.js << 'EOF'
+[?2004l[?2004h> const { sortByTransactionId } = require("../utils/sort");
+[?2004l[?2004h> 
+[?2004l[?2004h> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+[?2004l[?2004h> 
+[?2004l[?2004h> function reconcileTransactions(parsed) {
+[?2004l[?2004h>   // Step 1: Load ledger base rows
+[?2004laction_id)) {
+      c[?2004h>   const byId = new Map();
+[?2004l[?2004h>   for (const row of parsed.ledger) {
+[?2004l[?2004h>     byId.set(row.transaction_id, {
+[?2004l[?2004h>       transaction_id: row.transaction_id,
+[?2004l[?2004h>       owner: row.owner,
+[?2004l[?2004h>       status: row.status ? row.status.toLowerCase() : 'pending',
+[?2004l[?2004h>       date: row.date,
+[?2004l[?2004h>       amount: row.amount,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Step 2: Apply meeting amendments (Brief 05)
+[?2004l[?2004h>   // Only when signed: true AND (no effective or effective >= ledger date)
+[?2004l[?2004h>   for (const meeting of parsed.meetings) {
+[?2004l[?2004h>     const target = byId.get(meeting.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h>     if (!meeting.signed) continue;
+[?2004l[?2004h>     if (meeting.effective) {
+[?2004l[?2004h>       if (meeting.effective < target.date) continue;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     target.owner = meeting.owner;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Step 3: Apply compliance emails (Brief 02, 03)
+[?2004l[?2004h>   // Only compliance@ senders, status precedence (only upgrade), sent >= ledger date if sent line present
+[?2004l[?2004h>   for (const email of parsed.emails) {
+[?2004l[?2004h>     const target = byId.get(email.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h>     const newStatus = email.status;
+[?2004l[?2004h>     const oldOrder = STATUS_ORDER[target.status] !== undefined ? STATUS_ORDER[target.status] : -1;
+[?2004l[?2004h>     const newOrder = STATUS_ORDER[newStatus] !== undefined ? STATUS_ORDER[newStatus] : -1;
+[?2004l[?2004h>     if (newOrder <= oldOrder) continue; // only upgrade
+[?2004l[?2004h>     // Brief 03: check sent date
+[?2004l[?2004h>     if (email.sent) {
+[?2004l[?2004h>       if (email.sent < target.date) continue;
+[?2004l[?2004h>     }
+[?2004l[?2004h>     target.status = newStatus;
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Save pre-correction state for compliance_hold (Brief 09)
+[?2004l[?2004h>   const preCorrectionState = new Map();
+[?2004l[?2004h>   for (const [id, row] of byId) {
+[?2004l[?2004h>     preCorrectionState.set(id, { ...row });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Step 4: Apply corrections (Brief 04)
+[?2004l[?2004h>   // For each (txn, field), pick notice with greatest effective date
+[?2004l[?2004h>   // Group corrections by (transaction_id, field)
+[?2004l[?2004h>   const corrGroups = new Map();
+[?2004l[?2004h>   for (const notice of parsed.corrections) {
+[?2004l[?2004h>     const key = `${notice.transaction_id}||${notice.field}`;
+[?2004l[?2004h>     if (!corrGroups.has(key)) corrGroups.set(key, []);
+[?2004l[?2004h>     corrGroups.get(key).push(notice);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const report = [];
+[?2004l[?2004h>   const statusCorrectionWinners = new Set(); // track txns with winning status corrections
+[?2004l[?2004h> 
+[?2004l[?2004h>   for (const [key, notices] of corrGroups) {
+[?2004l[?2004h>     // Pick winner: greatest effective date lexicographically
+[?2004l[?2004h>     notices.sort((a, b) => (a.effective > b.effective ? -1 : a.effective < b.effective ? 1 : 0));
+[?2004l[?2004h>     const winner = notices[0];
+[?2004l[?2004h>     const target = byId.get(winner.transaction_id);
+[?2004l[?2004h>     if (!target) continue;
+[?2004l[?2004h> 
+[?2004l[?2004h>     // previous_value is field value before this correction
+[?2004l[?2004h>     let previousValue;
+[?2004l[?2004h>     if (winner.field === 'owner') {
+[?2004l[?2004h>       previousValue = target.owner;
+[?2004l[?2004h>       target.owner = winner.value;
+[?2004l[?2004h>     } else if (winner.field === 'status') {
+[?2004l[?2004h>       previousValue = target.status;
+[?2004l[?2004h>       target.status = winner.value.toLowerCase();
+[?2004l[?2004h>       statusCorrectionWinners.add(winner.transaction_id);
+[?2004l[?2004h>     } else if (winner.field === 'date') {
+[?2004l[?2004h>       previousValue = target.date;
+[?2004l[?2004h>       target.date = winner.value;
+[?2004l[?2004h>     } else {
+[?2004l[?2004h>       previousValue = '';
+[?2004l[?2004h>     }
+[?2004l[?2004h> 
+[?2004l[?2004h>     report.push({
+[?2004l[?2004h>       notice_id: winner.notice_id,
+[?2004l[?2004h>       transaction_id: winner.transaction_id,
+[?2004l[?2004h>       field: winner.field,
+[?2004l[?2004h>       previous_value: previousValue || '',
+[?2004l[?2004h>       new_value: winner.value,
+[?2004l[?2004h>       effective: winner.effective,
+[?2004l[?2004h>     });
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Sort report by notice_id ascending
+[?2004l[?2004h>   report.sort((a, b) => (a.notice_id < b.notice_id ? -1 : a.notice_id > b.notice_id ? 1 : 0));
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Step 5: Compute effective_date (Brief 06)
+[?2004l[?2004h>   // If a winning correction modified 'date' or 'status', use that correction's effective
+[?2004l[?2004h>   // as effective_date. Otherwise keep ledger date.
+[?2004l[?2004h>   const corrEffective = new Map();
+[?2004l[?2004h>   for (const r of report) {
+[?2004l[?2004h>     if (r.field === 'date' || r.field === 'status') {
+[?2004l[?2004h>       const existing = corrEffective.get(r.transaction_id);
+[?2004l[?2004h>       if (!existing || r.effective > existing) {
+[?2004l[?2004h>         corrEffective.set(r.transaction_id, r.effective);
+[?2004l[?2004h>       }
+[?2004l[?2004h>     }
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Step 6: Build exception flags (Brief 07, 08, 09)
+[?2004l[?2004h>   // Build lookup for compliance emails with sent line per transaction
+[?2004l[?2004h>   const complianceEmailsByTxn = new Map();
+[?2004l[?2004h>   for (const email of parsed.emails) {
+[?2004l[?2004h>     if (!complianceEmailsByTxn.has(email.transaction_id)) {
+[?2004l[?2004h>       complianceEmailsByTxn.set(email.transaction_id, []);
+[?2004l[?2004h>     }
+[?2004l[?2004h>     complianceEmailsByTxn.get(email.transaction_id).push(email);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   // Build policy exception lookup
+[?2004l[?2004h>   const policyByTxn = new Map();
+[?2004l[?2004h>   for (const pe of parsed.policyExceptions) {
+[?2004l[?2004h>     if (!policyByTxn.has(pe.transaction_id)) {
+[?2004l[?2004h>       policyByTxn.set(pe.transaction_id, []);
+[?2004l[?2004h>     }
+[?2004l[?2004h>     policyByTxn.get(pe.transaction_id).push(pe);
+[?2004l[?2004h>   }
+[?2004l[?2004h> 
+[?2004l[?2004h>   const items = sortByTransactionId(
+[?2004l[?2004h>     [...byId.values()].map((row) => {
+[?2004l[?2004h>       const effectiveDate = corrEffective.has(row.transaction_id)
+[?2004l[?2004h>         ? corrEffective.get(row.transaction_id)
+[?2004l[?2004h>         : (preCorrectionState.get(row.transaction_id) || row).date;
+[?2004l[?2004h>       const amount = Number(row.amount);
+[?2004l[?2004h>       const flags = [];
+[?2004l[?2004h> 
+[?2004l[?2004h>       // compliance_hold (Brief 07 + 09): final status is rejected,
+[?2004l[?2004h>       // qualifying compliance@ email with sent line,
+[?2004l[?2004h>       // compare sent against pre-correction date
+[?2004l[?2004h>       if (row.status === 'rejected') {
+[?2004l[?2004h>         const emails = complianceEmailsByTxn.get(row.transaction_id) || [];
+[?2004l[?2004h>         const preDate = preCorrectionState.get(row.transaction_id).date;
+[?2004l[?2004h>         for (const em of emails) {
+[?2004l[?2004h>           if (em.sent && em.sent >= preDate) {
+[?2004l[?2004h>             flags.push('compliance_hold');
+[?2004l[?2004h>             break;
+[?2004l[?2004h>           }
+[?2004l[?2004h>         }
+[?2004l[?2004h>       }
+[?2004l[?2004h> 
+[?2004l[?2004h>       // over_limit (Brief 07): amount > 10000
+[?2004l[?2004h>       if (amount > 10000) {
+[?2004l[?2004h>         flags.push('over_limit');
+[?2004l[?2004h>       }
+[?2004l[?2004h> 
+[?2004l[?2004h>       // policy_waiver (Brief 08): final status approved, amount > 10000,
+[?2004l[?2004h>       // policy exception with approved_by: compliance
+[?2004l[?2004h>       if (row.status === 'approved' && amount > 10000) {
+[?2004l[?2004h>         const policies = policyByTxn.get(row.transaction_id) || [];
+[?2004l[?2004h>         for (const p of policies) {
+[?2004l[?2004h>           if (p.approved_by === 'compliance') {
+[?2004l[?2004h>             flags.push('policy_waiver');
+[?2004l[?2004h>             break;
+[?2004l[?2004h>           }
+[?2004l[?2004h>         }
+[?2004l[?2004h>       }
+[?2004l[?2004h> 
+[?2004l[?2004h>       // retroactive_review (Brief 08): final status reversed, amount > 5000,
+[?2004l[?2004h>       // winning correction changed status
+[?2004l[?2004h>       if (row.status === 'reversed' && amount > 5000 && statusCorrectionWinners.has(row.transaction_id)) {
+[?2004l[?2004h>         flags.push('retroactive_review');
+[?2004l[?2004h>       }
+[?2004l[?2004h> 
+[?2004l[?2004h>       // Sort flags lexically and join with semicolon
+[?2004l[?2004h>       flags.sort();
+[?2004l[?2004h>       const exceptionReason = flags.length > 0 ? flags.join(';') : null;
+[?2004l[?2004h> 
+[?2004l[?2004h>       return {
+[?2004l[?2004h>         transaction_id: row.transaction_id,
+[?2004l[?2004h>         owner: row.owner,
+[?2004l[?2004h>         status: row.status,
+[?2004l[?2004h>         effective_date: effectiveDate,
+[?2004l[?2004h>         amount_usd: Math.round(amount * 100) / 100,
+[?2004l[?2004h>         exception_reason: exceptionReason,
+[?2004l[?2004h>       };
+[?2004l[?2004h>     })
+[?2004l[?2004h>   );
+[?2004l[?2004h> 
+[?2004l[?2004h>   return { items, report };
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { reconcileTransactions, STATUS_ORDER };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/normalize/exceptions.js << 'EOF'
+[?2004l[?2004h> function buildExceptions(items) {
+[?2004l[?2004h>   return items.filter((row) => row.exception_reason !== null);
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { buildExceptions };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/output/jsonWriter.js << 'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + '\n');
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeExceptionsJson(filePath, items) {
+[?2004l[?2004h>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + '\n');
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsJson, writeExceptionsJson };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/output/csvWriter.js << 'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeTransactionsCsv(filePath, items) {
+[?2004l[?2004h>   const header = 'transaction_id,owner,status,effective_date,amount_usd,exception_reason';
+[?2004l[?2004h>   const lines = items.map((row) => {
+[?2004l[?2004h>     const er = row.exception_reason !== null ? row.exception_reason : '';
+[?2004l[?2004h>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${er}`;
+[?2004l[?2004h>   });
+[?2004l[?2004h>   fs.writeFileSync(filePath, [header, ...lines].join('\n') + '\n');
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeTransactionsCsv };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# cat > /app/audit-extractor/src/output/reportWriter.js << 'EOF'
+[?2004l[?2004h> const fs = require("node:fs");
+[?2004l[?2004h> 
+[?2004l[?2004h> function writeReconciliationReport(filePath, report) {
+[?2004l[?2004h>   const lines = report.map((row) => JSON.stringify(row));
+[?2004l[?2004h>   fs.writeFileSync(filePath, lines.length > 0 ? lines.join('\n') + '\n' : '');
+[?2004l[?2004h> }
+[?2004l[?2004h> 
+[?2004l[?2004h> module.exports = { writeReconciliationReport };
+[?2004l[?2004h> EOF
+[?2004l[?2004hroot@e8e673637164:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+[?2004l[?2004hroot@e8e673637164:/app# 

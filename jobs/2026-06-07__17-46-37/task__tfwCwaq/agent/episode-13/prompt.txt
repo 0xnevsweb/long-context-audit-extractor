@@ -1,0 +1,55 @@
+New Terminal Output:
+n
+root@0f1e383a7916:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@0f1e383a7916:/app# rm -rf /tmp/outfix /tmp/outfix2 && mkdir -p /tmp/outfix /tmp/outfix2
+root@0f1e383a7916:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/outfix
+root@0f1e383a7916:/app# ls -la /tmp/outfix
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 00:51 .
+drwxrwxrwt 1 root root 4096 Jun  8 00:51 ..
+-rw-r--r-- 1 root root  266 Jun  8 00:51 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:51 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 00:51 transactions.csv
+-rw-r--r-- 1 root root 7418 Jun  8 00:51 transactions.json
+root@0f1e383a7916:/app# head -n 3 /tmp/outfix/reconciliation_report.jsonl || true
+root@0f1e383a7916:/app# python3 - <<'PY'
+> import json
+> p='/tmp/outfix/exceptions.json'
+> with open(p,'r',encoding='utf-8') as f:
+>     data=json.load(f)
+> print('exceptions count', len(data.get('items',[])))
+> print('first', data.get('items',[])[:2])
+> PY
+exceptions count 0
+first []
+root@0f1e383a7916:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/outfix2
+root@0f1e383a7916:/app# sha256sum /tmp/outfix/transactions.json /tmp/outfix2/transactions.json
+7f67d1cb4867634db05d4ac57357c778aa28dac781bd31b75d2781b919792dad  /tmp/outfix/transactions.json
+7f67d1cb4867634db05d4ac57357c778aa28dac781bd31b75d2781b919792dad  /tmp/outfix2/transactions.json
+root@0f1e383a7916:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@0f1e383a7916:/app# ls -la /app/output
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 00:51 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:51 ..
+-rw-r--r-- 1 root root  266 Jun  8 00:51 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:51 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 00:51 transactions.csv
+-rw-r--r-- 1 root root 7418 Jun  8 00:51 transactions.json
+root@0f1e383a7916:/app#

@@ -1,0 +1,42 @@
+{
+  "analysis": "I've read most of the source code. Now I need to see the reconcile logic, exceptions, output writers, validation, and the config file. Then I need to read the audit archive to understand the reconciliation rules from Investigation Briefs 01-09.",
+  "plan": "Read the remaining source files and the config, then start reading the audit archive.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.3
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/config/defaults.json\n",
+      "duration": 0.3
+    }
+  ]
+}

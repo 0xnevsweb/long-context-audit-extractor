@@ -1,0 +1,27 @@
+{
+  "analysis": "We now see actual structured Correction Notices format: blocks `### CORR-...` with `targets: TXN-...`, `field: ...`, `value: ...`, `effective: YYYY-MM-DD`. Transaction Ledger includes a decoy 'working copy' section before canonical '## Transaction Ledger' (our parser correctly uses canonical). We also saw that corrections use `targets:` not `transaction_id:`; current corrections parser expects first line to be notice id without ### and expects `transaction:` key, so it’s wrong and will mis-parse/skip. This explains correction notices landing on wrong ledger rows. Next: rewrite parser/corrections.js to parse these blocks robustly, and update reconcile.js to apply corrections in correct precedence order and generate report sorted by notice_id with correct previous_value.",
+  "plan": "1) Rewrite parser/corrections.js to: locate '## Correction Notices' section, split on /^### /m, parse notice_id from first line (after ###), parse `targets:` to transaction_id, parse field/value/effective. Return array of notices. 2) Update normalize/reconcile.js: apply corrections sorted by effective date then notice_id (unless briefs specify different), tracking previous_value for each applied correction; produce report of winning corrections (last applied per notice_id anyway) sorted by notice_id. 3) Ensure reportWriter sorts by notice_id. 4) Run extractor to /app/output and inspect artifacts.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const start = markdown.indexOf(\"## Correction Notices\");\n  if (start < 0) return [];\n\n  // Corrections run until the next top-level section (Transaction Ledger).\n  const end = markdown.indexOf(\"## Transaction Ledger\", start);\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = {\n      notice_id: noticeId,\n      transaction_id: \"\",\n      field: \"\",\n      value: \"\",\n      effective: \"\",\n    };\n\n    for (const line of lines.slice(1)) {\n      const trimmed = String(line).trim();\n      if (!trimmed) continue;\n\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (!entry.transaction_id || !entry.field) continue;\n    notices.push(entry);\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeReconciliationReport(filePath, report) {\n  // Contract: sorted by notice_id ascending.\n  const sorted = [...report].sort((a, b) => {\n    if (a.notice_id === b.notice_id) return 0;\n    return a.notice_id < b.notice_id ? -1 : 1;\n  });\n  const body = sorted.map((row) => JSON.stringify(row)).join(\"\\n\");\n  fs.writeFileSync(filePath, body ? `${body}\\n` : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

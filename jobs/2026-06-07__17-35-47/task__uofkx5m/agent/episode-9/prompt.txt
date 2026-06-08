@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Site visit #196 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers f
+lagged the gap because effective-date logic must honor notice precedence.
+
+Memo WP-5946 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+
+Interview #672 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+Site visit #576 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewers f
+lagged the gap because effective-date logic must honor notice precedence.
+
+During Q1 close, A. Ndiaye circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state;
+ QA reproduced the drift on a cold run the next morning.
+
+Follow-up #458 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows on
+ly from the canonical ledger and structured sections at file end.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Interview #978 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserving
+the full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #931 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows on
+ly from the canonical ledger and structured sections at file end.
+
+Memo WP-1033 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+
+In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+ so auditors can explain why a given transaction received compliance_hold.
+\n===== /tmp/brief09.md =====
+root@3f2a24e5dabd:/app# grep -nE "^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)$" /app/data/audit_archive.md
+1857:## Email Excerpts
+3849:## Policy Exceptions
+3866:## Correction Notices
+3912:## Transaction Ledger
+root@3f2a24e5dabd:/app#

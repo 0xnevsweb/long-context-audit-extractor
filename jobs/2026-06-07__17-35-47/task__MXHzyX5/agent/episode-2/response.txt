@@ -1,0 +1,87 @@
+{
+  "analysis": "We can locate key sections in the archive via grep. Investigation Briefs start around line 11. Correction Notices section begins around line 3866; correction notice contract reminder around 1437. Email excerpts include compliance emails early (lines ~242) and lots of non-compliance threads later. Ledger rows start around ~3986 with TXN headings; we also saw duplicate TXN entries including a provisional row. Code structure: parseArchive -> reconcileTransactions -> buildExceptions -> writers. Need to inspect reconcile.js and the parsers (emails, corrections, ledger, policy) to understand current behavior and identify causes of (1) nondeterministic drift (likely unordered iteration), (2) compliance holds missing later mail (likely using first mail only or wrong date comparison), (3) correction notices applied to wrong ledger rows (likely matching by array index or non-stable selection among duplicate TXN base rows). Next step: read the relevant Investigation Briefs (01–09, especially Brief 09) and current reconcile implementation.",
+  "plan": "1) Extract the text of Investigation Briefs 01–09 and Brief 09 amendment from the markdown using sed with line ranges. We’ll first find the line numbers for each brief heading. 2) View parsers for ledger/emails/corrections and normalize/reconcile.js plus utils/sort/date to see how ordering and matching is done. 3) Based on brief rules, adjust reconciliation: choose canonical ledger row among duplicates (non-provisional beats provisional; otherwise deterministic), apply correction notices in notice_id order, compute previous_value correctly, apply compliance mail timing per Brief 09, and ensure final output sorting and stable JSON serialization.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,820p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '820,1120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1120,1500p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1500,1860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1860,2200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2200,2700p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2700,3300p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3300,3920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3920,4160p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

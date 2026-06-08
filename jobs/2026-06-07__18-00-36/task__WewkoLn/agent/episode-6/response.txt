@@ -1,0 +1,10 @@
+{
+  "analysis": "I notice that \"Case Study 03\" is a decoy section, not an Investigation Brief. I need to search specifically for the Investigation Brief headings to find Briefs 03-09.",
+  "plan": "Search for all Investigation Brief headings and their line numbers to efficiently read the binding rules.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "analysis": "We can see Correction Notices are actually single-line `targets: TXN-...` (so the corrections parser’s approach is mostly OK, but it uses key `targets:` yet stores into transaction_id only if line starts with `targets:` and splits on ':'—works here. However, reconcile.js checks notice.field === 'date' but then writes target.date, while output expects effective_date from row.date; fine. The bigger issues remain: ledger parser currently starts at '## Transaction Ledger' but archive contains a decoy '## Transaction Ledger (working copy)' just before the authoritative '## Transaction Ledger' (noted earlier at file line ~17). If parser grabs the first occurrence of substring, it may start at the working copy and include duplicates/garbage. Also ledger parser drops duplicate TXN blocks entirely, losing final authoritative row (provisional vs final). Emails have `sent:` lines but emails parser ignores them, so hold timing cannot be computed and status timing rules (Brief 03) likely unmet. We still need to read the briefs 01–08 content we attempted to print; terminal now shows only corrections section, so we need to re-run those sed commands with smaller chunks and capture the binding rule bullets.",
+  "plan": "1) Re-run targeted sed extracts for Investigation Briefs 01–08 but in smaller windows, focusing on the binding 'Committee ruling (binding for extract):' parts and ignoring field notes sections. 2) Extract and inspect the top-of-file note around line 17 about authoritative ledger heading to fix parseLedger to only use the exact line `## Transaction Ledger` (not working copy). 3) After we have the rules, implement code fixes in ledger.js, emails.js, reconcile.js, exceptions.js, and potentially corrections precedence logic. 4) Run extractor twice and diff outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,60p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,40p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,290p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,740p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,900p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1105p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1485p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1848,1888p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

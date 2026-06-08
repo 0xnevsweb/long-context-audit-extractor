@@ -1,0 +1,35 @@
+{
+  "analysis": "The earlier attempt to extract Briefs 01–09 into /tmp/briefs_01_09.md captured a lot of narrative filler and possibly missed the actual directive text due to decoy headings and repeated filler paragraphs. We need to locate the actual authoritative content inside Briefs 01–09 (not the 'field notes' variants) by jumping to the specific line ranges where those headings occur, and then extracting only until the next top-level heading, excluding '— field notes' and other non-binding sections. Next step is to grep for the exact headings and then view around them to capture the directive bullets we must implement (holds timing, overlay order, signed amendments, correction precedence, exception codes).",
+  "plan": "1) Find line numbers for each authoritative heading '## Investigation Brief 01'..'09' (excluding 'field notes'). 2) For each, print a bounded window to read the directive. 3) Also locate 'Brief 09' mid-year amendment wording about compliance holds timing override. 4) Once rules are clear, proceed to code changes (parsers/reconcile/output).",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | grep -v \"field notes\" | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '240,360p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Brief 09\" -n /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09(\\b|[^—])/{p=1} p{print NR \":\" $0} /^## Investigation Brief 10/{p=0}' /app/data/audit_archive.md | head -n 220\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

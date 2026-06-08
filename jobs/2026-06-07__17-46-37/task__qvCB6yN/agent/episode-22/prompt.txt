@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1020:Follow-up #975 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1040:Follow-up #436 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1071:Follow-up #977 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1075:Follow-up #283 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1081:Follow-up #929 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1109:Follow-up #357 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1123:Follow-up #554 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+1135:Follow-up #484 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must inste
+ad derive rows only from the canonical ledger and structured sections at file end.
+1139:Follow-up #867 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must inste
+ad derive rows only from the canonical ledger and structured sections at file end.
+root@7a65087374e8:/app# grep -nEi "winning correction|correction notice" /app/data/audit_archive.md | head -n 80
+3:Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across t
+he file.
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+476:apply the status change if precedence allows. Correction notices always apply
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+1063:ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+1426:final status is `reversed`, `amount_usd` > 5000, and a winning correction
+1436:`reconciliation_report.jsonl` is one JSON object per winning correction with
+1677:ledger date immediately before correction notices are applied — that is, the date
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+3866:## Correction Notices
+root@7a65087374e8:/app# grep -nEi "Committee minutes show owner churn|signed: true" /app/data/audit_archive.md | head -n 40
+832:Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+834:owner when `signed: true` (case insensitive) and, when the amendment includes
+1840:signed: true
+1849:signed: true
+1854:signed: true
+root@7a65087374e8:/app#

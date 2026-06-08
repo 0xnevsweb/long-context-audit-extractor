@@ -1,0 +1,31 @@
+{
+  "analysis": "We successfully viewed the tail end of the Correction Notices section and confirmed there is a decoy 'Transaction Ledger (working copy)' followed by the authoritative 'Transaction Ledger'. This matches the archive warning about decoy headings. So parsing must explicitly choose the canonical `## Transaction Ledger` section, not the working copy. We still haven’t captured current parser/ledger.js, parser/corrections.js, or normalize/reconcile.js outputs; only the markdown snippet printed. Next: inspect the code to see if it mistakenly picks the first ledger section (working copy) or merges both; and ensure correction notices are applied to the authoritative ledger rows only. Also address duplicate ledger IDs (provisional vs final) deterministically.",
+  "plan": "1) Open parser/sections.js and parser/ledger.js to confirm how sections are located (string matching) and ensure it selects the canonical `## Transaction Ledger` heading exactly, ignoring working copy. 2) Open parser/corrections.js to ensure it parses all correction notices and uses stable keys. 3) Open normalize/reconcile.js to see how it picks base ledger rows, applies corrections (precedence), computes previous_value, and derives statuses/holds. 4) After identifying issues, patch code and run extractor twice; diff transactions.json and validate report ordering.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '360,760p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Transaction Ledger|working copy|Ledger\" /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

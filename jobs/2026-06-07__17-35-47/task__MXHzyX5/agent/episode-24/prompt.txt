@@ -1,0 +1,41 @@
+Current Terminal Screen:
+{
+  "items": [
+    {
+      "transaction_id": "TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f",
+      "owner": "asmith",
+      "status": "reversed",
+      "effective_date": "2024-02-02",
+      "amount_usd": 7500,
+      "exception_reason": "retroactive_review"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "policy_waiver"
+    }
+  ]
+}
+root@e1953a1e27da:/app# node -p "const j=require('/app/output/transactions.json'); j.items.filter(r=>r.exception_reason).slice(0,10)"
+[
+  {
+    transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+    owner: 'asmith',
+    status: 'reversed',
+    effective_date: '2024-02-02',
+    amount_usd: 7500,
+    exception_reason: 'retroactive_review'
+  },
+  {
+    transaction_id: 'TXN-de3b42d7-919c-5839-a490-b039d9c97092',
+    owner: 'dlee',
+    status: 'approved',
+    effective_date: '2024-12-12',
+    amount_usd: 15607.62,
+    exception_reason: 'policy_waiver'
+  }
+]
+root@e1953a1e27da:/app#

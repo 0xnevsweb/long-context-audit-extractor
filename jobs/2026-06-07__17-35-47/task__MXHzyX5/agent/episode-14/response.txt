@@ -1,0 +1,43 @@
+{
+  "analysis": "Corrections are now parsed and applied; reconciliation_report.jsonl has 6 lines and is ordered by notice_id ascending, with previous_value correctly reflecting the pre-application value. Determinism for transactions.json still holds (no diff across reruns). Remaining risks per task description: compliance holds missing later mail and statuses drifting between reruns. Status drift appears fixed via deterministic sorting and correction ordering, but we haven’t verified compliance hold logic at all; exceptions.json is tiny (22 bytes) suggesting no exceptions flagged, which may be wrong given the archive mentions compliance_hold. We need to inspect normalize/exceptions.js and parser/emails.js and the Investigation Briefs 07/09 rules to implement the compliance_hold exception reason correctly, including Brief 09 amendment about date comparison and later mail. Also correction notices landing on wrong ledger rows might involve duplicate TXN rows/provisional handling in ledger parsing; we haven’t addressed that either (currently last ledger entry wins). Next we must read Brief 07 and Brief 09 text and update reconciliation/exceptions accordingly, and handle provisional ledger duplicates deterministically per Brief 01.",
+  "plan": "1) Inspect current exceptions logic (normalize/exceptions.js) and email parsing (parser/emails.js) to see what is supposed to generate exception_reason codes (including compliance_hold). 2) Extract authoritative brief text for Brief 01 (ledger sourcing), Brief 07 (holds), and Brief 09 (mid-year amendment) by locating their heading line numbers and printing those ranges. 3) Implement: compute exception_reason codes in lexical order; ensure compliance_hold uses qualifying compliance@ mail and correct date comparison per Brief 09; ensure later mail supersedes earlier; and ensure ledger sourcing picks canonical (non-provisional) row when duplicates exist, so corrections apply to the correct base row. 4) Rerun extractor and confirm exceptions.json contains expected flagged items and that transactions.json remains deterministic.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md > /tmp/briefs.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '980,1200p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1200,1420p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/output && cat /app/output/exceptions.json\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

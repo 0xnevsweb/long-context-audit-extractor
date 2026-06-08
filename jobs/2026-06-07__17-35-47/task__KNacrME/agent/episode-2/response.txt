@@ -1,0 +1,63 @@
+{
+  "analysis": "We located Investigation Briefs 01–09 line ranges in the archive (Brief 09 starts ~1670). Extractor code shows a very simple reconcile: ledger -> Map by id, then emails overwrite status, then corrections overwrite fields and emit report. This likely violates policy: ignoring provisional ledger blocks, choosing last non-provisional ledger row, status precedence rules, mail timing vs holds, correction precedence/overlay order, and exception flags. Also drift between reruns suggests nondeterministic ordering (unsorted inputs, Map iteration, unstable sort, JSON writer formatting). Next: read the actual briefs (01–09) and inspect parsers (ledger/emails/corrections/policy/meetings) and exception normalizer to implement correct reconciliation and determinism.",
+  "plan": "1) Print the content of Briefs 01–09 (authoritative sections) to capture the exact rules, especially Brief 09 amendment for compliance_hold timing/date comparison. 2) Inspect current parsers: ledger.js (must ignore provisional blocks, choose last base row), emails.js (mail timing, holds), corrections.js (precedence and field targeting), and any policy/meetings parsing. 3) Inspect normalize/exceptions.js and normalize/reconcile.js to see how flags and status precedence are currently applied. Then we can implement fixes in reconcile + parsers and ensure stable sorting and byte-identical JSON output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,620p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,820p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1050p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1205p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1415p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1668p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1825p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,72 @@
+New Terminal Output:
+
+root@9416c0dee655:/app# python3 - <<'PY'
+> import pathlib
+> p=pathlib.Path('/app/audit-extractor/src/output/csvWriter.js')
+> s=p.read_text().splitlines()
+> # minimal edit: in writeTransactionsCsv, render amount as fixed 2 decimals
+> out=[]
+> for line in s:
+>     if 'csvEscape(row.amount_usd),' in line:
+>         out.append('      csvEscape(Number(row.amount_usd).toFixed(2)),')
+>     else:
+>         out.append(line)
+> p.write_text('\n'.join(out)+"\n")
+> print('updated amount formatting in csvWriter.js')
+> PY
+updated amount formatting in csvWriter.js
+root@9416c0dee655:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@9416c0dee655:/app# sed -n '1,220p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@9416c0dee655:/app# sed -n '1,220p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+root@9416c0dee655:/app# head -n 3 /app/output/transactions.csv | tail -n 1
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,
+root@9416c0dee655:/app#

@@ -1,0 +1,10 @@
+{
+  "analysis": "Now I have all 9 Investigation Briefs with their binding rules. Let me summarize the key reconciliation logic:\n\n1. **Brief 01**: Use regex (not indexOf) to find `## Transaction Ledger`. Ignore `provisional: true` blocks. Last non-provisional block wins for duplicates.\n2. **Brief 02**: Status precedence: pending < approved < rejected < reversed. Only emails from `compliance@` can change status.\n3. **Brief 03**: Emails with `sent:` date apply only if sent >= ledger date. No `sent:` line = apply if precedence allows.\n4. **Brief 04**: Multiple corrections for same txn+field: greatest `effective` date wins. previous_value = value before correction.\n5. **Brief 05**: Meeting amendments replace owner only when `signed: true` AND (no effective date OR effective >= ledger date).\n6. **Brief 06**: effective_date starts from ledger date. If winning correction modifies `status` or `date`, use that correction's `effective` as `effective_date`.\n7. **Brief 07**: `over_limit` if amount > 10000. `compliance_hold` if final status=rejected, compliance@ email exists with `sent:` line. Sent comparison per Brief 09.\n8. **Brief 08**: `policy_waiver` if approved + amount>10000 + policy exception with `approved_by: compliance`. `retroactive_review` if reversed + amount>5000 + winning correction changed status.\n9. **Brief 09**: For compliance_hold, compare email's sent date against pre-correction date (after ledger+amendments+emails, before corrections).\n\nNow I need to see the structured data sections to understand their formats.",
+  "plan": "Read the structured data sections near the end of the file to understand email excerpts, policy exceptions, correction notices, and transaction ledger formats.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## \" /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

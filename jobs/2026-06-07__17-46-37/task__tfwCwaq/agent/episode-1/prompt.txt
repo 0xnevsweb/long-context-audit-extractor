@@ -1,0 +1,220 @@
+New Terminal Output:
+root@0f1e383a7916:/app# ls -ლა /app
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@0f1e383a7916:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:35 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 data
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@0f1e383a7916:/app# find /app/audit-extractor -maxdepth 3 -type f -name '*.js' -o -name '*.ts' -o -name '*.json' | sed 's#^#/app/#' | head
+/app//app/audit-extractor/config/defaults.json
+/app//app/audit-extractor/src/lib/handbook.js
+/app//app/audit-extractor/src/lib/constants.js
+/app//app/audit-extractor/src/schema/validate.js
+/app//app/audit-extractor/src/cli.js
+/app//app/audit-extractor/src/output/jsonWriter.js
+/app//app/audit-extractor/src/output/csvWriter.js
+/app//app/audit-extractor/src/output/reportWriter.js
+/app//app/audit-extractor/src/utils/sort.js
+/app//app/audit-extractor/src/utils/date.js
+root@0f1e383a7916:/app# ls -la /app/audit-extractor/src
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+root@0f1e383a7916:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@0f1e383a7916:/app# ls -la /app/audit-extractor/docs
+total 16
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  429 Jun  8 00:31 architecture.md
+-rw-r--r-- 1 root root 2267 Jun  8 00:32 extractor-output-contract.md
+root@0f1e383a7916:/app# sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md
+# Audit Extractor Output Contract
+
+Service root: `/app/audit-extractor`
+
+## CLI
+
+`node /app/audit-extractor/src/cli.js extract --input <markdown-path> --outdir <directory>`
+
+Missing `--input` or `--outdir`: message on stderr, exit code 1.
+
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of
+ the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes onl
+y.
+
+## Artifacts
+
+`extract` writes exactly these files under `--outdir`:
+
+- `transactions.json`
+- `transactions.csv`
+- `exceptions.json`
+- `reconciliation_report.jsonl`
+
+Identical input must produce byte-identical `transactions.json` on repeated runs.
+
+## `transactions.json`
+
+Top-level envelope:
+
+```json
+{ "items": [ /* transaction rows */ ] }
+```
+
+Each row:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `transaction_id` | string | `TXN-…` |
+| `owner` | string | |
+| `status` | string | lowercase: `pending`, `approved`, `rejected`, `reversed` |
+| `effective_date` | string | `YYYY-MM-DD` |
+| `amount_usd` | number | two decimal places |
+| `exception_reason` | string or null | semicolon-joined flag codes in lexical order, or null |
+
+Sort `items` by `transaction_id` ascending.
+
+## `transactions.csv`
+
+Header (exact order):
+
+`transaction_id,owner,status,effective_date,amount_usd,exception_reason`
+
+Same rows as `transactions.json` in the same order. Empty cell when `exception_reason` is null.
+
+## `exceptions.json`
+
+```json
+{ "items": [ /* flagged rows only */ ] }
+```
+
+Same row shape as `transactions.json`. Include only rows where `exception_reason` is non-null. Sort by `transaction_id` ascending.
+
+## `reconciliation_report.jsonl`
+
+One JSON object per line, sorted by `notice_id` ascending. Each line records one winning correction notice:
+
+| Field | Type |
+|-------|------|
+| `notice_id` | string |
+| `t
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+gestion. Teams must not treat decoy ledger headings or appendix
+ commentary as authoritative transaction sources.
+
+Memo WP-4162 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #592 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows o
+nly from the canonical ledger and structured sections at file end.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+
+During February recon, R. Okonkwo circulated a draft finding on treasury wire cutoff failures. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Memo WP-3682 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Memo WP-1921 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-8866 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced differ
+ent status columns for the same transaction id.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+In February recon, external advisors reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+
+Lead reviewer M. Chen noted that treasury wire cutoff failures created reconciliation noise in treasury during February recon. Staff initially blamed tooling, b
+ut timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-2046 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+ commentary as authoritative transaction sources.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #736 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows o
+nly from the canonical ledger and structured sections at file end.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-6752 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced differ
+ent status columns for the same transaction id.
+
+## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+root@0f1e383a7916:/app#

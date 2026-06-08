@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  3860
+  3861  ### Policy Exception
+  3862  transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+  3863  approved_by: compliance
+  3864  reason: executive waiver
+  3865
+  3866  ## Correction Notices
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> function parsePolicyExceptions(markdown) {
+>   const start = markdown.indexOf("## Policy Exceptions");
+>   if (start < 0) return [];
+>
+>   // Avoid decoy headings earlier in the archive by searching forward.
+>   const end = markdown.indexOf("## Correction Notices", start + 1);
+>   const slice = end >= 0 ? markdown.slice(start, end) : markdown.slice(start);
+>
+>   const blocks = slice.split(/^### /m).slice(1);
+>   const entries = [];
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     // first line after ### is expected to be TXN-...
+>     const txn = (lines[0] || "").trim();
+>     if (!txn.startsWith("TXN-")) continue;
+>
+>     const entry = { transaction_id: txn, approved_by: null, reason: null };
+>     for (const line of lines) {
+>       const t = line.trim();
+>       if (t.startsWith("approved_by:")) entry.approved_by = t.split(":")[1].trim();
+>       if (t.startsWith("reason:")) entry.reason = t.split(":")[1].trim();
+>     }
+>     entries.push(entry);
+>   }
+>
+>   return entries;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@e1953a1e27da:/app#

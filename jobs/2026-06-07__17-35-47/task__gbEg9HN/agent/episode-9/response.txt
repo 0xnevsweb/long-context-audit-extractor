@@ -1,0 +1,35 @@
+{
+  "analysis": "corrections.js parses notices by finding headings and reading targets/field/value/effective, and we updated it to match the exact heading line. However, reconciliation_report.jsonl is still empty, so either (a) parseArchive isn’t using parseCorrections (or is failing to extract the Corrections section), (b) parseCorrections is returning empty because it’s slicing incorrectly (maybe stops immediately due to section termination logic), or (c) reconcileTransactions is skipping because it can’t find target transactions (ledger parsed wrong or transaction_id mismatch). We need to inspect parser/sections.js and how it passes markdown to parseCorrections, plus run a direct node check of parsed.corrections length and ledger ids. Also need to check ledger.js edit actually applied. Finally, the transactions.json structure mismatch needs checking but is secondary to report being empty.",
+  "plan": "1) Inspect parser/sections.js and any parseArchive function to ensure corrections parser is invoked and uses full markdown. 2) Run a node snippet to print parsed section counts (ledger/corrections) after our edits. 3) Inspect parser/ledger.js to confirm exact heading match change is present. 4) If parsed.corrections is still 0, debug parseCorrections slicing logic: confirm it slices from heading to end and extracts \"### CORR-\" blocks; fix to stop at next \"## \" heading rather than end-of-file, but should still include content. 5) If corrections parse nonzero but report empty, inspect reconcile.js to ensure it reads parsed.corrections and pushes report, and check transaction_id key usage (entry.transaction_id vs notice.transaction_id).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed=parseArchive(md);\nconsole.log({ledger: parsed.ledger.length, corrections: parsed.corrections.length, emails: parsed.emails.length, policy: parsed.policy.length});\nconsole.log('sample correction ids', parsed.corrections.slice(0,5).map(x=>x.notice_id));\nconsole.log('sample correction txns', parsed.corrections.slice(0,5).map(x=>x.transaction_id));\nconsole.log('sample ledger ids', parsed.ledger.slice(0,5).map(x=>x.transaction_id));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"### CORR-\" -n /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib\np=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')\nprint(p.read_text())\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"parsed\\.corre\" -n /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

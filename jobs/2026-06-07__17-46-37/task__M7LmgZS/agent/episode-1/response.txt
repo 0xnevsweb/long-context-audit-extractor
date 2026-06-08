@@ -1,0 +1,47 @@
+{
+  "analysis": "Repo and CLI exist; CLI already enforces missing --input/--outdir with stderr + exit 1, matching contract. Output contract requires deterministic transactions.json and ordering rules. We have not yet inspected the extraction logic. The input archive is large; tail shows ledger rows at end including duplicate TXN-ba9e6ade... with a provisional row and a final row, which likely relates to correction/overlay precedence. Grep output indicates non-binding draft guidance about comparing compliance mail against post-correction effective dates; mid-year amendment in Brief 09 supersedes earlier hold-timing wording. Next we must read authoritative Investigation Briefs 01–09 (especially 09) and then fix extractor logic for: deterministic output (no drift between reruns), correct compliance hold timing with later mail, and correct correction notice mapping to ledger rows.",
+  "plan": "1) Inspect src/index.js and main pipeline modules under parser/normalize/output to find where statuses/holds/corrections are computed and where nondeterminism could be introduced. 2) Locate Investigation Brief sections within the markdown by line number and view Briefs 01–09, especially the amendment in 09, to codify the correct reconciliation rules. 3) Identify how ledger rows are selected/merged when duplicates/provisional exist, and how correction notices are linked to transactions. 4) After understanding current behavior, implement deterministic sorting at every stage (transactions, notices, exceptions) and correct rule precedence/timing per Brief 09. 5) Run extractor to /app/output and inspect artifacts for determinism and correctness.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -name '*.js' | sort\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/parser && for f in /app/audit-extractor/src/parser/*.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/normalize && for f in /app/audit-extractor/src/normalize/*.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/lib && for f in /app/audit-extractor/src/lib/*.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/output && for f in /app/audit-extractor/src/output/*.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 0\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Brief 09\\|Investigation Brief 09\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

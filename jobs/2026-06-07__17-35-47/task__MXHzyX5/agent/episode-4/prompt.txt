@@ -1,0 +1,41 @@
+Current Terminal Screen:
+nst amendment minutes before accepting any owner change.
+
+Memo WP-9951 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Lead reviewer S. Patel noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling
+, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+## Meeting Notes
+
+Committee minutes include signed amendments affecting owner fields.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+effective: 2024-11-01
+
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing con
+text.
+
+root@e1953a1e27da:/app#

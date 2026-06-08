@@ -1,0 +1,203 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "8.4.1"
+        },
+        "summary": {
+            "tests": 19,
+            "passed": 15,
+            "failed": 4,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1780879429.1337638,
+            "stop": 1780879429.9380157
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_archive_is_long_context",
+                "status": "passed",
+                "duration": 0.003102759000171318,
+                "start": 1780879429.2270856,
+                "stop": 1780879429.230717,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_archive_policy_is_distributed",
+                "status": "passed",
+                "duration": 0.022939347999908932,
+                "start": 1780879429.23276,
+                "stop": 1780879429.2570097,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_cli_requires_arguments",
+                "status": "passed",
+                "duration": 0.1518016960001205,
+                "start": 1780879429.2574651,
+                "stop": 1780879429.4098098,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_files_exist",
+                "status": "passed",
+                "duration": 0.15125443999988875,
+                "start": 1780879429.4101305,
+                "stop": 1780879429.5626123,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_json_schema",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.03996460099995147,
+                "start": 1780879429.5629632,
+                "stop": 1780879429.649936,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_transactions_json_schema(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify transactions.json envelope and row fields match the handbook.\"\"\"\n        expected_rows, _ = expected\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        assert \"items\" in payload and isinstance(payload[\"items\"], list)\n        assert len(payload[\"items\"]) == len(expected_rows)\n    \n        for actual, exp in zip(payload[\"items\"], expected_rows, strict=True):\n            assert actual[\"transaction_id\"] == exp.transaction_id\n            assert actual[\"owner\"] == exp.owner\n            assert actual[\"status\"] == exp.status\n            assert actual[\"effective_date\"] == exp.effective_date\n            assert abs(actual[\"amount_usd\"] - exp.amount_usd) < 0.001\n>           assert actual.get(\"exception_reason\") == exp.exception_reason\nE           AssertionError: assert 'post_reversal_review' == 'retroactive_review'\nE             \nE             - retroactive_review\nE             + post_reversal_review\n\n/tests/test_outputs.py:377: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_sorted",
+                "status": "passed",
+                "duration": 0.001585711999950945,
+                "start": 1780879429.650224,
+                "stop": 1780879429.6531062,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_csv_matches_json",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0032368239999414072,
+                "start": 1780879429.653481,
+                "stop": 1780879429.6813793,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_transactions_csv_matches_json(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify transactions.csv header, ordering, and cell values mirror JSON rows.\"\"\"\n        expected_rows, _ = expected\n        with (pipeline_output / \"transactions.csv\").open(encoding=\"utf-8\", newline=\"\") as handle:\n            reader = csv.DictReader(handle)\n            assert reader.fieldnames == [\n                \"transaction_id\",\n                \"owner\",\n                \"status\",\n                \"effective_date\",\n                \"amount_usd\",\n                \"exception_reason\",\n            ]\n            rows = list(reader)\n        assert len(rows) == len(expected_rows)\n        for actual, exp in zip(rows, expected_rows, strict=True):\n            assert actual[\"transaction_id\"] == exp.transaction_id\n            assert actual[\"owner\"] == exp.owner\n            assert actual[\"status\"] == exp.status\n            assert actual[\"effective_date\"] == exp.effective_date\n            assert float(actual[\"amount_usd\"]) == pytest.approx(exp.amount_usd)\n            exc_cell = actual[\"exception_reason\"]\n            if exp.exception_reason is None:\n                assert exc_cell == \"\"\n            else:\n>               assert exc_cell == exp.exception_reason\nE               AssertionError: assert 'post_reversal_review' == 'retroactive_review'\nE                 \nE                 - retroactive_review\nE                 + post_reversal_review\n\n/tests/test_outputs.py:414: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_exceptions_json_only_flagged",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0015081949999284916,
+                "start": 1780879429.6816227,
+                "stop": 1780879429.6988668,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_exceptions_json_only_flagged(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify exceptions.json contains only rows with non-null exception_reason.\"\"\"\n        expected_rows, _ = expected\n        flagged = [row for row in expected_rows if row.exception_reason]\n        payload = json.loads((pipeline_output / \"exceptions.json\").read_text(encoding=\"utf-8\"))\n        assert \"items\" in payload\n>       assert len(payload[\"items\"]) == len(flagged)\nE       AssertionError: assert 18 == 17\nE        +  where 18 = len([{'amount_usd': 15335.5, 'effective_date': '2024-02-26', 'exception_reason': 'over_limit', 'owner': 'dlee', ...}, {'am... {'amount_usd': 19727.88, 'effective_date': '2024-03-15', 'exception_reason': 'over_limit', 'owner': 'jdoe', ...}, ...])\nE        +  and   17 = len([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_d... owner='jdoe', status='pending', effective_date='2024-03-15', amount_usd=19727.88, exception_reason='over_limit'), ...])\n\n/tests/test_outputs.py:425: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_reconciliation_report",
+                "status": "passed",
+                "duration": 0.0014813349999940328,
+                "start": 1780879429.6990933,
+                "stop": 1780879429.70098,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_duplicate_ledger_last_wins",
+                "status": "passed",
+                "duration": 0.003137110000125176,
+                "start": 1780879429.7011728,
+                "stop": 1780879429.704626,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_ignores_decoy_ledger_section",
+                "status": "passed",
+                "duration": 0.0013739450000684883,
+                "start": 1780879429.7048302,
+                "stop": 1780879429.7065592,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_uses_pre_correction_ledger_date",
+                "status": "passed",
+                "duration": 0.013274649000095451,
+                "start": 1780879429.7067544,
+                "stop": 1780879429.7204652,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_requires_sent_line",
+                "status": "passed",
+                "duration": 0.009238605999939864,
+                "start": 1780879429.7207077,
+                "stop": 1780879429.7304423,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_retroactive_review_on_status_correction",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0019989019999684388,
+                "start": 1780879429.7309608,
+                "stop": 1780879429.749803,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_retroactive_review_on_status_correction(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify retroactive_review is set when status was corrected to reversed above threshold.\"\"\"\n        flagged = [r for r in expected[0] if r.exception_reason and \"retroactive_review\" in r.exception_reason]\n        assert flagged, \"fixture must include at least one retroactive_review row\"\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        out_by_id = {r[\"transaction_id\"]: r for r in payload[\"items\"]}\n        for exp in flagged:\n>           assert \"retroactive_review\" in (out_by_id[exp.transaction_id].get(\"exception_reason\") or \"\")\nE           AssertionError: assert 'retroactive_review' in (('post_reversal_review'))\nE            +  where 'post_reversal_review' = <built-in method get of dict object at 0x7f47dda29f00>('exception_reason')\nE            +    where <built-in method get of dict object at 0x7f47dda29f00> = {'amount_usd': 7500, 'effective_date': '2024-06-15', 'exception_reason': 'post_reversal_review', 'owner': 'asmith', ...}.get\n\n/tests/test_outputs.py:529: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_without_sent_applies_status",
+                "status": "passed",
+                "duration": 0.008018204999984846,
+                "start": 1780879429.750051,
+                "stop": 1780879429.7585058,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_sent_date_gate",
+                "status": "passed",
+                "duration": 0.010871200999986286,
+                "start": 1780879429.758777,
+                "stop": 1780879429.7701952,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_deterministic_rerun",
+                "status": "passed",
+                "duration": 0.1480514200000016,
+                "start": 1780879429.770647,
+                "stop": 1780879429.9201133,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_correction_effective_date_from_handbook",
+                "status": "passed",
+                "duration": 0.005548624999960339,
+                "start": 1780879429.920432,
+                "stop": 1780879429.9266338,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_meeting_signed_owner_override",
+                "status": "passed",
+                "duration": 0.008827435000057449,
+                "start": 1780879429.9268792,
+                "stop": 1780879429.9369154,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

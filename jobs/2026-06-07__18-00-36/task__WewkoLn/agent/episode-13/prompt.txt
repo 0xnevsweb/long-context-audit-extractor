@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     }
+>   }
+>   if (sectionStart < 0) return [];
+>
+>   let sectionEnd = lines.length;
+>   for (let i = sectionStart + 1; i < lines.length; i++) {
+>     if (/^## /.test(lines[i])) {
+>       sectionEnd = i;
+>       break;
+>     }
+>   }
+>
+>   const sectionText = lines.slice(sectionStart, sectionEnd).join('\n');
+>   const exceptions = [];
+>   const blocks = sectionText.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const blockLines = block.split('\n');
+>     let transaction = null;
+>     let approvedBy = null;
+>     let reason = null;
+>     for (const line of blockLines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith('transaction:')) {
+>         transaction = trimmed.slice(12).trim();
+>       } else if (trimmed.startsWith('approved_by:')) {
+>         approvedBy = trimmed.slice(12).trim();
+>       } else if (trimmed.startsWith('reason:')) {
+>         reason = trimmed.slice(7).trim();
+>       }
+>     }
+>     if (transaction) {
+>       exceptions.push({ transaction_id: transaction, approved_by: approvedBy, reason });
+>     }
+>   }
+>   return exceptions;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@b5558c31e8a7:/app#

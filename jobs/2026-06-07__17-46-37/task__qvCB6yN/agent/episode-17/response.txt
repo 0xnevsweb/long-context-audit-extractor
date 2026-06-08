@@ -1,0 +1,43 @@
+{
+  "analysis": "We have firm pointers from grep output for Brief 07/08: exception_reason rules and required output artifact shapes/headers. We still need to capture the authoritative directive text for Briefs 01–06 and 09 (ledger sourcing, status precedence, mail timing, correction precedence, meeting amendments/signed logic, effective date semantics, and Brief 09 hold-timing override). The previous command batch failed due to missing the required JSON field \"plan\"; no new commands executed from that batch.",
+  "plan": "Run targeted `sed` windows around the known brief heading line numbers to extract only the directive paragraphs at the top of each brief (01–06) plus the key lines in 07–08 and the mid-year amendment text in 09. These small ranges should contain the binding rules without too much filler, enabling us to implement the correct reconciliation logic and output contract conformance.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,60p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '252,330p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,800p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,940p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1058,1145p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1201,1235p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1419,1465p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1670,1715p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

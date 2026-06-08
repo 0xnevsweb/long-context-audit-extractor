@@ -1,0 +1,43 @@
+{
+  "analysis": "We still aren’t seeing the `ls`/`head` outputs, but we are seeing grep output with line numbers, so the loop likely ran and is printing rule-ish lines from one of the brief files (probably brief01.full). However the content is still narrative and not concrete rules. We need to confirm the full brief files exist and directly `head` them; maybe previous outputs are being truncated before reaching the `ls` lines. We'll run only the existence checks and a single head on one file to confirm. Then, instead of relying on brief extracts, we can directly read the authoritative rule paragraphs around the brief headings in the main archive using sed, focusing on the first ~60 lines after each brief heading to find explicit instructions (we already saw ledger provisional/last-wins in early lines of the archive).",
+  "plan": "1) Run minimal commands: `ls -la /tmp/brief01.full.md` and `head -n 40` it; same for brief02 and brief09. 2) If files don’t exist, fall back to direct sed ranges from archive around each brief heading lines previously identified. 3) Once we have binding rule text, update parsers/reconcile accordingly.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /tmp/brief01.full.md /tmp/brief02.full.md /tmp/brief09.full.md 2>&1 | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- brief01.full head ---'; sed -n '1,80p' /tmp/brief01.full.md 2>/dev/null || echo missing\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- brief02.full head ---'; sed -n '1,120p' /tmp/brief02.full.md 2>/dev/null || echo missing\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- brief09.full head ---'; sed -n '1,80p' /tmp/brief09.full.md 2>/dev/null || echo missing\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- archive around Brief01 heading (11-80) ---'; sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- archive around Brief02 heading (252-330) ---'; sed -n '252,340p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- archive around Brief03 heading (468-560) ---'; sed -n '468,580p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- archive around Brief04 heading (685-780) ---'; sed -n '685,820p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- archive around Brief07/09 compliance_hold notes (1201-1235,1670-1715) ---'; sed -n '1201,1238p' /app/data/audit_archive.md; sed -n '1670,1718p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

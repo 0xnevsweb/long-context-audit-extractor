@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*(.+)$/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     const dateMatch = block.match(/^Date:\s*(.+)$/im);
+>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+>
+>     const txnMatch = subjectMatch[1].match(/(TXN-[0-9a-f-]+)/i);
+>     if (!txnMatch) continue;
+>
+>     const date = dateMatch ? toYmd(dateMatch[1].trim()) : null;
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: txnMatch[1],
+>       status: statusMatch[1].trim().toLowerCase(),
+>       date,
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@30aa72376025:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@30aa72376025:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+6 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"reversed","new_value":"approved","ef
+fective":"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@30aa72376025:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "We saw parser/corrections.js: it slices from '## Correction Notices' to '## Transaction Ledger' (so corrections must appear before ledger) and parses blocks by '### '. It maps 'targets:' to transaction_id. No precedence logic; it just returns list. exceptions.js just filters rows already flagged; reconcile currently never sets exception_reason so exceptions.json likely empty. extractor-output-contract.md beyond line 200 printed nothing due to file being shorter than that or earlier truncation; need to cat whole file. Also need parser/sections.js, parser/emails.js, parser/ledger.js to implement rules properly including email sent dates and compliance hold indicators.",
+  "plan": "1) View parser/sections.js, ledger.js, emails.js to understand parsed shapes and how they choose authoritative sections (avoid non-authoritative email thread dumps). 2) View entire output contract to know reconciliation_report.jsonl schema. 3) Implement exceptions building: compute exception_reason codes (including compliance_hold) in reconcile or a new normalize step based on parsed policy exceptions section and mail holds. 4) Update reconcile to use sent-date gating and Brief 09 hold timing, and to apply corrections with correct precedence and build report per contract.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

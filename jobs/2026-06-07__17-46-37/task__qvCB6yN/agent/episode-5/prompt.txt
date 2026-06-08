@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Memo WP-5595 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override ledger o
+wners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer J. Huang noted that revenue cutoff testing created reconciliation noise in external audit during September fieldwork. Staff initially blamed tooli
+ng, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-5960 documents a three-way match failure tied to revenue cutoff testing. The team escalated when repeated extractor runs produced different sta
+tus columns for the same transaction id.
+
+Lead reviewer S. Patel noted that revenue cutoff testing created reconciliation noise in external audit during September fieldwork. Staff initially blamed tooli
+ng, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references revenue cutoff testing as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amen
+dment minutes before accepting any owner change.
+
+In September fieldwork, external advisors reviewed revenue cutoff testing and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+Risk assessment WP-5482 ties revenue cutoff testing to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commen
+tary as authoritative transaction sources.
+
+Follow-up #436 confirmed that external audit had been using an informal spreadsheet for revenue cutoff testing. The formal extractor must instead derive rows on
+ly from the canonical ledger and structured sections at file end.
+
+Memo WP-2910 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override ledger o
+wners; Brief 05 resolves that question for the extractor.
+
+In September fieldwork, external advisors reviewed revenue cutoff testing and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+Memo WP-4484 summarizes stakeholder interviews about revenue cutoff testing. Participants disagreed on whether unsigned amendments should ever override ledger o
+wners; Brief 05 resolves that question for the extractor.
+
+Risk assessment WP-9298 ties revenue cutoff testing to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix commen
+tary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+root@7a65087374e8:/app#

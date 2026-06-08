@@ -1,0 +1,79 @@
+New Terminal Output:
+n
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>
+>   const lines = items.map((row) => {
+>     const exception = row.exception_reason == null ? "" : row.exception_reason;
+>     const amount = Number(row.amount_usd).toFixed(2);
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${amount},${exception}`;
+>   });
+>
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n") + "\n");
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/output/csvWriter.js
+root@e13b9ef9896e:/app# email_line=$(grep -n "^## Email Excerpts" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo "EMAIL_LINE=$email_line"; sed -n "$
+((email_line+1)),$((email_line+40))p" /app/data/audit_archive.md
+EMAIL_LINE=238
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+
+Auditor directive (mandatory for extract):
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+## Investigation Brief 02 — Status Precedence — field notes
+
+Risk assessment WP-2138 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Lead reviewer J. Huang noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling
+, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed too
+ling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Follow-up #238 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+root@e13b9ef9896e:/app# rm -rf /app/output && mkdir -p /app/output
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# head -n 3 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,
+root@e13b9ef9896e:/app#

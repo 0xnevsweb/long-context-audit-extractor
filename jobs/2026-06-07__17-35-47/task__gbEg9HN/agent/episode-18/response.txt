@@ -1,0 +1,35 @@
+{
+  "analysis": "We see Email Excerpts include a `sent: YYYY-MM-DD` field, not `Date:`. Our current emails parser does not capture sent date at all, so compliance hold timing rules cannot be applied, explaining holds missing later mail. Policy Exceptions section lists transaction IDs; our policy parser uses indexOf boundaries and a regex to collect transaction IDs, which likely works but should be made exact-heading-safe. Next we must read Investigation Brief 07 and 09 to learn how to interpret compliance mail vs ledger dates (including corrections and the Brief 09 amendment). Then update parser/emails.js to capture sent date and possibly other fields, and update reconcile.js to apply mail-derived holds and policy exception flags into exception_reason per contract (semicolon joined, lexical order).",
+  "plan": "1) Locate and display the Investigation Brief sections that define exception flag codes and compliance hold timing (Brief 07 and the mid-year amendment in Brief 09). 2) Update parser/emails.js to parse only within the Email Excerpts section, extract transaction_id from subject, status, and `sent` date. Ensure it does not fall back to whole markdown when end heading not found. Use exact heading matching with regex and next-`##` delimiter like we did for ledger/corrections. 3) Update parser/policy.js similarly for exact section extraction. 4) Implement exception_reason calculation in reconcile.js: for each transaction, gather codes (e.g., POLICY_EXCEPTION, COMPLIANCE_HOLD, etc.) based on parsed policy ids and email timing/status, per briefs; sort and join. Then exceptions.json will include those rows. 5) Rerun extractor and validate outputs and determinism.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1200,1650p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1650,2100p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // Extract only the authoritative \"## Email Excerpts\" section.\n  const m = markdown.match(/^## Email Excerpts\\s*$/m);\n  if (!m) return [];\n\n  const after = markdown.slice(m.index + m[0].length);\n  const nextHeading = after.search(/^##\\s+/m);\n  const section = nextHeading === -1 ? after : after.slice(0, nextHeading);\n\n  const emails = [];\n  const blocks = section.split(/\\n\\n+/);\n\n  for (const block of blocks) {\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)\\s*$/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)\\s*$/im);\n    const fromMatch = block.match(/^From:\\s*(.+)\\s*$/im);\n\n    if (!subjectMatch || !sentMatch || !statusMatch || !fromMatch) continue;\n\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1].trim(),\n      sent: sentMatch[1].trim(),\n      status: statusMatch[1].trim().toLowerCase(),\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  const m = markdown.match(/^## Policy Exceptions\\s*$/m);\n  if (!m) return new Set();\n\n  const after = markdown.slice(m.index + m[0].length);\n  const nextHeading = after.search(/^##\\s+/m);\n  const section = nextHeading === -1 ? after : after.slice(0, nextHeading);\n\n  const ids = new Set();\n  const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(section)) !== null) ids.add(match[1]);\n  return ids;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed=parseArchive(md);\nconsole.log({emails: parsed.emails.length, policy: parsed.policy.size});\nconsole.log(parsed.emails.slice(0,3));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

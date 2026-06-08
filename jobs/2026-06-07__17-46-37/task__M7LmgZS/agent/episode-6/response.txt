@@ -1,0 +1,43 @@
+{
+  "analysis": "Terminal is again flooded with non-authoritative narrative content; outputs from our recent sed/code/brief commands are not visible due to scrollback limits. We need a more controlled way to inspect: write code/brief extracts to files and use grep to pull the specific rule lines we need. We'll also directly open the code files with cat into /tmp for targeted greps. Main known issues so far: output contract mismatch, exceptions not implemented, reconciliation report previous_value empty, likely incorrect correction precedence and compliance mail timing due to email parser lacking dates. Next step: capture the needed sources and briefs into /tmp and then query them with grep for key rule phrases (hold, compliance_hold, correction precedence, provisional, meeting amendments, sorting).",
+  "plan": "1) Save relevant JS sources (reconcile.js, parsers, writers) into /tmp snapshots and use sed/grep on them to avoid terminal overflow. 2) Use grep on /tmp/brief0X.txt to extract the exact normative bullet points for each policy area; especially Brief 09 for compliance_hold comparison baseline and mail timing. 3) After confirming rules, proceed to patch code with apply_patch (next round) implementing: stable ordering, correct envelopes/CSV fields, exception flags, email date parsing, correction application ordering with previous_value, and correct handling of duplicate/provisional ledger rows.",
+  "commands": [
+    {
+      "keystrokes": "cp -f /app/audit-extractor/src/normalize/reconcile.js /tmp/reconcile.js && cp -f /app/audit-extractor/src/parser/ledger.js /tmp/ledger.js && cp -f /app/audit-extractor/src/parser/corrections.js /tmp/corrections.js && cp -f /app/audit-extractor/src/parser/emails.js /tmp/emails.js && cp -f /app/audit-extractor/src/parser/meetings.js /tmp/meetings.js && cp -f /app/audit-extractor/src/parser/policy.js /tmp/policy.js && cp -f /app/audit-extractor/src/parser/sections.js /tmp/sections.js && cp -f /app/audit-extractor/src/output/jsonWriter.js /tmp/jsonWriter.js && cp -f /app/audit-extractor/src/output/csvWriter.js /tmp/csvWriter.js && cp -f /app/audit-extractor/src/output/reportWriter.js /tmp/reportWriter.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /tmp/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"compliance_hold|hold|mail|email|timestamp|effective\" /tmp/brief03.txt /tmp/brief07.txt /tmp/brief08.txt /tmp/brief09.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"correction|notice|previous_value|winning|overlay|precedence\" /tmp/brief04.txt /tmp/brief06.txt /tmp/brief09.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"ledger|canonical|provisional|duplicate|source\" /tmp/brief01.txt /tmp/brief09.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"meeting|owner|amend\" /tmp/brief05.txt /tmp/brief09.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"status|pending|approved|rejected|reversed\" /tmp/brief02.txt /tmp/brief09.txt | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

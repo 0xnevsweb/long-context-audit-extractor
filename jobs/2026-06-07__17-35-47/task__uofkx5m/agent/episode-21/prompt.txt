@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>      });
+>    }
+>    return emails;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@3f2a24e5dabd:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: /app/audit-extractor/src/utils/sort.js
+> @@
+>  function sortByTransactionId(items) {
+> -  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+> +  return items.sort((a, b) => {
+> +    if (a.transaction_id === b.transaction_id) return 0;
+> +    return a.transaction_id < b.transaction_id ? -1 : 1;
+> +  });
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@3f2a24e5dabd:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: /app/audit-extractor/src/output/jsonWriter.js
+> @@
+>  const fs = require("node:fs");
+>
+>  function writeTransactionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+> +  fs.writeFileSync(filePath, `${JSON.stringify({ items }, null, 2)}\n`);
+>  }
+>
+>  function writeExceptionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+> +  fs.writeFileSync(filePath, `${JSON.stringify({ items }, null, 2)}\n`);
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@3f2a24e5dabd:/app#

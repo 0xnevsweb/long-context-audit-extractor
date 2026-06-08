@@ -1,0 +1,60 @@
+New Terminal Output:
+.
+root@7aa6d0745461:/app# sed -n '1058,1070p' /app/data/audit_archive.md
+## Investigation Brief 06 — Effective Dates on Output
+
+Auditor directive (mandatory for extract):
+
+Auditors compared effective_date columns to correction paperwork. Start from the
+ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+sets field `date` or `status`, use that notice's `effective` date as
+`effective_date` only if that correction modified status or date; otherwise
+keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+places in CSV and as a JSON number.
+
+## Investigation Brief 06 — Effective Dates on Output — field notes
+
+root@7aa6d0745461:/app# sed -n '1201,1215p' /app/data/audit_archive.md
+## Investigation Brief 07 — Exception Flags (Part I)
+
+Extract policy (authoritative):
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+## Investigation Brief 07 — Exception Flags (Part I) — field notes
+
+Memo WP-7758 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+root@7aa6d0745461:/app# sed -n '1419,1442p' /app/data/audit_archive.md
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+
+Controller memo (binding reconciliation rule):
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+by `transaction_id` ascending with fields transaction_id, owner, status
+(lowercase), effective_date, amount_usd, exception_reason (null or
+semicolon-joined codes). `transactions.csv` uses header
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows; leave exception_reason blank when null. `exceptions.json` is
+`{"items":[...]}` with only rows where exception_reason is set.
+`reconciliation_report.jsonl` is one JSON object per winning correction with
+notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+by notice_id ascending.
+
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+root@7aa6d0745461:/app#

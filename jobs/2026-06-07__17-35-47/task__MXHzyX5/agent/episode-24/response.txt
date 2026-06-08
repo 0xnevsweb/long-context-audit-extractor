@@ -1,0 +1,31 @@
+{
+  "analysis": "We now generate exception_reason and exceptions.json correctly: two flagged transactions with codes retroactive_review and policy_waiver, matching Brief 08 conditions. Remaining stated issues: compliance holds miss later mail, and Brief 09 amendment overrides hold wording. We have not implemented compliance_hold at all. Also ledger duplicates/provisional selection may still be wrong, potentially affecting correction mapping and owner/status. We need to (1) read Brief 07 and Brief 09 to implement compliance_hold flag, and (2) ensure email parser captures mail dates and relevant transactions to evaluate hold timing. Then implement compliance_hold in reconciliation and rerun; ensure exception_reason codes are semicolon-joined and lexicographically sorted when multiple flags apply.",
+  "plan": "1) Extract and read Investigation Brief 07 and Brief 09 sections precisely. 2) Inspect parser/emails.js to see what it extracts (it likely misses mail timestamp/date). If mail excerpts include dates, parse them; if not, Brief 07/09 may define using archive ordering or effective: lines. 3) Implement compliance_hold exception flag per Brief 07/09, ensuring later mail can update/clear holds as required and using the correct date comparison baseline (Brief 09 overrides). 4) Ensure policy parser and corrections parser are robust (already fixed for decoy headings). 5) Rerun extractor and confirm exceptions increase and include compliance_hold where expected.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+260)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+260)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '220,320p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

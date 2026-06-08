@@ -1,0 +1,35 @@
+{
+  "analysis": "We saw meetings parser: it does not parse 'effective:' date needed for Brief05 gating, and it slices a fixed 400 chars after the heading which might miss fields but probably ok. CSV writer is missing exception_reason column and header order doesn't match contract (should include exception_reason). reportWriter doesn't sort by notice_id. We still need to implement core reconciliation and exceptions logic and update writers accordingly.",
+  "plan": "1) Update parser/meetings.js to parse optional 'effective: YYYY-MM-DD' and include it. 2) Fix csvWriter header and rows to include exception_reason (blank when null) in exact order. Ensure newline at end (optional but nice).\n3) Fix reportWriter to sort report rows by notice_id ascending before writing.\n4) Implement normalize/reconcile.js and normalize/exceptions.js using binding rules. For this, we need the full text of binding briefs 02/03/04 to know: email From criteria and correction winning selection details. We'll read those binding-brief files; if they’re too long, grep within them for key lines. 5) After code changes, run extractor and validate output artifacts and determinism.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"From line|From:|may change status|only when\" /tmp/binding-brief02.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /tmp/binding-brief02.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,160p' /tmp/binding-brief03.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,180p' /tmp/binding-brief04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'\nfunction parseMeetings(markdown) {\n  const meetings = [];\n  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(markdown)) !== null) {\n    const block = markdown.slice(match.index, match.index + 600);\n    const ownerMatch = block.match(/^owner:\\s*(.+)$/im);\n    const signedMatch = block.match(/^signed:\\s*(.+)$/im);\n    const effectiveMatch = block.match(/^effective:\\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\\s*$/im);\n    meetings.push({\n      transaction_id: match[1],\n      owner: ownerMatch ? ownerMatch[1].trim() : \"\",\n      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === \"true\" : false,\n      effective: effectiveMatch ? effectiveMatch[1].trim() : null,\n    });\n  }\n  return meetings;\n}\n\nmodule.exports = { parseMeetings };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const exception = row.exception_reason == null ? \"\" : row.exception_reason;\n    return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${exception}`;\n  });\n  fs.writeFileSync(filePath, `${[header, ...lines].join(\"\\n\")}\\n`);\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\nconst { sortByNoticeId } = require(\"../utils/sort\");\n\nfunction writeReconciliationReport(filePath, report) {\n  const sorted = sortByNoticeId([...report]);\n  const body = sorted.map((row) => JSON.stringify(row)).join(\"\\n\");\n  fs.writeFileSync(filePath, body ? `${body}\\n` : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\nEOF\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,4 @@
+New Terminal Output:
+
+root@b5558c31e8a7:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@b5558c31e8a7:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Interview #811 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Memo WP-5659 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-2113 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Follow-up #439 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-4667 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+During July review, L. Bergstrom circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Working paper WP-7480 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Interview #803 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+During July review, M. Chen circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+state; QA reproduced the drift on a cold run the next morning.
+
+Memo WP-4038 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-6587 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+root@e13b9ef9896e:/app#

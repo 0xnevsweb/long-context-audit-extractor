@@ -1,0 +1,37 @@
+New Terminal Output:
+s
+root@7a65087374e8:/app# grep -n "^## Investigation Brief 0[1-9]" /app/data/audit_archive.md | grep -v "field notes" | head -n 30
+11:## Investigation Brief 01 — Ledger Sourcing
+252:## Investigation Brief 02 — Status Precedence
+468:## Investigation Brief 03 — Compliance Mail Timing
+685:## Investigation Brief 04 — Correction Notice Precedence
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+1058:## Investigation Brief 06 — Effective Dates on Output
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1670:## Investigation Brief 09 — Mid-Year Amendment
+root@7a65087374e8:/app# grep -n "^## Investigation Brief 01" -n /app/data/audit_archive.md | head -n 20
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+root@7a65087374e8:/app# grep -n "^## Investigation Brief 09" -n /app/data/audit_archive.md | head -n 20
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@7a65087374e8:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf8').read().splitlines()
+> for i,l in enumerate(lines,1):
+>     m=re.match(r'^## Investigation Brief (0[1-9])\b',l)
+>     if m and 'field notes' not in l:
+>         print(i,l)
+> PY
+11 ## Investigation Brief 01 — Ledger Sourcing
+252 ## Investigation Brief 02 — Status Precedence
+468 ## Investigation Brief 03 — Compliance Mail Timing
+685 ## Investigation Brief 04 — Correction Notice Precedence
+828 ## Investigation Brief 05 — Meeting Amendments and Owners
+1058 ## Investigation Brief 06 — Effective Dates on Output
+1201 ## Investigation Brief 07 — Exception Flags (Part I)
+1419 ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1670 ## Investigation Brief 09 — Mid-Year Amendment
+root@7a65087374e8:/app#

@@ -1,0 +1,10 @@
+{
+  "analysis": "I found some compliance@ emails. I need to see the full context of each one to understand which transactions they reference and their sent dates.",
+  "plan": "Get the full content of all compliance@ email blocks.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1857,3848p' /app/data/audit_archive.md | grep -n -A10 'compliance@'\n",
+      "duration": 1.0
+    }
+  ]
+}

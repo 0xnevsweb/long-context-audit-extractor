@@ -1,0 +1,176 @@
+New Terminal Output:
+root@9416c0dee655:/app# ls -ლა
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@9416c0dee655:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:35 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 data
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@9416c0dee655:/app# ls -la /app/audit-extractor/src
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+root@9416c0dee655:/app# ls -la /app/audit-extractor/docs
+total 16
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  429 Jun  8 00:31 architecture.md
+-rw-r--r-- 1 root root 2267 Jun  8 00:32 extractor-output-contract.md
+root@9416c0dee655:/app# sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md
+# Audit Extractor Output Contract
+
+Service root: `/app/audit-extractor`
+
+## CLI
+
+`node /app/audit-extractor/src/cli.js extract --input <markdown-path> --outdir <directory>`
+
+Missing `--input` or `--outdir`: message on stderr, exit code 1.
+
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of
+ the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes onl
+y.
+
+## Artifacts
+
+`extract` writes exactly these files under `--outdir`:
+
+- `transactions.json`
+- `transactions.csv`
+- `exceptions.json`
+- `reconciliation_report.jsonl`
+
+Identical input must produce byte-identical `transactions.json` on repeated runs.
+
+## `transactions.json`
+
+Top-level envelope:
+
+```json
+{ "items": [ /* transaction rows */ ] }
+```
+
+Each row:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `transaction_id` | string | `TXN-…` |
+| `owner` | string | |
+| `status` | string | lowercase: `pending`, `approved`, `rejected`, `reversed` |
+| `effective_date` | string | `YYYY-MM-DD` |
+| `amount_usd` | number | two decimal places |
+| `exception_reason` | string or null | semicolon-joined flag codes in lexical order, or null |
+
+Sort `items` by `transaction_id` ascending.
+
+## `transactions.csv`
+
+Header (exact order):
+
+`transaction_id,owner,status,effective_date,amount_usd,exception_reason`
+
+Same rows as `transactions.json` in the same order. Empty cell when `exception_reason` is null.
+
+## `exceptions.json`
+
+```json
+{ "items": [ /* flagged rows only */ ] }
+```
+
+Same row shape as `transactions.json`. Include only rows where `exception_reason` is non-null. Sort by `transaction_id` ascending.
+
+## `reconciliation_report.jsonl`
+
+One JSON object per line, sorted by `notice_id` ascending. Each line records one winning correction notice:
+
+| Field | Type |
+|-------|------|
+| `notice_id` | string |
+| `transaction_id` | string |
+| `field` | string |
+| `previous_value` | string |
+| `new_value` | string |
+| `effective` | string |
+
+`previous_value` is the field value immediately before that correction applies.
+root@9416c0dee655:/app# sed -n '200,400p' /app/audit-extractor/docs/extractor-output-contract.md
+root@9416c0dee655:/app# wc -l /app/data/audit_archive.md
+4118 /app/data/audit_archive.md
+root@9416c0dee655:/app# grep -nE "Investigation Brief\s+0[1-9]|Brief\s+0[1-9]" /app/data/audit_archive.md | head
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+60:Memo WP-3763 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+62:Memo WP-5953 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extract
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+vestigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+234:Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+257:amendments, and corrections. Ledger rows provide the base status (lowercase on
+268:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+274:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+284:Memo WP-2881 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+294:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+310:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+314:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+336:Memo WP-7928 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+338:The committee packet references SOX sampling mismatch as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against a
+mendment minutes before accepting any owner change.
+346:Memo WP-4151 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+354:Memo WP-1395 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+360:The committee packet references SOX sampling mismatch as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against a
+mendment minutes before accepting any owner change.
+362:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+370:Memo WP-7131 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+grep: write error: Broken pipe
+root@9416c0dee655:/app# grep -nE "Ledger|LEDGER|ledger rows|Correction Notice|correction notice|Structured" /app/data/audit_archive.md | tail -n 50
+3:Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across t
+he file.
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+17:line is exactly `## Transaction Ledger` as authoritative. The archive also
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+257:amendments, and corrections. Ledger rows provide the base status (lowercase on
+477:after ledger rows, meeting amendments, and mail excerpts have been merged.
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+832:Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+1063:ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+1677:ledger date immediately before correction notices are applied — that is, the date
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+3866:## Correction Notices
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@9416c0dee655:/app#

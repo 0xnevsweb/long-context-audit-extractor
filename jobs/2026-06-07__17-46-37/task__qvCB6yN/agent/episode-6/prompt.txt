@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1854:signed: true
+1855:effective: 2020-01-01
+1856:
+1857:## Email Excerpts
+1858:
+1859:Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timin
+g context.
+1860:
+1861:From: audit-lead@corp.internal
+1862:Subject: FY24 sampling plan draft — thread 0
+1863:
+1864:Internal coordination on vendor onboarding backlog. No transaction identifiers
+1865:appear in this message. Investigators archived it to preserve mailbox ordering
+1866:around compliance threads.
+1867:
+1868:From: hr-payroll@corp.internal
+1869:Subject: accrual true-up schedule — thread 1
+1870:
+1871:Internal coordination on lease modification restatement. No transaction
+1872:identifiers appear in this message. Investigators archived it to preserve
+1873:mailbox ordering around compliance threads.
+1874:
+1875:From: legal-notices@corp.internal
+1876:Subject: retention hold reminder — thread 2
+1877:
+1878:Internal coordination on grant compliance attestation. No transaction
+1879:identifiers appear in this message. Investigators archived it to preserve
+1880:mailbox ordering around compliance threads.
+1881:
+1882:From: controller@corp.internal
+1883:Subject: close calendar revision — thread 3
+1884:
+1885:Internal coordination on year-end close checklist drift. No transaction
+1886:identifiers appear in this message. Investigators archived it to preserve
+1887:mailbox ordering around compliance threads.
+1888:
+1889:From: controller@corp.internal
+awk: write failure (Broken pipe)
+awk: close failed on file /dev/stdout (Broken pipe)
+root@7a65087374e8:/app#

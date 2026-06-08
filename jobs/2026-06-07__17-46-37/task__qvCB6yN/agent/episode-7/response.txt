@@ -1,0 +1,23 @@
+{
+  "analysis": "The terminal is currently showing content from the Email Excerpts section, meaning our previous batch likely printed ranges that landed in emails rather than the brief directives, or the brief line extraction didn't run/was interrupted. We need to regain control and re-run the brief line-number extraction and then view each brief segment. We'll first show /tmp/brief_lines.txt to confirm it exists and contains the right headings. Then we will print a small excerpt around each brief heading using sed with explicit numeric ranges derived manually (no shell arithmetic in JSON if it failed previously). We'll compute line numbers from the file and then view around them.",
+  "plan": "1) Re-run grep to capture authoritative brief headings with line numbers and display them. 2) Pick the line numbers and print around each using sed (line..line+80). 3) If the grep shows multiple occurrences, ensure we select the non-field-notes ones. 4) Proceed after we can read the actual directives.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | grep -v \"field notes\" | head -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 01\" -n /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" -n /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf8').read().splitlines()\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n    if m and 'field notes' not in l:\n        print(i,l)\nPY\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

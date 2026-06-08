@@ -1,0 +1,43 @@
+{
+  "analysis": "ripgrep (rg) is not installed, so we must use grep/sed/python. Brief 09 is very short and clearly states the amended rule: for compliance_hold only, compare qualifying email sent date against the ledger date immediately before correction notices are applied (after ledger load, meeting amendments, and compliance mail merges; before correction notice changes date/status). This likely explains holds missing later mail and drift after reruns if ordering differs. Also normalize/policy.js doesn’t exist; policy might be in src/lib/policy.js or constants. Next we need to inspect normalize/reconcile.js (not yet shown) and locate where compliance_hold is computed—ensure it uses pre-correction effective date snapshot, not post-correction. Also check correction notice mapping to ledger rows. Additionally verify other outputs determinism; earlier hash checks for those weren’t shown yet.",
+  "plan": "1) Hash/diff all artifacts from out1/out2 to see if any drift exists. 2) Open reconcile.js and related normalize files to find compliance_hold logic and correction application ordering. 3) Read Investigation Brief 03 (mail-driven status changes) and any earlier hold wording to implement the amendment correctly. 4) Patch reconcile flow: compute base transaction state, apply meeting amendments + compliance mail merges, compute compliance_hold based on that pre-correction effective_date, then apply correction notices (date/status) while keeping the hold decision stable per amendment. 5) Fix correction notice -> ledger row matching if it uses unstable index; ensure it uses transaction_id and/or canonical ledger keys. 6) Run extractor to /app/output and revalidate.",
+  "commands": [
+    {
+      "keystrokes": "sha256sum /tmp/out1/* /tmp/out2/* 2>/dev/null | sort\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/transactions.csv /tmp/out2/transactions.csv | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/exceptions.json /tmp/out2/exceptions.json | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/normalize\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\n\ndef brief(n):\n    pat=re.compile(r'^#+\\s*Investigation Brief\\s*0?%d\\b'%n)\n    starts=[i for i,l in enumerate(lines,1) if pat.match(l)]\n    if not starts:\n        print('Brief',n,'not found'); return\n    start=starts[0]\n    end=len(lines)\n    for i in range(start+1,len(lines)+1):\n        if re.match(r'^#+\\s*Investigation Brief\\s*\\d+\\b', lines[i-1]):\n            end=i-1; break\n    print(f\"\\n=== Brief {n:02d} lines {start}-{end} ===\")\n    for j in range(start, end+1):\n        print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\n\nbrief(3)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

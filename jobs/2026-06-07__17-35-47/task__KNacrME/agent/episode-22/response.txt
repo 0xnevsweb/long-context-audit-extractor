@@ -1,0 +1,23 @@
+{
+  "analysis": "Corrections parser and report writer are now updated and syntactically valid. Next critical piece is normalize/reconcile.js: it still ignores meetings, policy exceptions, emails timing/holds, and doesn’t compute exception_reason or previous_value. We also need deterministic ordering and to ensure transactions.json is byte-identical across reruns. At minimum, we should: apply signed meeting owner overrides, apply corrections in effective-date order, compute previous_value, produce report entries only for applied corrections, and set exception_reason for policy exceptions and compliance_hold once we implement it. We also must fix transactions.json envelope already done. Next: inspect emails section format and update emails parser to include date and any hold indicators; current emails parser lacks date so cannot do timing. Then implement reconcile pipeline including Brief09 ordering constraint for compliance_hold and corrections.",
+  "plan": "1) Inspect actual Email Excerpts section format by locating its heading line and printing a small sample, then update parser/emails.js to parse: transaction_id, status, sent/received date, and whether it indicates compliance hold. 2) Implement reconcile.js: base from ledger, apply signed meeting amendments to owner, merge policy exceptions into exception flags, parse emails into events; apply compliance_hold computation per Brief09 ordering (after mail merges, before corrections on date/status), then apply corrections sorted by effective then notice_id while tracking previous_value and building winning report, then apply mail-driven status changes per Brief03. 3) Update exceptions.js to build exception_reason string and filter. 4) Run extractor to /app/output twice and diff transactions.json to ensure byte-identical.",
+  "commands": [
+    {
+      "keystrokes": "email_line=$(grep -n \"^## Email Excerpts\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"EMAIL_LINE=$email_line\"; sed -n \"$((email_line+1)),$((email_line+70))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

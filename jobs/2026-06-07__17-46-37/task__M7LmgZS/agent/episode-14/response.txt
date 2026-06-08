@@ -1,0 +1,27 @@
+{
+  "analysis": "We rewrote ledger/emails/reconcile and achieved deterministic transactions.json across two runs (diff empty). exceptions.json now has items (non-empty), indicating exception_reason is being set at least for some rows. reconciliation_report.jsonl is still empty (0 lines), implying either no corrections parsed from archive or our corrections parser doesn’t match the archive format (e.g., uses 'targets:' but archive might use 'target:' or different section headings), or notices have fields not handled. Need to inspect correction notices section in the markdown to confirm actual format, and adjust parser/corrections.js accordingly so report is populated and corrections applied. Also need to ensure transactions.csv and exceptions.json shapes are correct (already). Next: inspect portion of /app/data/audit_archive.md around '## Correction Notices' and a few 'CORR-' blocks; update parser accordingly. Then rerun extractor to produce reconciliation_report.jsonl sorted by notice_id.",
+  "plan": "1) Locate and display the Correction Notices section and a few notice blocks to confirm syntax (keys like target(s), transaction, applies_to, new_value, etc.). 2) Update parser/corrections.js to robustly parse notice_id, transaction_id, field, value/new_value, effective. Accept multiple synonyms (targets/target/transaction). 3) Re-run extractor and verify reconciliation_report.jsonl has lines and is sorted. 4) Spot-check that corrections affect transactions.json and that previous_value is correctly filled.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Correction Notices\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^### CORR-\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "start=$(grep -n \"## Correction Notices\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); end=$(grep -n \"## Transaction Ledger\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"$start $end\"; sed -n \"${start},$((start+220))p\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "corrline=$(grep -n \"^### CORR-\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); sed -n \"$((corrline-2)),$((corrline+35))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

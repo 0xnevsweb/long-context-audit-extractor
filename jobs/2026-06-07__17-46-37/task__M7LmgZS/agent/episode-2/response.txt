@@ -1,0 +1,55 @@
+{
+  "analysis": "We found multiple concrete contract mismatches/bugs already: jsonWriter writes {transactions: items} but contract requires {items:[...]}; exceptions.json writes {exceptions: items} but requires {items:[...]}. csvWriter header missing exception_reason column and also omits exception_reason values. Also transactions.csv contract requires exact header and empty cell for null exception_reason. Output ordering requirements exist but we haven't yet checked reconcileTransactions for sorting determinism. Parser shows emails parser only matches \"Subject: Re: (TXN-...)\" and captures a status; may miss later mail if subjects differ; also no email date is parsed, so hold timing likely wrong. Corrections parser uses 'targets:' to set transaction_id; might be wrong field name in archive or needs more robust mapping. We need to inspect remaining modules: parser/ledger.js, meetings.js, policy.js, sections.js; normalize/reconcile.js and normalize/exceptions.js; utils/sort.js/date.js; schema/validate.js. Then read Investigation Briefs 01–09 text to apply correct policy including Brief 09 amendment on compliance_hold timing. After code fixes, run extractor and ensure outputs conform and deterministic.",
+  "plan": "1) Dump the remaining source files (ledger/policy/meetings/sections, normalize/*, utils/*, schema/validate) to understand current reconciliation behavior and where drift/mis-mapping occurs. 2) Read the authoritative Investigation Brief sections 01–09 (excluding field notes) to derive exact rules for ledger sourcing, status precedence, correction precedence, meeting amendments, effective dates, exception flags, and especially Brief 09 compliance_hold comparison. 3) Implement fixes: output contract compliance (JSON envelopes, CSV header/column), deterministic sorting, correct reconciliation logic for compliance holds using email timing (parse email dates and apply Brief 09 comparison), and correct correction notice application to correct ledger rows (properly select canonical ledger row and apply corrections in correct order). 4) Run extractor to /app/output and inspect artifacts.",
+  "commands": [
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/src/parser/meetings.js /app/audit-extractor/src/parser/policy.js /app/audit-extractor/src/parser/sections.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/normalize/reconcile.js /app/audit-extractor/src/normalize/exceptions.js; do echo \"\\n### $f\"; sed -n '1,340p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/utils/date.js /app/audit-extractor/src/utils/sort.js /app/audit-extractor/src/schema/validate.js /app/audit-extractor/src/lib/constants.js /app/audit-extractor/src/lib/handbook.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '11,251p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,467p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,684p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,827p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1057p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1418p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1669p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1755p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

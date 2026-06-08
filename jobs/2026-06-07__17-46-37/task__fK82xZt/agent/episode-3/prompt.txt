@@ -1,0 +1,304 @@
+New Terminal Output:
+
+root@7b07e9f8c4c5:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@7b07e9f8c4c5:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@7b07e9f8c4c5:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@7b07e9f8c4c5:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@7b07e9f8c4c5:/app# sed -n '1,260p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@7b07e9f8c4c5:/app# sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@7b07e9f8c4c5:/app# sed -n '3800,3925p' /app/data/audit_archive.md
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 55
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 56
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 57
+
+Internal coordination on intercompany netting dispute. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 58
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 59
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+sent: 2024-08-10
+status: rejected
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+sent: 2024-09-01
+status: reversed
+
+## Policy Exceptions
+
+### Policy Exception
+transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+approved_by: compliance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+approved_by: finance
+reason: executive waiver
+
+### Policy Exception
+transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+approved_by: compliance
+reason: executive waiver
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets:
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+2024-06-18
+
+### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+amount: 5721.56
+owner: dlee
+status: approved
+date: 2024-07-19
+
+### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+amount: 7094.98
+owner: evans
+status: pending
+date: 2024-08-20
+
+### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+amount: 8468.40
+owner: frost
+status: pending
+date: 2024-09-21
+
+### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+amount: 9841.82
+owner: jdoe
+status: approved
+date: 2024-10-22
+
+### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+amount: 11215.24
+owner: asmith
+status: rejected
+date: 2024-11-23
+
+### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+amount: 12588.66
+owner: bwong
+status: approved
+date: 2024-12-24
+
+### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+amount: 13962.08
+owner: ckim
+status: pending
+date: 2024-01-25
+
+### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+amount: 15335.50
+owner: dlee
+status: pending
+date: 2024-02-26
+
+### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+amount: 16708.92
+owner: evans
+status: approved
+date: 2024-03-27
+
+### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+amount: 18082.34
+owner: frost
+status: rejected
+date: 2024-04-01
+
+### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+amount: 19455.76
+owner: jdoe
+status: approved
+date: 2024-05-02
+
+### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+amount: 1329.18
+owner: asmith
+status: pending
+date: 2024-06-03
+
+### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+amount: 2702.60
+owner: bwong
+status: pending
+date: 2024-07-04
+
+### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+amount: 4076.02
+owner: ckim
+status: approved
+date: 2024-08-05
+
+root@7b07e9f8c4c5:/app# grep -n "## Email Excerpts" /app/data/audit_archive.md
+238:## Email Excerpts (archived thread)
+1857:## Email Excerpts
+root@7b07e9f8c4c5:/app# grep -n "## Transaction Ledger" /app/data/audit_archive.md
+17:line is exactly `## Transaction Ledger` as authoritative. The archive also
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@7b07e9f8c4c5:/app# python3 - <<'PY'
+> import re
+> path='/app/data/audit_archive.md'
+> with open(path,'r',encoding='utf-8',errors='replace') as f:
+>     lines=f.readlines()
+> # print line numbers for the Investigation Brief headings
+> for i,l in enumerate(lines, start=1):
+>     if re.match(r"^#+\s*Investigation\s*Brief\s*0?[1-9]\b", l, re.I):
+>         print(f"{i}: {l.strip()}")
+> PY
+11: ## Investigation Brief 01 — Ledger Sourcing
+28: ## Investigation Brief 01 — Ledger Sourcing — field notes
+252: ## Investigation Brief 02 — Status Precedence
+262: ## Investigation Brief 02 — Status Precedence — field notes
+468: ## Investigation Brief 03 — Compliance Mail Timing
+479: ## Investigation Brief 03 — Compliance Mail Timing — field notes
+685: ## Investigation Brief 04 — Correction Notice Precedence
+696: ## Investigation Brief 04 — Correction Notice Precedence — field notes
+828: ## Investigation Brief 05 — Meeting Amendments and Owners
+838: ## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058: ## Investigation Brief 06 — Effective Dates on Output
+1069: ## Investigation Brief 06 — Effective Dates on Output — field notes
+1201: ## Investigation Brief 07 — Exception Flags (Part I)
+1213: ## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419: ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440: ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670: ## Investigation Brief 09 — Mid-Year Amendment
+1682: ## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@7b07e9f8c4c5:/app# python3 - <<'PY'
+> # dump Investigation Brief 09 fully (line-based) for the hold amendment
+> import re
+> path='/app/data/audit_archive.md'
+> with open(path,'r',encoding='utf-8',errors='replace') as f:
+>     lines=f.readlines()
+> starts=[]
+> for i,l in enumerate(lines):
+>     if re.match(r"^#+\s*Investigation\s*Brief\s*0?9\b", l, re.I):
+>         starts.append(i)
+> if not starts:
+>     raise SystemExit('no brief 09 heading found')
+> start=starts[0]
+> end=len(lines)
+> for j in range(start+1,len(lines)):
+>     if re.match(r"^#+\s*Investigation\s*Brief\s*\d+\b", lines[j], re.I):
+>         end=j
+>         break
+> # print the whole section
+> for k in range(start, end):
+>     print(f"{k+1}:{lines[k]}", end='')
+> PY
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1671:
+1672:Committee ruling (binding for extract):
+1673:
+1674:Mid-year QA found compliance holds disappearing after date corrections. This
+1675:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+1676:only, compare each qualifying email's `sent:` date against the transaction's
+1677:ledger date immediately before correction notices are applied — that is, the date
+1678:in effect after ledger load, meeting amendments, and compliance mail merges, but
+1679:before any correction notice changes `date` or `status`. Brief 03 still governs
+1680:mail-driven status changes; this amendment governs only the hold flag.
+1681:
+root@7b07e9f8c4c5:/app#

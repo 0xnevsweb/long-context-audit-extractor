@@ -1,0 +1,115 @@
+New Terminal Output:
+6,
+root@e1953a1e27da:/app# sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@e1953a1e27da:/app# sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@e1953a1e27da:/app# sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@e1953a1e27da:/app# sed -n '1,260p' /app/audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(outPath, items) {
+>   fs.writeFileSync(outPath, JSON.stringify({ items }, null, 2) + "\n", "utf8");
+> }
+>
+> function writeExceptionsJson(outPath, items) {
+>   fs.writeFileSync(outPath, JSON.stringify({ items }, null, 2) + "\n", "utf8");
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+> function buildExceptions(items) {
+>   return items.filter((row) => row.exception_reason != null);
+> }
+>
+> module.exports = { buildExceptions };
+> EOF
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/schema/validate.js <<'EOF'
+> function validateTransactionRow(row) {
+>   const required = [
+>     "transaction_id",
+>     "owner",
+>     "status",
+>     "effective_date",
+>     "amount_usd",
+>     "exception_reason",
+>   ];
+>   for (const key of required) {
+>     if (!(key in row)) {
+>       throw new Error(`invalid row: missing ${key}`);
+>     }
+>   }
+> }
+>
+> function validateOutputs(items, exceptions, report) {
+>   if (!Array.isArray(items)) throw new Error("transactions must be an array");
+>   if (!Array.isArray(exceptions)) throw new Error("exceptions must be an array");
+>   if (!Array.isArray(report)) throw new Error("report must be an array");
+>
+>   for (const row of items) validateTransactionRow(row);
+>   for (const row of exceptions) validateTransactionRow(row);
+>
+>   // exceptions must be subset with exception_reason non-null
+>   for (const row of exceptions) {
+>     if (row.exception_reason == null) throw new Error("exceptions contain unflagged row");
+>   }
+> }
+>
+> module.exports = { validateOutputs };
+> EOF
+root@e1953a1e27da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e1953a1e27da:/app# head -n 5 /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@e1953a1e27da:/app# cat /app/output/exceptions.json
+{
+  "items": []
+}
+root@e1953a1e27da:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+root@e1953a1e27da:/app#

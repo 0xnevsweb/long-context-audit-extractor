@@ -1,0 +1,39 @@
+{
+  "analysis": "We fixed email parsing to use the authoritative Email Excerpts section after Meeting Notes and capture `sent:` dates. We still need to read the authoritative Investigation Briefs 03, 07, and 09 to implement the compliance_hold exception flag and the amended date comparison rule from Brief 09, and to ensure only `From:` lines containing `compliance@` can affect status (Brief 02). The previous attempt to print brief sections didn’t show; the screen still shows narrative filler, so we need to re-run sed with correct ranges and ensure output appears. Also, we must update reconcile.js to ignore non-compliance emails (e.g., alice@corp.internal currently parsed) and incorporate compliance_hold logic once rules are known.",
+  "plan": "1) Print the exact text of Brief 03 (lines 468–684), Brief 07 (1201–1418), and Brief 09 (1670–1833) in smaller chunks to avoid truncation. 2) Based on those rules, update reconcile.js to: (a) filter emails to only those whose from_addr includes `compliance@`, (b) apply status updates with precedence, (c) compute `compliance_hold` exception code using `sent` date vs the correct comparison date per Brief 09, ensuring later mail is considered deterministically. 3) Rerun extractor to /app/output and verify exceptions.json includes compliance_hold where expected and that outputs remain deterministic.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '540,620p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '620,684p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1280p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1280,1360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1360,1418p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1750p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1750,1833p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

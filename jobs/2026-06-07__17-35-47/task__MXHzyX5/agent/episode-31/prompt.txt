@@ -1,0 +1,41 @@
+Current Terminal Screen:
+d different status columns for the same transaction id.
+   237
+   238  ## Email Excerpts (archived thread)
+   239
+   240  Non-authoritative mailbox export kept for chronology; do not merge these rows.
+   241
+   242  From: compliance@corp.internal
+   243  Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+   244  sent: 2020-01-01
+   245  status: reversed
+   246
+   247  From: compliance@corp.internal
+   248  Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+   249  sent: 2024-01-01
+   250  status: approved
+   251
+   252  ## Investigation Brief 02 — Status Precedence
+   253
+   254  Auditor directive (mandatory for extract):
+   255
+   256  Interview notes with the compliance desk confirmed status fights between mail,
+   257  amendments, and corrections. Ledger rows provide the base status (lowercase on
+   258  output). Status precedence from lowest to highest is: pending, approved,
+   259  rejected, reversed. Email excerpts may change status only when the From line
+   260  contains `compliance@` anywhere in the address; ignore all other senders.
+   261
+   262  ## Investigation Brief 02 — Status Precedence — field notes
+   263
+   264  Risk assessment WP-2138 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+ appendix commentary as authoritative transaction sources.
+   265
+   266  Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+   267
+   268  Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds
+. The mid-year amendment later in this archive supersedes that draft practice.
+   269
+   270  Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+root@e1953a1e27da:/app#

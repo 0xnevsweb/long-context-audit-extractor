@@ -1,0 +1,18 @@
+{
+  "analysis": "I have the Correction Notices. Now let me read the working copy ledger (to be ignored) and the canonical Transaction Ledger in full. I also need to see the Meeting Notes section for amendments.",
+  "plan": "Read the canonical Transaction Ledger and Meeting Notes.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '3904,3911p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '3912,4118p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "sed -n '1834,1857p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

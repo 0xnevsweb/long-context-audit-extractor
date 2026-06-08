@@ -1,0 +1,218 @@
+New Terminal Output:
+
+root@7a65087374e8:/app# sed -n '1,220p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@7a65087374e8:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@7a65087374e8:/app# find /app/audit-extractor/src -maxdepth 3 -type f | sed 's|^/app/audit-extractor/src/||' | sort
+cli.js
+index.js
+lib/constants.js
+lib/handbook.js
+normalize/exceptions.js
+normalize/reconcile.js
+output/csvWriter.js
+output/jsonWriter.js
+output/reportWriter.js
+parser/corrections.js
+parser/emails.js
+parser/ledger.js
+parser/meetings.js
+parser/policy.js
+parser/sections.js
+schema/validate.js
+utils/date.js
+utils/sort.js
+root@7a65087374e8:/app# sed -n '1,260p' /app/audit-extractor/src/output/index.js
+sed: can't read /app/audit-extractor/src/output/index.js: No such file or directory
+root@7a65087374e8:/app# find /app/audit-extractor/src/parser -type f -maxdepth 3 -print -exec sed -n '1,220p' {} \;
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+/app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+ reviewed treasury wire cutoff failures and asked for a machine-readable reconciliation trace. The archive preserves nar
+rative context so auditors can explain why a given transaction received compliance_hold.
+213:
+214:Lead reviewer M. Chen noted that treasury wire cutoff failures created reconciliation noise in treasury during February recon. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+215:
+216:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+217:
+218:The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+219:
+220:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+221:
+222:Risk assessment WP-2046 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+223:
+224:The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+225:
+226:Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+227:
+228:Follow-up #736 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive ro
+ws only from the canonical ledger and structured sections at file end.
+229:
+230:The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+231:
+232:The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+233:
+234:Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+235:
+236:Working paper WP-6752 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced di
+fferent status columns for the same transaction id.
+237:
+238:## Email Excerpts (archived thread)
+239:
+240:Non-authoritative mailbox export kept for chronology; do not merge these rows.
+241:
+242:From: compliance@corp.internal
+243:Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+244:sent: 2020-01-01
+245:status: reversed
+246:
+247:From: compliance@corp.internal
+248:Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+249:sent: 2024-01-01
+250:status: approved
+251:
+252:## Investigation Brief 02 — Status Precedence
+253:
+254:Auditor directive (mandatory for extract):
+255:
+256:Interview notes with the compliance desk confirmed status fights between mail,
+257:amendments, and corrections. Ledger rows provide the base status (lowercase on
+258:output). Status precedence from lowest to highest is: pending, approved,
+259:rejected, reversed. Email excerpts may change status only when the From line
+260:contains `compliance@` anywhere in the address; ignore all other senders.
+261:
+262:## Investigation Brief 02 — Status Precedence — field notes
+263:
+264:Risk assessment WP-2138 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or app
+endix commentary as authoritative transaction sources.
+265:
+266:Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced d
+ifferent status columns for the same transaction id.
+267:
+268:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+269:
+270:Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced d
+ifferent status columns for the same transaction id.
+awk: write failure (Broken pipe)
+awk: close failed on file /dev/stdout (Broken pipe)
+root@7a65087374e8:/app#

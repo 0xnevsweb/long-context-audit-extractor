@@ -1,0 +1,23 @@
+{
+  "analysis": "We now have correct line numbers for all briefs. Brief 07 starts at 1201 and Brief 09 starts at 1670. We need to read Brief 07 and Brief 09 content to implement compliance_hold and any other exception flags from Part I, with Brief 09 overriding date comparison wording for compliance_hold. Also Brief 03 is 'Compliance Mail Timing' at 468 which may define how mail affects status/holds; we earlier used simplistic mail status precedence. Next: extract and read Brief 03, 07, and 09 sections. Then update parser/emails.js and reconcile.js accordingly for compliance_hold timing and later mail handling.",
+  "plan": "1) Print Brief 03, Brief 07, and Brief 09 sections from the markdown using sed line ranges (from heading to just before next brief heading). 2) Inspect parser/emails.js to see what fields it provides (likely transaction_id, from, status, date). Enhance it if Brief requires mail date extraction. 3) Implement compliance_hold flag and any other flags in Brief 07; update exception_reason computation to include these codes, sorted lexicographically. 4) Adjust mail application logic per Brief 03 and Brief 09 amendment (hold timing comparison baseline). 5) Rerun extractor and verify exceptions.json includes compliance_hold items and that repeated runs remain deterministic.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,684p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1418p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1833p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

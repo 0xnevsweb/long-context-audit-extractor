@@ -1,0 +1,63 @@
+{
+  "analysis": "We only saw the tail of parser/corrections.js: it parses correction blocks into notice objects with notice_id, transaction_id, field, value, effective. There's no precedence handling here; reconcile.js applies all notices in parsed order and sets report.previous_value as empty. validate.js is very minimal and won’t catch envelope/shape issues. We still need to view parser/sections.js, ledger.js, emails.js, and the missing brief texts (02–09). Without the briefs we can’t implement correct status precedence, mail timing/holds, and correction precedence. We'll re-run sed/grep to capture those missing sections and the parser source files fully.",
+  "plan": "1) Print parser files: sections.js, ledger.js, emails.js, corrections.js (full) to understand how it identifies canonical headings and blocks and whether it already violates Brief 01 rules. 2) Print the Investigation Brief sections 02–09 (narrow ranges around their headings to avoid massive filler) to capture binding bullet rules. 3) Locate the structured data headings near the file end (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) to confirm the exact formatting our parsers must match.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,890p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1115p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1475p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1725p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)\\b\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '3600,4118p' /app/data/audit_archive.md | head -n 240\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

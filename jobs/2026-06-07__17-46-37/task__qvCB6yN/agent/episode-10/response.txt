@@ -1,0 +1,15 @@
+{
+  "analysis": "The grep-for-key-lines output didn't appear, likely because the terminal is still showing the tail of the previous command output (nl of brief09) and we haven't yet viewed the grep results. We need to explicitly display the key-line grep results per brief, then open the top of each brief file to find the actual directive text (usually near the beginning). We'll start by showing the first ~80 lines of each brief temp file and then targeted greps for 'Auditor directive' blocks.",
+  "plan": "1) Show the grep results again (with smaller output) to confirm rule markers exist. 2) For each brief file, print the beginning section where the authoritative directive likely sits. 3) For Brief 09 specifically, print from the heading until the first blank lines after directive to capture the override wording. Then we can implement code changes.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief0*.md; do echo \"===== $f\"; grep -nEi \"Auditor directive|mandatory for extract|Extractor must|must not|supersedes|precedence|overlay|compliance_hold|exception_reason|byte-identical\" \"$f\" | head -n 50; done\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief01.md /tmp/brief02.md /tmp/brief03.md /tmp/brief04.md /tmp/brief05.md /tmp/brief06.md /tmp/brief07.md /tmp/brief08.md /tmp/brief09.md; do echo \"\\n===== HEAD $f\"; nl -ba \"$f\" | sed -n '1,120p'; done\n",
+      "duration": 2
+    }
+  ],
+  "task_complete": false
+}

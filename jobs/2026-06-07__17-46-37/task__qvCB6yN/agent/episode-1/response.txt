@@ -1,0 +1,39 @@
+{
+  "analysis": "We successfully ran the extractor and it produced the four artifacts, but outputs are clearly wrong vs the contract: transactions.csv is missing the exception_reason column; exceptions.json uses key \"exceptions\" instead of top-level {\"items\":...}; reconciliation_report.jsonl is empty. Also, the head output for transactions.json appears corrupted/truncated with narrative text leaking into output, suggesting the parser is ingesting non-authoritative sections (email excerpts, filler) rather than only the canonical structured ledger section near file end. Need to read the archive around Briefs 01–09 and then the structured ledger/corrections sections near the end, then fix parser/reconciliation logic and output formatting/sorting for determinism. Also the initial ls command used a bad flag (not important). Next: inspect current source implementation for parsing and output writers, then inspect the markdown near the end for the structured blocks we should parse.",
+  "plan": "1) Inspect src/cli.js for arg validation and wiring. 2) Inspect src/index.js and parsing pipeline to find where markdown is read and which sections are parsed. 3) Inspect output writers to align with contract (items envelope, csv header, jsonl sorting). 4) Locate parser for ledger/corrections/mail and ensure only structured canonical sections are used. 5) Read the bottom of /app/data/audit_archive.md to find the canonical structured data formats (ledger rows, correction notices, mail). 6) Read Investigation Briefs 01–09 text to implement correct precedence and Brief 09 hold timing override.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f | sed 's|^/app/audit-extractor/src/||' | sort\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src/parser -type f -maxdepth 3 -print -exec sed -n '1,220p' {} \\;\n",
+      "duration": 2
+    },
+    {
+      "keystrokes": "tail -n 220 /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 0\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} /^## Investigation Brief 10/{p=0} {if(p) print NR \":\" $0}' /app/data/audit_archive.md | head -n 260\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

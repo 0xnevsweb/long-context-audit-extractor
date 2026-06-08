@@ -1,0 +1,31 @@
+{
+  "analysis": "The last command outputs aren’t visible (likely scrolled/truncated), so we still don’t have the extracted brief binding text. We need to rerun the Python extraction but write it to a temp file and then view it with sed/head to avoid terminal truncation. Once we have the binding rules, we can implement the correct logic changes. Also need to inspect emails section for compliance@corp.internal entries and their fields.",
+  "plan": "1) Re-run the brief-binding extraction script, saving output to /tmp/briefs.txt. 2) View /tmp/briefs.txt in chunks to capture rules. 3) Locate and display a few compliance@corp.internal email blocks to see exact formatting (sent/status). 4) Then proceed to code edits implementing those rules.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY' > /tmp/briefs.txt\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    txt=f.read()\nfor i in range(1,9):\n    h=re.search(rf\"^##\\s*Investigation\\s*Brief\\s*0?{i}\\b.*$\", txt, re.M|re.I)\n    if not h:\n        continue\n    hn=re.search(rf\"^##\\s*Investigation\\s*Brief\\s*0?{i}\\b.*field notes.*$\", txt[h.end():], re.M|re.I)\n    end = h.end()+hn.start() if hn else len(txt)\n    sec=txt[h.start():end]\n    m=re.search(r\"Committee ruling \\(binding for extract\\):\\s*\\n\", sec, re.I)\n    body=sec[m.end():] if m else sec\n    print('\\n'+'='*80)\n    print(f'BRIEF {i} — '+re.sub(r\"\\s+\",\" \",sec.splitlines()[0]).strip())\n    print('='*80)\n    print(body.strip())\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "wc -l /tmp/briefs.txt && sed -n '1,220p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,900p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"From: compliance@corp.internal\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    lines=f.readlines()\n# print first 3 compliance email blocks with some context\nidx=[i for i,l in enumerate(lines) if l.startswith('From: compliance@corp.internal')]\nfor n,i in enumerate(idx[:4], start=1):\n    print('\\n'+'='*60)\n    print('COMPLIANCE EMAIL',n,'at line',i+1)\n    print(''.join(lines[i:i+12]))\nPY\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

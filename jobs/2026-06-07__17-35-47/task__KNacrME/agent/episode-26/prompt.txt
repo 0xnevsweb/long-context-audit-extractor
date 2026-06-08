@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       new_value: String(notice.value),
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   // 5) Exception flags
+>   const policyExceptions = parsed.policyExceptions || new Set();
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => {
+>       const flags = [];
+>       if (policyExceptions.has(row.transaction_id)) flags.push("policy_exception");
+>
+>       flags.sort();
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: Number(Number(row.amount).toFixed(2)),
+>         exception_reason: flags.length ? flags.join(";") : null,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_RANK };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@e13b9ef9896e:/app# rm -rf /app/output && mkdir -p /app/output
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# jq -r '.items[0].transaction_id' /app/output/transactions.json 2>/dev/null || head -n 5 /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@e13b9ef9896e:/app#

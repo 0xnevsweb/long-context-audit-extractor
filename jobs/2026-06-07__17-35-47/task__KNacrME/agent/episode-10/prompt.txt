@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ mid-year amendment later in this archive supersedes that draft practice.
+84:Site visit #909 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewer
+s flagged the gap because effective-date logic must honor notice precedence.
+86:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+94:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+106:Site visit #536 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+112:Site visit #928 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+120:Site visit #196 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+126:Site visit #576 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+132:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+144:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+150:Site visit #519 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewe
+rs flagged the gap because effective-date logic must honor notice precedence.
+158:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+174:Site visit #611 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+182:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+186:Site visit #547 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+188:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+204:Site visit #308 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+210:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+218:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+246:Site visit #872 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batc
+hes. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+root@e13b9ef9896e:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    95  Follow-up #106 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+    96
+    97  Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blame
+d tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+    98
+    99  During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transie
+nt cache state; QA reproduced the drift on a cold run the next morning.
+   100
+   101  Interview #898 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advis
+ed preserving the full thread because downstream exception coding depends on mail timestamps.
+   102
+   103  Site visit #452 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batche
+s. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+   104
+   105  Working paper WP-6375 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+   106
+   107  Follow-up #449 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+   108
+   109  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+   110
+   111  Interview #698 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advis
+ed preserving the full thread because downstream exception coding depends on mail timestamps.
+   112
+   113  Memo WP-6435 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever o
+verride ledger owners; Brief 05 resolves that question for the extractor.
+   114
+   115  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+   116
+   117  During July review, M. Chen circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transien
+t cache state; QA reproduced the drift on a cold run the next morning.
+   118
+   119  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+   120
+root@7a65087374e8:/app#

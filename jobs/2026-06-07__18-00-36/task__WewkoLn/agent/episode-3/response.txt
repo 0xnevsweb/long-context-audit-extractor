@@ -1,0 +1,46 @@
+{
+  "analysis": "I've seen the parsers. Now I need to look at the reconciliation logic, exceptions builder, output writers, and the audit archive data to understand the rules and bugs.",
+  "plan": "Read the reconciliation logic, exceptions, output writers, and start reading the audit archive.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.5
+    }
+  ]
+}

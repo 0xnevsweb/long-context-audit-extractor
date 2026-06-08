@@ -1,0 +1,27 @@
+{
+  "analysis": "The output currently displayed is still narrative filler; our sed ranges likely included large non-directive content after the brief headings. We need to extract only the directive paragraphs for Briefs 01/03/04/05 by locating the 'Auditor directive' / 'Committee ruling' markers within those brief ranges and printing just the short blocks around them. We'll directly grep for those markers near the brief headings and then print a tight context around the exact line numbers where the markers occur (as we successfully did for Brief 06 and 09).",
+  "plan": "1) Grep for 'Auditor directive' near Brief 01/03/04/05 by searching within specific line ranges using sed piped to grep -n (relative) and/or by grepping the whole file for nearby distinctive phrases (e.g., 'canonical ledger', 'Email excerpts may', 'winning correction notice', 'signed: true'). 2) Once we have the marker line numbers, print small sed windows (e.g., marker line-2 to +20) to capture the directives precisely. 3) Then implement the code changes based on the captured directives.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Auditor directive\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Committee ruling\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"exactly `## Transaction Ledger`|canonical ledger|working copy\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"winning correction|correction notice\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"Committee minutes show owner churn|signed: true\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

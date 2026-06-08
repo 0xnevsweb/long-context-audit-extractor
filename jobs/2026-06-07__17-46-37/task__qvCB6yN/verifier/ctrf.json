@@ -1,0 +1,212 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "8.4.1"
+        },
+        "summary": {
+            "tests": 19,
+            "passed": 12,
+            "failed": 7,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1780880252.9737139,
+            "stop": 1780880253.402702
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_archive_is_long_context",
+                "status": "passed",
+                "duration": 0.0026358360003087,
+                "start": 1780880253.0277724,
+                "stop": 1780880253.030914,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_archive_policy_is_distributed",
+                "status": "passed",
+                "duration": 0.0018530279999140475,
+                "start": 1780880253.0311315,
+                "stop": 1780880253.033476,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_cli_requires_arguments",
+                "status": "passed",
+                "duration": 0.03698452100002214,
+                "start": 1780880253.033858,
+                "stop": 1780880253.0713756,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_files_exist",
+                "status": "passed",
+                "duration": 0.041958456999964255,
+                "start": 1780880253.0718033,
+                "stop": 1780880253.114365,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_json_schema",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.015567689000135942,
+                "start": 1780880253.114671,
+                "stop": 1780880253.1573672,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_transactions_json_schema(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify transactions.json envelope and row fields match the handbook.\"\"\"\n        expected_rows, _ = expected\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        assert \"items\" in payload and isinstance(payload[\"items\"], list)\n        assert len(payload[\"items\"]) == len(expected_rows)\n    \n        for actual, exp in zip(payload[\"items\"], expected_rows, strict=True):\n            assert actual[\"transaction_id\"] == exp.transaction_id\n            assert actual[\"owner\"] == exp.owner\n            assert actual[\"status\"] == exp.status\n            assert actual[\"effective_date\"] == exp.effective_date\n            assert abs(actual[\"amount_usd\"] - exp.amount_usd) < 0.001\n>           assert actual.get(\"exception_reason\") == exp.exception_reason\nE           AssertionError: assert 'over_limit' == 'compliance_hold;over_limit'\nE             \nE             - compliance_hold;over_limit\nE             + over_limit\n\n/tests/test_outputs.py:377: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_sorted",
+                "status": "passed",
+                "duration": 0.0018587900001421076,
+                "start": 1780880253.1577137,
+                "stop": 1780880253.1599693,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_csv_matches_json",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0027109149998523208,
+                "start": 1780880253.160203,
+                "stop": 1780880253.1847541,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_transactions_csv_matches_json(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify transactions.csv header, ordering, and cell values mirror JSON rows.\"\"\"\n        expected_rows, _ = expected\n        with (pipeline_output / \"transactions.csv\").open(encoding=\"utf-8\", newline=\"\") as handle:\n            reader = csv.DictReader(handle)\n            assert reader.fieldnames == [\n                \"transaction_id\",\n                \"owner\",\n                \"status\",\n                \"effective_date\",\n                \"amount_usd\",\n                \"exception_reason\",\n            ]\n            rows = list(reader)\n        assert len(rows) == len(expected_rows)\n        for actual, exp in zip(rows, expected_rows, strict=True):\n            assert actual[\"transaction_id\"] == exp.transaction_id\n            assert actual[\"owner\"] == exp.owner\n            assert actual[\"status\"] == exp.status\n            assert actual[\"effective_date\"] == exp.effective_date\n            assert float(actual[\"amount_usd\"]) == pytest.approx(exp.amount_usd)\n            exc_cell = actual[\"exception_reason\"]\n            if exp.exception_reason is None:\n                assert exc_cell == \"\"\n            else:\n>               assert exc_cell == exp.exception_reason\nE               AssertionError: assert 'over_limit' == 'compliance_hold;over_limit'\nE                 \nE                 - compliance_hold;over_limit\nE                 + over_limit\n\n/tests/test_outputs.py:414: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_exceptions_json_only_flagged",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0021442810000280588,
+                "start": 1780880253.1849976,
+                "stop": 1780880253.2028682,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_exceptions_json_only_flagged(\n        pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify exceptions.json contains only rows with non-null exception_reason.\"\"\"\n        expected_rows, _ = expected\n        flagged = [row for row in expected_rows if row.exception_reason]\n        payload = json.loads((pipeline_output / \"exceptions.json\").read_text(encoding=\"utf-8\"))\n        assert \"items\" in payload\n        assert len(payload[\"items\"]) == len(flagged)\n        for actual, exp in zip(payload[\"items\"], flagged, strict=True):\n            assert actual[\"transaction_id\"] == exp.transaction_id\n>           assert actual[\"exception_reason\"] == exp.exception_reason\nE           AssertionError: assert 'over_limit' == 'compliance_hold;over_limit'\nE             \nE             - compliance_hold;over_limit\nE             + over_limit\n\n/tests/test_outputs.py:428: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_reconciliation_report",
+                "status": "passed",
+                "duration": 0.001798242999939248,
+                "start": 1780880253.2031431,
+                "stop": 1780880253.2054555,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_duplicate_ledger_last_wins",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.003711118000182978,
+                "start": 1780880253.2057621,
+                "stop": 1780880253.2257571,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\narchive_text = '# FY24 Internal Audit Archive\\n\\nMixed investigation briefs, committee minutes, mail excerpts, policy exceptions, cor...# TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb\\namount: 4620.26\\nowner: finalowner\\nstatus: approved\\ndate: 2024-04-04\\n\\n'\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_duplicate_ledger_last_wins(\n        pipeline_output: Path, archive_text: str, expected: tuple[list[TransactionRow], list[dict]]\n    ) -> None:\n        \"\"\"Verify duplicate ledger blocks use the last non-provisional occurrence in file order.\"\"\"\n        section = _ledger_slice(archive_text)\n        dup_ids: list[str] = []\n        seen: set[str] = set()\n        for block in section.split(\"\\n### \")[1:]:\n            txn_id = block.splitlines()[0].strip()\n            if not txn_id.startswith(\"TXN-\"):\n                continue\n            if txn_id in seen:\n                dup_ids.append(txn_id)\n            seen.add(txn_id)\n        assert dup_ids, \"fixture should include duplicate ledger rows\"\n        exp_by_id = {r.transaction_id: r for r in expected[0]}\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        out_by_id = {r[\"transaction_id\"]: r for r in payload[\"items\"]}\n        for tid in dup_ids:\n>           assert out_by_id[tid][\"owner\"] == exp_by_id[tid].owner\nE           AssertionError: assert 'earlybird' == 'finalowner'\nE             \nE             - finalowner\nE             + earlybird\n\n/tests/test_outputs.py:463: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_ignores_decoy_ledger_section",
+                "status": "passed",
+                "duration": 0.0023454130002846796,
+                "start": 1780880253.2259772,
+                "stop": 1780880253.228704,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_uses_pre_correction_ledger_date",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.002001782999968782,
+                "start": 1780880253.228876,
+                "stop": 1780880253.247341,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\narchive_text = '# FY24 Internal Audit Archive\\n\\nMixed investigation briefs, committee minutes, mail excerpts, policy exceptions, cor...# TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb\\namount: 4620.26\\nowner: finalowner\\nstatus: approved\\ndate: 2024-04-04\\n\\n'\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_compliance_hold_uses_pre_correction_ledger_date(\n        pipeline_output: Path,\n        archive_text: str,\n        expected: tuple[list[TransactionRow], list[dict]],\n    ) -> None:\n        \"\"\"Verify compliance_hold compares sent against ledger date before corrections adjust date.\"\"\"\n        tid = \"TXN-1b083448-63e3-5527-a20a-edd71416341c\"\n        exp_by_id = {r.transaction_id: r for r in expected[0]}\n        assert \"compliance_hold\" in (exp_by_id[tid].exception_reason or \"\")\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        out_by_id = {r[\"transaction_id\"]: r for r in payload[\"items\"]}\n>       assert \"compliance_hold\" in (out_by_id[tid].get(\"exception_reason\") or \"\")\nE       AssertionError: assert 'compliance_hold' in (('over_limit'))\nE        +  where 'over_limit' = <built-in method get of dict object at 0x7f6f2c807840>('exception_reason')\nE        +    where <built-in method get of dict object at 0x7f6f2c807840> = {'amount_usd': 10113.94, 'effective_date': '2024-09-01', 'exception_reason': 'over_limit', 'owner': 'jdoe', ...}.get\n\n/tests/test_outputs.py:486: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_requires_sent_line",
+                "status": "passed",
+                "duration": 0.008674973999859503,
+                "start": 1780880253.2476885,
+                "stop": 1780880253.2567816,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_retroactive_review_on_status_correction",
+                "status": "passed",
+                "duration": 0.0019307680001929839,
+                "start": 1780880253.2569776,
+                "stop": 1780880253.259299,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_without_sent_applies_status",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.007033771000124034,
+                "start": 1780880253.259471,
+                "stop": 1780880253.2822638,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\narchive_text = '# FY24 Internal Audit Archive\\n\\nMixed investigation briefs, committee minutes, mail excerpts, policy exceptions, cor...# TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb\\namount: 4620.26\\nowner: finalowner\\nstatus: approved\\ndate: 2024-04-04\\n\\n'\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_compliance_email_without_sent_applies_status(\n        pipeline_output: Path,\n        archive_text: str,\n        expected: tuple[list[TransactionRow], list[dict]],\n    ) -> None:\n        \"\"\"Verify compliance emails without sent: still apply status when precedence allows.\"\"\"\n        emails = _parse_emails(archive_text)\n        exp_by_id = {r.transaction_id: r for r in expected[0]}\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        out_by_id = {r[\"transaction_id\"]: r for r in payload[\"items\"]}\n        for email in emails:\n            if \"compliance@\" not in email[\"from_addr\"].lower() or email.get(\"sent\"):\n                continue\n            tid = email[\"transaction_id\"]\n>           assert out_by_id[tid][\"status\"] == exp_by_id[tid].status\nE           AssertionError: assert 'approved' == 'rejected'\nE             \nE             - rejected\nE             + approved\n\n/tests/test_outputs.py:546: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_sent_date_gate",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.008849160000181655,
+                "start": 1780880253.28252,
+                "stop": 1780880253.307206,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\narchive_text = '# FY24 Internal Audit Archive\\n\\nMixed investigation briefs, committee minutes, mail excerpts, policy exceptions, cor...# TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb\\namount: 4620.26\\nowner: finalowner\\nstatus: approved\\ndate: 2024-04-04\\n\\n'\nexpected = ([TransactionRow(transaction_id='TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', owner='dlee', status='pending', effective_...f0', ...}, {'effective': '2024-09-01', 'field': 'date', 'new_value': '2024-09-01', 'notice_id': 'CORR-c27e46a1', ...}])\n\n    def test_compliance_email_sent_date_gate(\n        pipeline_output: Path,\n        archive_text: str,\n        expected: tuple[list[TransactionRow], list[dict]],\n    ) -> None:\n        \"\"\"Verify compliance emails with sent before ledger date do not change status.\"\"\"\n        emails = _parse_emails(archive_text)\n        ledger = _parse_ledger(archive_text)\n        payload = json.loads((pipeline_output / \"transactions.json\").read_text(encoding=\"utf-8\"))\n        out_by_id = {r[\"transaction_id\"]: r for r in payload[\"items\"]}\n        exp_by_id = {r.transaction_id: r for r in expected[0]}\n        for email in emails:\n            if \"compliance@\" not in email[\"from_addr\"].lower():\n                continue\n            if not email.get(\"sent\"):\n                continue\n            txn_id = email[\"transaction_id\"]\n            if email[\"sent\"] >= ledger[txn_id][\"date\"]:\n                continue\n>           assert out_by_id[txn_id][\"status\"] == exp_by_id[txn_id].status\nE           AssertionError: assert 'approved' == 'rejected'\nE             \nE             - rejected\nE             + approved\n\n/tests/test_outputs.py:568: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_deterministic_rerun",
+                "status": "passed",
+                "duration": 0.08383665299993481,
+                "start": 1780880253.3074255,
+                "stop": 1780880253.3917463,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_correction_effective_date_from_handbook",
+                "status": "passed",
+                "duration": 0.0037894849997428537,
+                "start": 1780880253.3919666,
+                "stop": 1780880253.3961978,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_meeting_signed_owner_override",
+                "status": "passed",
+                "duration": 0.005295810000234269,
+                "start": 1780880253.3964055,
+                "stop": 1780880253.4020822,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> +
+> +      reasons.sort();
+> +      const exception_reason = reasons.length ? reasons.join(";") : null;
+> +
+> +      // Brief 06: effective_date starts from ledger date; but if a winning
+> +      // correction changed status or date, set effective_date to that notice's effective.
+> +      const effective_date = dateOrStatusEffectiveOverrideById.get(row.transaction_id) || row.date;
+> +
+> +      return {
+> +        transaction_id: row.transaction_id,
+> +        owner: row.owner,
+> +        status,
+> +        effective_date,
+> +        amount_usd: Number(amt.toFixed(2)),
+> +        exception_reason,
+> +      };
+> +    }),
+> +  );
+> +
+> +  // Report must be sorted by notice_id ascending (contract).
+> +  report.sort((a, b) => (a.notice_id < b.notice_id ? -1 : a.notice_id > b.notice_id ? 1 : 0));
+> +
+> +  return { items, report };
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@7b07e9f8c4c5:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@7b07e9f8c4c5:/app# rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@7b07e9f8c4c5:/app# diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json || true
+root@7b07e9f8c4c5:/app# diff -u /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl || true
+root@7b07e9f8c4c5:/app# rm -rf /app/output && mkdir -p /app/output
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@7b07e9f8c4c5:/app# ls -ლა /app/output && head -n 5 /app/output/transactions.json && head -n 3 /app/output/transactions.csv && head -n 5 /app/output/reconci
+liation_report.jsonl
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@7b07e9f8c4c5:/app#

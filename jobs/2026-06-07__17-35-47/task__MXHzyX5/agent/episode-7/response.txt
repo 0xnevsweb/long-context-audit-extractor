@@ -1,0 +1,23 @@
+{
+  "analysis": "We successfully used nl+sed to view part of the Email Excerpts section around lines 1962-2000, but it’s non-compliance mail. We still need: (a) the extracted brief heading line numbers from /tmp/briefs.txt (not shown yet), (b) the contents of reconcile.js from the top (not shown yet), and (c) the specific Brief 09 amendment language and Brief 04 correction precedence language. Next we should display /tmp/briefs.txt and then use nl+sed to print the exact ranges for the relevant briefs. Then we can implement the reconciliation fixes in code.",
+  "plan": "1) Show /tmp/briefs.txt to get precise line numbers for each Investigation Brief 01–09. 2) Print Brief 04, Brief 07, Brief 09 sections (start at heading line and continue until next brief heading). 3) Print reconcile.js from the start to understand current logic around ledger sourcing, meeting amendments, email status changes, and holds. 4) After confirming policy, edit reconcile.js and utils/sort.js and possibly parser/ledger.js to handle duplicates/provisional and ensure deterministic behavior. 5) Run CLI extract to /app/output and verify outputs + determinism.",
+  "commands": [
+    {
+      "keystrokes": "cat /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '650,740p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '740,860p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

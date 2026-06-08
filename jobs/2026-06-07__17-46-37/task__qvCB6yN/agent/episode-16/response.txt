@@ -1,0 +1,42 @@
+{
+  "analysis": "We now have concrete directive lines for Brief 07 and 08 via grep output: exception_reason rules (over_limit, compliance_hold, and reference to Brief 09 for hold comparison), and exact artifact shapes/headers (transactions.csv must include exception_reason, exceptions.json envelope {items:[...]}). We still need directives for Briefs 01–06 and 09; the 'Auditor directive' grep didn't show on screen, so maybe briefs don't contain that literal aside from Brief 02 which we saw earlier. We'll directly print the key directive ranges around the line numbers indicated by grep: Brief 07 starts at 1201, and exception rules start at 1205; Brief 08 has artifact shape rules around 1431-1436. Also need status precedence from Brief 02 and correction precedence from Brief 04 and signed amendment rule from Brief 05 and effective date output from Brief 06 and mail timing from Brief 03 and ledger sourcing from Brief 01 and hold timing from Brief 09 (we already saw some). We'll print tight ranges around each brief heading and the specific lines of interest.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,40p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '252,285p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,735p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,880p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1058,1095p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1201,1225p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1419,1450p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1670,1695p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

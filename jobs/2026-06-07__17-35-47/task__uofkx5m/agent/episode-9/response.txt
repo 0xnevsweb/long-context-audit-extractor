@@ -1,0 +1,31 @@
+{
+  "analysis": "The awk extraction for briefs did not work as intended: the output shown is still narrative filler and then it only printed the label for /tmp/brief09.md without content, implying our Brief 09 extraction exited immediately because it stopped at the same heading line (the /^## / rule). We did get exact line numbers for structured sections: Email Excerpts at 1857, Policy Exceptions at 3849, Correction Notices at 3866, Transaction Ledger at 3912. Next we must correctly extract Brief 02–09 binding sections (using heading-to-heading ranges) and view them. Then we must update parsers and reconciliation logic per those rules.",
+  "plan": "1) Re-extract Brief 02–09 using a robust awk that starts at the exact heading and stops at the next '## ' heading with a different brief number (or for Brief 09 stop at the first subsequent '## ' after the heading line). 2) Print the first ~120 lines of each extracted brief to capture binding rules. 3) Dump the structured sections (emails, policy exceptions, correction notices, ledger) into /tmp files and inspect their formats. 4) After we have rules, we’ll implement code fixes in parsers and normalize/reconcile/exceptions/output writers.",
+  "commands": [
+    {
+      "keystrokes": "for b in 02 03 04 05 06 07 08 09; do awk -v b=\"$b\" 'BEGIN{p=0} $0 ~ \"^## Investigation Brief \"b\" \" {p=1} (p && $0 ~ /^## / && $0 !~ (\"^## Investigation Brief \"b\" \") && NR!=start){exit} p{if(!start) start=NR; print}' /app/data/audit_archive.md > /tmp/brief${b}.md; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{2,3,4,5,6,7,8,9}.md; do echo \"\\n===== $f ($(wc -l < $f) lines) =====\"; sed -n '1,140p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1857,1915p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3849,3915p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3866,3912p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3912,3985p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

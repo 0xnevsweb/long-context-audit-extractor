@@ -1,0 +1,55 @@
+{
+  "analysis": "We’re seeing the tail of normalize/reconcile.js. Current issues visible: (1) report entries set previous_value to empty string always (violates contract: must be value immediately before correction). (2) Corrections are applied by iterating parsed.corrections (order unknown) and report not sorted by notice_id. (3) Ledger base rows are stored in a Map byId; if multiple ledger entries share a transaction_id (as in the archive), later one overwrites earlier depending on parse order; may be correct but needs explicit canonical selection (e.g., non-provisional beats provisional, and deterministic). (4) sortByTransactionId comparator is incomplete (returns -1 or 1, never 0), making sort potentially unstable when equal ids (not expected but possible) and generally not ideal. (5) Status precedence / compliance mail logic not yet reviewed; we need the full reconcile.js plus parsers and the Brief 09 rules. Next step is to open the full reconcile.js and parsers, and the relevant archive sections (briefs, corrections, emails, ledger) because previous sed output for markdown wasn’t captured in this snippet.",
+  "plan": "1) Re-open full reconcile.js to inspect how it sources ledger, applies emails, holds, and corrections. 2) Open parser modules (sections/ledger/emails/corrections) to see ordering, parsing details (e.g., provisional flag), and whether they return arrays unsorted. 3) View the authoritative Investigation Brief 04 (correction precedence) and Brief 09 (mid-year amendment about compliance hold timing) from the markdown using sed around known line numbers (e.g., Brief 04 ~685; Brief 09 line from grep list). 4) Implement fixes: compute previous_value during application; apply corrections in sorted notice_id order; ensure report sorted; select canonical ledger row deterministically with explicit rules; ensure compliance email processing considers later mail and Brief 09 date comparison; make sorting stable with 0 return for equal keys; ensure deterministic JSON writing (likely already via JSON.stringify but order of items must be stable).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '650,780p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1180,1320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1320,1520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1520,1700p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1700,1860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

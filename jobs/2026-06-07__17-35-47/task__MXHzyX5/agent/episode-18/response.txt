@@ -1,0 +1,39 @@
+{
+  "analysis": "CSV now matches the required header order and formats amount_usd with two decimals; exception_reason column is present and empty when null (currently printed as trailing comma, which is correct). Remaining work: implement exception_reason flags (and thus populate exceptions.json) according to Investigation Brief 08 and compliance hold logic (Brief 07/09). Also need to ensure ledger sourcing handles provisional duplicates per Brief 01 and that compliance holds consider later mail. We need to read the authoritative brief sections and inspect parser/policy.js (policy exceptions) and parseArchive to see what structured data is available.",
+  "plan": "1) Locate and print Investigation Brief 07, 08, 09 from the markdown using line numbers from /tmp/briefs.txt to get exact exception flag definitions and hold timing amendment. 2) Inspect parser/policy.js and the archive’s Policy Exceptions section formatting to see what flags can be derived (e.g., policy_exception codes by txn). 3) Implement exception_reason computation: likely based on (a) compliance_hold from qualifying compliance@ email timing vs ledger/correction effective dates per Brief 09, and (b) policy exceptions from structured section. Join multiple codes in lexical order. 4) Update reconcile.js to compute exception_reason on each item (or add a new normalization step that enriches items with exception_reason and returns exceptions list). 5) Rerun extractor and verify exceptions.json has items and transactions.json rows have non-null exception_reason where expected.",
+  "commands": [
+    {
+      "keystrokes": "cat /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '940,1120p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1120,1425p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1425,1765p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '3720,3866p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,126 @@
+New Terminal Output:
+
+root@3f2a24e5dabd:/app# grep -n "Investigation Brief" /app/data/audit_archive.md | head -n 50
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@3f2a24e5dabd:/app# grep -nE "Brief 0[1-9]|Investigation Brief 0[1-9]" /app/data/audit_archive.md | head -n 200
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+60:Memo WP-3763 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+62:Memo WP-5953 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+102:Memo WP-3161 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+136:Memo WP-2697 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+196:Memo WP-4162 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+204:Memo WP-3682 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+206:Memo WP-1921 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+226:Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+234:Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+284:Memo WP-2881 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+336:Memo WP-7928 summarizes stakeholder intervi
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+364:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+370:Memo WP-7131 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+378:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+384:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+388:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+390:Memo WP-6022 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+396:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+406:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+416:Memo WP-6978 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overrid
+e ledger owners; Brief 05 resolves that question for the extractor.
+424:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+426:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+root@3f2a24e5dabd:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@3f2a24e5dabd:/app# find /app/audit-extractor/src -maxdepth 3 -type f | sed 's|^|FILE: |'
+FILE: /app/audit-extractor/src/lib/handbook.js
+FILE: /app/audit-extractor/src/lib/constants.js
+FILE: /app/audit-extractor/src/schema/validate.js
+FILE: /app/audit-extractor/src/cli.js
+FILE: /app/audit-extractor/src/output/jsonWriter.js
+FILE: /app/audit-extractor/src/output/csvWriter.js
+FILE: /app/audit-extractor/src/output/reportWriter.js
+FILE: /app/audit-extractor/src/utils/sort.js
+FILE: /app/audit-extractor/src/utils/date.js
+FILE: /app/audit-extractor/src/normalize/exceptions.js
+FILE: /app/audit-extractor/src/normalize/reconcile.js
+FILE: /app/audit-extractor/src/index.js
+FILE: /app/audit-extractor/src/parser/ledger.js
+FILE: /app/audit-extractor/src/parser/meetings.js
+FILE: /app/audit-extractor/src/parser/policy.js
+FILE: /app/audit-extractor/src/parser/sections.js
+FILE: /app/audit-extractor/src/parser/corrections.js
+FILE: /app/audit-extractor/src/parser/emails.js
+root@3f2a24e5dabd:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "Key contract mismatches found: jsonWriter outputs `{transactions: ...}` and `{exceptions: ...}` but contract requires `{ \"items\": [...] }` for both. sortByTransactionId comparator never returns 0, which can cause unstable ordering and rerun drift when ids equal (and can also violate strict sort requirements). Reconciliation report is not sorted by notice_id, and reconcile.js sets previous_value as empty string. Corrections parser is simplistic. We still need the actual policy text from Briefs 01–09 (sed outputs weren’t visible in provided screen) and need to inspect ledger.js/emails.js plus normalize/reconcile.js fully and output/csvWriter.js and schema validation. Then implement fixes per policy and contract, ensuring deterministic output and correct mapping.",
+  "plan": "1) Re-open Brief 01–09 sections but write them to temporary files for easier inspection (or use sed+cat with clear boundaries) so we can implement exact reconciliation semantics and Brief 09 override. 2) Inspect parser/ledger.js and parser/emails.js (and any policy/meetings parsers) to see current extraction of holds/mail/status. 3) Fix output writers to meet contract envelope keys and ordering. 4) Fix sorting comparator and explicitly sort report by notice_id and transactions by transaction_id. 5) Update reconcile.js to compute previous_value and apply correction precedence correctly. 6) Implement exception_reason generation and ensure exceptions.json filters flagged rows. 7) Run extractor twice and diff transactions.json to confirm byte-identical output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md > /tmp/brief01.md\nsed -n '252,467p' /app/data/audit_archive.md > /tmp/brief02.md\nsed -n '468,684p' /app/data/audit_archive.md > /tmp/brief03.md\nsed -n '685,827p' /app/data/audit_archive.md > /tmp/brief04.md\nsed -n '828,1057p' /app/data/audit_archive.md > /tmp/brief05.md\nsed -n '1058,1200p' /app/data/audit_archive.md > /tmp/brief06.md\nsed -n '1201,1418p' /app/data/audit_archive.md > /tmp/brief07.md\nsed -n '1419,1669p' /app/data/audit_archive.md > /tmp/brief08.md\nsed -n '1670,1825p' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{1..9}.md; do echo \"\\n===== $f =====\"; sed -n '1,120p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

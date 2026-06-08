@@ -1,0 +1,35 @@
+{
+  "analysis": "parseArchive now returns policyExceptions (Set size 3) and emails (4 entries with sent date and status). Great. Next we must implement exception_reason logic in reconcile.js so transactions get flagged based on policyExceptions and compliance holds (derived from emails) according to Investigation Briefs 01–09, especially Brief 09 override. We haven't yet displayed the brief text; we must read the relevant sections (hold timing wording and flag codes). After implementing, exceptions.json should include flagged rows and transactions.json should contain exception_reason strings sorted lexically. Also ensure deterministic ordering and that exception_reason is included in CSV (already).",
+  "plan": "1) Extract the relevant brief passages from audit_archive.md that define exception flags and compliance hold rules (search within briefs for 'exception', 'flag', 'compliance_hold', 'hold', and codes). 2) Implement minimal correct semantics: add POLICY_EXCEPTION flag when transaction_id is in policyExceptions; add COMPLIANCE_HOLD flag when there exists compliance email with status in {rejected,reversed}? and sent date comparison per Brief 09 (likely compare email sent to ledger effective_date before corrections or after; briefs will clarify). 3) Apply flags per transaction, build exception_reason as semicolon-joined sorted codes, else null. 4) Re-run extractor and verify exceptions.json non-empty and includes only flagged rows, sorted by transaction_id. 5) Confirm determinism by rerunning and diffing transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "grep -nEi \"exception_reason|exception reason|flag code|flag codes|COMPLIANCE|hold|compliance_hold|policy exception\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '980,1250p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1450,1750p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1750,2050p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

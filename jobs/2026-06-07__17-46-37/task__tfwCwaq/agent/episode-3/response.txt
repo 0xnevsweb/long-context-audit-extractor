@@ -1,0 +1,39 @@
+{
+  "analysis": "Two consecutive runs produced identical transactions.json (same sha256), so drift may be in other artifacts (CSV formatting, exceptions.json, report jsonl) or drift occurs only in certain statuses when input parsing includes mailbox excerpts and order changes based on regex matches. We also accidentally dumped a large portion of the archive (email excerpts) to the terminal, but we still haven’t inspected the key source files (parser/sections.js, normalize/reconcile.js, etc.) because their outputs are not shown here—likely scrolled past. Next: inspect remaining outputs for determinism, then inspect reconcile logic and compare to Brief 09 rules by extracting just the authoritative brief sections from the archive without printing the whole file.",
+  "plan": "1) Check hashes/diffs for the other three artifacts across the two runs to see what actually drifts. 2) Inspect parser/sections.js and normalize/reconcile.js to locate logic for compliance holds, mail, and correction notice mapping. 3) Extract Investigation Brief 09 text precisely (and earlier relevant hold wording from briefs) using targeted ripgrep/sed around the lines, not full file dumps. 4) Once we see the mismatch, patch reconciliation logic and ensure report sorting and correction precedence match policy.",
+  "commands": [
+    {
+      "keystrokes": "sha256sum /tmp/out1/transactions.csv /tmp/out2/transactions.csv /tmp/out1/exceptions.json /tmp/out2/exceptions.json /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/exceptions.json /tmp/out2/exceptions.json | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\n# find Brief 09 heading line\nstart=None\nfor i,l in enumerate(lines,1):\n    if re.match(r'^#+\\s*Investigation Brief\\s*0?9\\b', l):\n        start=i; break\nif not start:\n    raise SystemExit('Brief 09 not found')\n# end at next Investigation Brief heading or EOF\nend=len(lines)\nfor i in range(start+1, len(lines)+1):\n    if re.match(r'^#+\\s*Investigation Brief\\s*\\d+\\b', lines[i-1]):\n        end=i-1; break\nprint(f'Brief 09 lines {start}-{end}')\n# print a manageable slice: first 220 lines of Brief 09\nfor j in range(start, min(end, start+219)+1):\n    print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

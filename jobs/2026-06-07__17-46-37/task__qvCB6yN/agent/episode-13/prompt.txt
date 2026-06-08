@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  29: Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed
+tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+  30:
+  31: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds.
+The mid-year amendment later in this archive supersedes that draft practice.
+  32:
+  33: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds.
+The mid-year amendment later in this archive supersedes that draft practice.
+  34:
+  35: Interview #628 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+  36:
+  37: Site visit #975 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+-- around line 27 --
+  24:
+  25: Site visit #872 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+  26:
+  27: Risk assessment WP-9137 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or a
+ppendix commentary as authoritative transaction sources.
+  28:
+  29: Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed
+tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+  30:
+  31: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds.
+The mid-year amendment later in this archive supersedes that draft practice.
+  32:
+  33: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds.
+The mid-year amendment later in this archive supersedes that draft practice.
+  34:
+  35: Interview #628 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+  36:
+  37: Site visit #975 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+  38:
+  39: Risk assessment WP-4185 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or a
+ppendix commentary as authoritative transaction sources.
+root@7a65087374e8:/app#

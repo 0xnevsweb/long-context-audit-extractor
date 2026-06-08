@@ -1,0 +1,47 @@
+{
+  "analysis": "Reconcile.js now imports sortByNoticeId, but utils/sort.js only exports sortByTransactionId. This causes extractor to fail before writing outputs. Need to add sortByNoticeId (and ideally fix sortByTransactionId comparator to return 0 on equality for stability). After patching sort.js, rerun extractor and verify outputs created. Then ensure reconciliation_report.jsonl is sorted by notice_id and exceptions.json populated.",
+  "plan": "1) Edit src/utils/sort.js to export sortByNoticeId and improve comparators for determinism. 2) Rerun extractor to /tmp/outfix and inspect artifacts. 3) Run again to confirm transactions.json determinism. 4) Run final extractor to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/utils/sort.js <<'EOF'\nfunction sortByTransactionId(items) {\n  return items.sort((a, b) => {\n    if (a.transaction_id === b.transaction_id) return 0;\n    return a.transaction_id < b.transaction_id ? -1 : 1;\n  });\n}\n\nfunction sortByNoticeId(items) {\n  return items.sort((a, b) => {\n    if (a.notice_id === b.notice_id) return 0;\n    return a.notice_id < b.notice_id ? -1 : 1;\n  });\n}\n\nmodule.exports = { sortByTransactionId, sortByNoticeId };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/outfix /tmp/outfix2 && mkdir -p /tmp/outfix /tmp/outfix2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/outfix\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/outfix\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 3 /tmp/outfix/reconciliation_report.jsonl || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/tmp/outfix/exceptions.json'\nwith open(p,'r',encoding='utf-8') as f:\n    data=json.load(f)\nprint('exceptions count', len(data.get('items',[])))\nprint('first', data.get('items',[])[:2])\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/outfix2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sha256sum /tmp/outfix/transactions.json /tmp/outfix2/transactions.json\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

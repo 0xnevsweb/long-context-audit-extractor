@@ -1,0 +1,35 @@
+{
+  "analysis": "We still haven't captured the contents of Brief 03/07/09 due to terminal output truncation/scroll; only narrative filler appeared. However we successfully inspected parser/emails.js: it slices Email Excerpts to Policy Exceptions and parses blocks split by blank lines; it requires From, Subject 'Re: TXN-...', and a 'status:' line in the block. It does not enforce compliance@ sender (that is done in reconcile.js? currently not), and it does not parse any mail timestamp/date, which is likely required for compliance_hold timing. Also it uses markdown.indexOf(\"## Policy Exceptions\") for end which might be safe but could be decoyed. Next: we need to re-extract brief texts with smaller ranges and ensure they display, especially Brief 03 and Brief 07 and Brief 09. We'll also need to inspect the actual compliance email blocks in the markdown (around lines 242 etc.) to see if there is a date line. Then implement compliance_hold rules: filter only from_addr containing 'compliance@' as already described in archive snippet; and compute hold based on mail timing vs effective date per Brief 09.",
+  "plan": "1) Use nl+sed to show exact Brief 03/07/09 sections with line numbers but in smaller chunks to avoid truncation (e.g., 60 lines at a time). 2) Display the compliance email excerpts near their known lines (~242) to see the actual structure and whether a date/timestamp exists. 3) Update parser/emails.js to: search end heading after start; parse an optional 'date:' or 'sent:' ISO date if present; include it in parsed email objects; and keep all qualifying compliance mails (from contains 'compliance@'). 4) Implement compliance_hold in reconcile.js based on Brief 07 + Brief 09: likely flag when a qualifying compliance email occurs after some comparison date (ledger effective date vs corrected date etc.). 5) Rerun extractor and verify exceptions include compliance_hold.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '468,560p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '560,684p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1201,1290p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1290,1418p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1670,1760p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1760,1833p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '232,280p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

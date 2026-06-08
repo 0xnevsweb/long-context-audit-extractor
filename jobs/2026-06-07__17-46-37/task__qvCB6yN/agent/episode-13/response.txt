@@ -1,0 +1,15 @@
+{
+  "analysis": "Our windowing is still landing on narrative filler lines containing keywords like 'must not treat decoy', rather than the actual directive blocks. The directive text is likely immediately after the brief heading and 'Auditor directive' label; we should directly extract from each brief heading down to the next blank line after the directive block by searching for 'Auditor directive' and then printing the next ~40 lines, even if filler follows. We'll do that for each brief using a script that finds the heading line and then prints until it hits a separator like '## Investigation Brief' or '— field notes' or until N lines. We can also search for colon-style rules (e.g., 'Extractor must:').",
+  "plan": "1) For each brief file, locate the first occurrence of 'Auditor directive' and print from there for 60 lines. If not found, print from the top starting at the heading for 60 lines. 2) Additionally, locate explicit rule lists by matching patterns like 'Status precedence', 'Overlay order', 'Exception codes', 'Hold', 'Signed'. 3) Once we have the concrete rules, implement code changes.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re,glob\nfor f in sorted(glob.glob('/tmp/brief0*.md')):\n    lines=open(f,'r',encoding='utf8').read().splitlines()\n    # find first 'Auditor directive' else first non-empty after heading\n    start=None\n    for i,l in enumerate(lines,1):\n        if re.search(r'Auditor directive',l,re.I):\n            start=i;break\n    if start is None:\n        start=1\n    end=min(len(lines), start+80)\n    print('\\n===== ',f,' from',start,'to',end)\n    for j in range(start,end+1):\n        print(f\"{j:4d}: {lines[j-1]}\")\nPY\n",
+      "duration": 2
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nrules=[]\nfor fnum in range(1,10):\n    f=f'/tmp/brief0{fnum}.md'\n    lines=open(f,'r',encoding='utf8').read().splitlines()\n    for i,l in enumerate(lines,1):\n        if re.search(r'Overlay order|Status precedence|exception_reason|exception flags|compliance_hold|signed:|ignore|canonical ledger|working copy|correction notice',l,re.I):\n            rules.append((f,i,l.strip()))\nprint('\\n'.join([f\"{a}:{b}: {c}\" for a,b,c in rules[:200]]))\nPY\n",
+      "duration": 2
+    }
+  ],
+  "task_complete": false
+}

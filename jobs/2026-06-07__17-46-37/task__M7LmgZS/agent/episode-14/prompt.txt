@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>         const hasLateComplianceMail = emails.some(
+>           (e) =>
+>             e.transaction_id === row.transaction_id &&
+>             e.date &&
+>             String(e.from_addr).toLowerCase().includes("compliance") &&
+>             e.date > baseline,
+>         );
+>         if (hasLateComplianceMail) reasons.push("compliance_hold");
+>       }
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: Number(row.amount),
+>         exception_reason: joinReasons(reasons),
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@30aa72376025:/app# rm -rf /app/output && mkdir -p /app/output
+root@30aa72376025:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@30aa72376025:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 3 /app/output/reconciliation_report.jsonl && head -n 5 /app/output/exceptions.j
+son
+0 /app/output/reconciliation_report.jsonl
+{
+  "items": [
+    {
+      "transaction_id": "TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0",
+      "owner": "frost",
+root@30aa72376025:/app# cp /app/output/transactions.json /tmp/transactions_run1.json
+root@30aa72376025:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@30aa72376025:/app# diff -u /tmp/transactions_run1.json /app/output/transactions.json || true
+root@30aa72376025:/app#

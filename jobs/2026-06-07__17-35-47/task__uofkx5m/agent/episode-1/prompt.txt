@@ -1,0 +1,150 @@
+New Terminal Output:
+root@3f2a24e5dabd:/app# ls -ლა
+ls: invalid option -- ''
+Try 'ls --help' for more information.
+root@3f2a24e5dabd:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:35 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 data
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@3f2a24e5dabd:/app# ls -la /app/audit-extractor/src
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+root@3f2a24e5dabd:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@3f2a24e5dabd:/app# sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md
+# Audit Extractor Output Contract
+
+Service root: `/app/audit-extractor`
+
+## CLI
+
+`node /app/audit-extractor/src/cli.js extract --input <markdown-path> --outdir <directory>`
+
+Missing `--input` or `--outdir`: message on stderr, exit code 1.
+
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of
+ the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes onl
+y.
+
+## Artifacts
+
+`extract` writes exactly these files under `--outdir`:
+
+- `transactions.json`
+- `transactions.csv`
+- `exceptions.json`
+- `reconciliation_report.jsonl`
+
+Identical input must produce byte-identical `transactions.json` on repeated runs.
+
+## `transactions.json`
+
+Top-level envelope:
+
+```json
+{ "items": [ /* transaction rows */ ] }
+```
+
+Each row:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `transaction_id` | string | `TXN-…` |
+| `owner` | string | |
+| `status` | string | lowercase: `pending`, `approved`, `rejected`, `reversed` |
+| `effective_date` | string | `YYYY-MM-DD` |
+| `amount_usd` | number | two decimal places |
+| `exception_reason` | string or null | semicolon-joined flag codes in lexical order, or null |
+
+Sort `items` by `transaction_id` ascending.
+
+## `transactions.csv`
+
+Header (exact order):
+
+`transaction_id,owner,status,effective_date,amount_usd,exception_reason`
+
+Same rows as `transactions.json` in the same order. Empty cell when `exception_reason` is null.
+
+## `exceptions.json`
+
+```json
+{ "items": [ /* flagged rows only */ ] }
+```
+
+Same row shape as `transactions.json`. Include only rows where `exception_reason` is non-null. Sort by `transaction_id` ascending.
+
+## `reconciliation_report.jsonl`
+
+One JSON object per line, sorted by `notice_id` ascending. Each line records one winning correction notice:
+
+| Field | Type |
+|-------|------|
+| `notice_id` | string |
+| `transaction_id` | string |
+| `field` | string |
+| `previous_value` | string |
+| `new_value` | string |
+| `effective` | string |
+
+`previous_value` is the field value immediately before that correction applies.
+root@3f2a24e5dabd:/app# ls -la /app/data
+total 280
+drwxr-xr-x 2 root root   4096 Jun  8 00:35 .
+drwxr-xr-x 1 root root   4096 Jun  8 00:35 ..
+-rw-r--r-- 1 root root 276739 Jun  5 11:46 audit_archive.md
+root@3f2a24e5dabd:/app# wc -l /app/data/audit_archive.md
+4118 /app/data/audit_archive.md
+root@3f2a24e5dabd:/app# rg -n "Investigation Brief" /app/data/audit_archive.md | head
+bash: rg: command not found
+root@3f2a24e5dabd:/app# rg -n "Investigation Brief 0[1-9]|Brief 0[1-9]" /app/data/audit_archive.md
+bash: rg: command not found
+root@3f2a24e5dabd:/app#

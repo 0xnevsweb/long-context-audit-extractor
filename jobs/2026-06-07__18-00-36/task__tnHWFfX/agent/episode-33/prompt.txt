@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+root@7aa6d0745461:/app# grep -n '^### TXN' /tmp/ledger.txt
+3:### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+9:### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+15:### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+21:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+27:### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+33:### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+39:### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+45:### TXN-1b083448-63e3-5527-a20a-edd71416341c
+51:### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+57:### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+63:### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+69:### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+75:### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+81:### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+87:### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+93:### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+99:### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+105:### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+111:### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+117:### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+123:### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+129:### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+135:### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+141:### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+147:### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+153:### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+159:### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+165:### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+171:### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+177:### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+183:### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+189:### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+195:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+202:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+root@7aa6d0745461:/app#

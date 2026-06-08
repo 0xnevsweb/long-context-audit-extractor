@@ -1,0 +1,43 @@
+{
+  "analysis": "We successfully extracted a crucial snippet from Brief 09: it explicitly states the amendment supersedes earlier hold timing wording, and compliance_hold should compare compliance mail against the ledger date immediately before corrections are applied (i.e., pre-correction date/status). However, we still haven't captured the rest of the rules for Briefs 01–08 (status precedence, correction ordering, signed amendments, exception codes, artifact determinism). We need to directly print the top directive parts of each brief from the original archive around the heading lines (11,252,468,685,828,1058,1201,1419,1670). Those top sections should contain the directives; we should print only the first ~40-70 lines after each heading to avoid filler.",
+  "plan": "Use sed on the original /app/data/audit_archive.md at the known line numbers, printing a small window after each heading until before the field-notes heading that follows (we know field notes start at lines like 28 for Brief01, etc.). We'll also print the first ~60 lines after each brief heading and then separately print the first ~40 lines of Brief09 to capture the full amendment text precisely.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,55p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '252,310p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,910p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1058,1135p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1201,1285p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1419,1515p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1670,1715p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

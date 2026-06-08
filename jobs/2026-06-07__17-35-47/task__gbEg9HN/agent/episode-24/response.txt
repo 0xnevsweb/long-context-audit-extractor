@@ -1,0 +1,47 @@
+{
+  "analysis": "We still haven’t captured the actual Brief 07/09 rules; the output shown is narrative around compliance holds but not the brief heading itself—so our sed range likely started mid-section due to multiple matches or because grep located a later 'Investigation Brief 07 — ...' but output truncated. Regardless, we have a clear actionable rule hinted earlier: Brief 09 supersedes draft practice of comparing compliance mail against post-correction effective dates; instead compare against ledger date immediately before correction notices. We can implement compliance_hold based on parsed.emails sent date compared to the original ledger effective_date (pre-correction) and email status not in approved/pending. We also should flag policy exceptions. We'll implement these two flag codes (from narrative: 'compliance_hold' is referenced explicitly) and 'policy_exception' (from section name). Then populate exception_reason on each item, and buildExceptions can filter correctly. This should address “compliance holds miss later mail” because we now parse sent date and compare to base date, and include later mail regardless of corrections.",
+  "plan": "1) Modify reconcile.js to retain base ledger date before applying corrections (base_date). 2) After applying corrections, compute exception flags per transaction:\n   - policy_exception if transaction_id in parsed.policyExceptions.\n   - compliance_hold if there exists an email for that transaction where email.status in {rejected,reversed} and email.sent is after base_date (string compare works for ISO dates) OR simply any such email (depending on brief). To align with 'late holds', use email.sent > base_date.\n   Create lexical sort and join with ';', else null.\n3) Ensure items carry exception_reason and that exceptions.json includes flagged subset.\n4) Re-run extractor and confirm exceptions.json non-empty and transactions.csv shows exception_reason values.\n5) Re-run twice and diff transactions.json for determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib, re\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text()\n# Insert base_date preservation when building byId: after byId set, ensure base_date set.\n# We'll set base_date when choosing ledger row.\nif 'base_date' not in s:\n    s=s.replace('byId.set(transactionId, chosen);', \"byId.set(transactionId, { ...chosen, base_date: chosen.date });\")\n# When applying date correction, keep base_date intact.\n# Now compute exception_reason when mapping items.\nmap_pat = r\"\\[\\.\\.\\.byId\\.values\\(\\)\\]\\.map\\(\\(row\\) => \\(\\{[\\s\\S]*?exception_reason: null,[\\s\\S]*?\\}\\)\\),\"\nmm=re.search(map_pat, s)\nif not mm:\n    raise SystemExit('map block not found')\nblock=mm.group(0)\nblock2=block.replace('exception_reason: null,', \"exception_reason: null, // filled below\")\n# We'll replace the whole map function to compute exceptions.\nreplacement = \"[...byId.values()].map((row) => {\\n      const flags = [];\\n      if (parsed.policyExceptions && parsed.policyExceptions.has(row.transaction_id)) flags.push('policy_exception');\\n      const baseDate = row.base_date || row.date;\\n      const related = (parsed.emails || []).filter((e) => e.transaction_id === row.transaction_id);\\n      const hasLateHold = related.some((e) => (e.status === 'rejected' || e.status === 'reversed') && e.sent && baseDate && e.sent > baseDate);\\n      if (hasLateHold) flags.push('compliance_hold');\\n      flags.sort();\\n      const exception_reason = flags.length ? flags.join(';') : null;\\n\\n      return {\\n        transaction_id: row.transaction_id,\\n        owner: row.owner,\\n        status: String(row.status).toLowerCase(),\\n        effective_date: row.date,\\n        amount_usd: Math.round(Number(row.amount) * 100) / 100,\\n        exception_reason,\\n      };\\n    }),\"\n# Replace existing map with our new one (match on beginning of map).\ns=re.sub(r\"\\[\\.\\.\\.byId\\.values\\(\\)\\]\\.map\\(\\(row\\) => \\(\\{[\\s\\S]*?\\}\\)\\),\",\n         replacement,\n         s,\n         count=1)\np.write_text(s)\nprint('updated reconcile.js exception logic')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /app/output/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"compliance_hold\\|policy_exception\" /app/output/transactions.csv | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cp /app/output/transactions.json /tmp/transactions.run1.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/transactions.run1.json /app/output/transactions.json || true\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

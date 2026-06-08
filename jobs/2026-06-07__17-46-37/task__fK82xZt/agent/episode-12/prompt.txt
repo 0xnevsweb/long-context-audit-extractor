@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       };
+>     })
+>   );
+>
+>   report.sort((a, b) => (a.notice_id < b.notice_id ? -1 : a.notice_id > b.notice_id ? 1 : 0));
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@7b07e9f8c4c5:/app# node -c /app/audit-extractor/src/parser/ledger.js && node -c /app/audit-extractor/src/parser/emails.js && node -c /app/audit-extractor/s
+rc/parser/meetings.js && node -c /app/audit-extractor/src/normalize/reconcile.js
+root@7b07e9f8c4c5:/app# rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@7b07e9f8c4c5:/app# diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json || true
+root@7b07e9f8c4c5:/app# diff -u /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl || true
+root@7b07e9f8c4c5:/app# rm -rf /app/output && mkdir -p /app/output
+root@7b07e9f8c4c5:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@7b07e9f8c4c5:/app# ls -la /app/output
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 00:52 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:52 ..
+-rw-r--r-- 1 root root 3625 Jun  8 00:52 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:52 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2438 Jun  8 00:52 transactions.csv
+-rw-r--r-- 1 root root 7537 Jun  8 00:52 transactions.json
+root@7b07e9f8c4c5:/app# head -n 5 /app/output/transactions.json
+{
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@7b07e9f8c4c5:/app# head -n 3 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78
+root@7b07e9f8c4c5:/app# head -n 5 /app/output/reconciliation_report.jsonl
+root@7b07e9f8c4c5:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "We still aren’t seeing the grep output for brief headings; only the nl+sed range around 1739-1765 which is a non-authoritative Case Study section. We need to capture the brief headings and then print the correct ranges. Likely the brief headings are earlier and our sed ranges are missing them. We'll explicitly search for the brief headings with grep and ensure output shows (no pipes). Then we can print exact ranges around those line numbers. Once we have Brief 07/08/09 text, we can implement exception flags and compliance_hold timing rules.",
+  "plan": "1) Run grep for Investigation Brief 07/08/09 headings with context (-n and -C) to ensure they appear. 2) Use nl+sed around the returned line numbers to read each brief section. 3) Implement exception_reason logic and update parser/policy to avoid decoy end headings similar to corrections if necessary. 4) Rerun extractor and validate exceptions.json and transaction exception_reason fields.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 08\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+180)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 08\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+220)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md | cut -d: -f1 | xargs -I{} sh -c 'start=$(({})); end=$(({}+220)); nl -ba /app/data/audit_archive.md | sed -n \"${start},${end}p\"'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

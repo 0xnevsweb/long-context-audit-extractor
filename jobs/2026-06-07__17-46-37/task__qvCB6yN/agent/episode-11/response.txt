@@ -1,0 +1,19 @@
+{
+  "analysis": "We are still mid-way through large 'HEAD' dumps; we need the actual directive lines, which are likely near the top of each brief but got buried. Instead of dumping huge heads for all briefs, we should extract only the key directive paragraph blocks by searching for 'Auditor directive' within each brief and printing a small context window around each match. We'll do a per-file grep for 'Auditor directive' and then use sed with computed line windows around those match lines.",
+  "plan": "1) For each brief file, find the line number of 'Auditor directive' (or similar marker). 2) Print ~60 lines starting at that marker to capture the exact rules. 3) Also search for 'exception_reason' and 'compliance_hold' mentions and print nearby context. 4) With rules extracted, proceed to implement code updates.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re,glob\nfor f in sorted(glob.glob('/tmp/brief0*.md')):\n    txt=open(f,'r',encoding='utf8').read().splitlines()\n    keys=[]\n    for i,l in enumerate(txt,1):\n        if re.search(r'Auditor directive|mandatory for extract|Extractor must',l,re.I):\n            keys.append(i)\n    print(f, 'keys', keys[:5])\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re,glob,subprocess,os,sys\nfor f in sorted(glob.glob('/tmp/brief0*.md')):\n    lines=open(f,'r',encoding='utf8').read().splitlines()\n    idx=None\n    for i,l in enumerate(lines,1):\n        if re.search(r'Auditor directive',l,re.I):\n            idx=i;break\n    if idx is None:\n        continue\n    start=max(1,idx-2); end=min(len(lines),idx+80)\n    print('\\n===== ',f,' Auditor directive context lines',start,'..',end)\n    for j in range(start,end+1):\n        print(f\"{j:4d}: {lines[j-1]}\")\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re,glob\nterms=[r'compliance_hold',r'exception_reason',r'exception flags',r'byte-identical',r'overlay',r'precedence',r'supersedes']\nfor f in sorted(glob.glob('/tmp/brief0*.md')):\n    lines=open(f,'r',encoding='utf8').read().splitlines()\n    hits=[]\n    for i,l in enumerate(lines,1):\n        if any(re.search(t,l,re.I) for t in terms):\n            hits.append(i)\n    if hits:\n        print(f\"\\n===== {f} term hits: {hits[:20]}\")\nPY\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

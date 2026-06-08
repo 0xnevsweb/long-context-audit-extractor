@@ -1,0 +1,23 @@
+{
+  "analysis": "We saw parser/policy.js: it slices Policy Exceptions using indexOf and returns a Set of transaction ids matching /^transaction: TXN-.../ . corrections.js (tail shown) similarly slices with indexOf and parses correction blocks. The brief binding extraction output still isn't visible in the provided screen, likely due to scroll; we need to re-run it but restrict to small output per brief (e.g., head -n 80) and/or redirect to /tmp/binding-briefXX.txt then view. Next, we must implement regex-anchored section slicing for all parsers, include additional fields (emails sent date, compliance/hold qualifiers; meeting effective date; corrections precedence), and implement reconcile/exceptions/output shape fixes.",
+  "plan": "1) Re-run binding brief extraction into /tmp/bindingXX.md and show only first ~120 lines for each brief to capture rules without overflow. 2) Dump and inspect the structured sections for policy exceptions and correction notices to know exact shapes. 3) Update parsers to use a shared helper to slice sections by anchored heading lines, satisfying Brief 01. 4) Update reconcile.js and exceptions.js and writers to satisfy contract + determinism.",
+  "commands": [
+    {
+      "keystrokes": "for b in 02 03 04 06 07 08; do start=$(grep -n \"^## Investigation Brief $b\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); end=$(grep -n \"^## Investigation Brief $b .*— field notes\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); out=/tmp/binding-brief${b}.md; if [ -n \"$start\" ] && [ -n \"$end\" ]; then sed -n \"${start},$((end-1))p\" /app/data/audit_archive.md > \"$out\"; else echo \"missing range $b start=$start end=$end\" > \"$out\"; fi; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/binding-brief0{2,3,4,6,7,8}.md; do echo \"\\n===== $f =====\"; sed -n '1,160p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '3849,3866p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3866,3912p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

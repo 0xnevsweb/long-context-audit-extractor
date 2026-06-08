@@ -1,0 +1,41 @@
+Current Terminal Screen:
+rive rows only from the canonical ledger and structured sections at file end.
+
+During October count, M. Chen circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Interview #369 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Site visit #409 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Interview #336 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Lead reviewer M. Chen noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed
+tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+## Case Study 01 — Vendor Onboarding Backlog
+
+Lead reviewer L. Bergstrom noted that vendor onboarding backlog created reconciliation noise in procurement during Q1 close. Staff initially blamed tooling, but
+ timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Follow-up #228 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows on
+ly from the canonical ledger and structured sections at file end.
+
+During Q1 close, S. Patel circulated a draft finding on vendor onboarding backlog. Finance operations pushed back, arguing the issue was transient cache state;
+QA reproduced the drift on a cold run the next morning.
+
+Working paper WP-7827 documents a three-way match failure tied to vendor onboarding backlog. The team escalated when repeated extractor runs produced different
+status columns for the same transaction id.
+root@7aa6d0745461:/app#

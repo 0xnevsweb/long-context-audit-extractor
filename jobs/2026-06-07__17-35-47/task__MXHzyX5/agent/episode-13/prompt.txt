@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> const fs=require('fs');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const start=md.indexOf('## Correction Notices');
+> const end=md.indexOf('## Transaction Ledger');
+> console.log({start,end,len:md.length});
+> console.log(md.slice(start,start+600));
+> NODE
+{ start: 271454, end: 1027, len: 276089 }
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+
+root@e1953a1e27da:/app#

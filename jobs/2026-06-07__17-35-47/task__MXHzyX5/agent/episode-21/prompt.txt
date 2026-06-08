@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  1739
+  1740  The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+  1741
+  1742  During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transie
+nt cache state; QA reproduced the drift on a cold run the next morning.
+  1743
+  1744  Site visit #638 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batche
+s. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+  1745
+  1746  During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transi
+ent cache state; QA reproduced the drift on a cold run the next morning.
+  1747
+  1748  ## Case Study 07 — Capital Project Capitalization
+  1749
+  1750  Risk assessment WP-3391 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+ appendix commentary as authoritative transaction sources.
+  1751
+  1752  Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds
+. The mid-year amendment later in this archive supersedes that draft practice.
+  1753
+  1754  The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+  1755
+  1756  Follow-up #634 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+  1757
+  1758  Working paper WP-5723 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+  1759
+  1760  In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+  1761
+  1762  Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds
+. The mid-year amendment later in this archive supersedes that draft practice.
+  1763
+  1764  Follow-up #106 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+  1765
+root@e1953a1e27da:/app#

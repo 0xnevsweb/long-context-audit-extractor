@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     meetings.push({
+>       transaction_id: match[1],
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+>       effective: effectiveMatch ? effectiveMatch[1].trim() : null,
+>     });
+>   }
+>   return meetings;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const exception = row.exception_reason == null ? "" : row.exception_reason;
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${exception}`;
+>   });
+>   fs.writeFileSync(filePath, `${[header, ...lines].join("\n")}\n`);
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'
+> const fs = require("node:fs");
+> const { sortByNoticeId } = require("../utils/sort");
+>
+> function writeReconciliationReport(filePath, report) {
+>   const sorted = sortByNoticeId([...report]);
+>   const body = sorted.map((row) => JSON.stringify(row)).join("\n");
+>   fs.writeFileSync(filePath, body ? `${body}\n` : "");
+> }
+>
+> module.exports = { writeReconciliationReport };
+> EOF
+root@3f2a24e5dabd:/app#

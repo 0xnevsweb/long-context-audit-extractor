@@ -1,0 +1,60 @@
+New Terminal Output:
+1
+
+root@e1953a1e27da:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(markdown) {
+>   const start = markdown.indexOf("## Correction Notices");
+>   if (start < 0) return [];
+>
+>   // There may be decoy headings earlier in the archive. Only treat the
+>   // Transaction Ledger heading that occurs *after* the Correction Notices
+>   // section as the delimiter.
+>   const end = markdown.indexOf("## Transaction Ledger", start + 1);
+>   const slice = end >= 0 ? markdown.slice(start, end) : markdown.slice(start);
+>
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = lines[0].trim();
+>     if (!noticeId.startsWith("CORR-")) {
+>       continue;
+>     }
+>     const entry = { notice_id: noticeId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("targets:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     if (entry.transaction_id && entry.field && typeof entry.value !== "undefined" && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@e1953a1e27da:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e1953a1e27da:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+6 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"reversed","new_value":"approved","ef
+fective":"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@e1953a1e27da:/app# rm -rf /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@e1953a1e27da:/app# diff -u /app/output/transactions.json /tmp/out2/transactions.json || true
+root@e1953a1e27da:/app#

@@ -1,0 +1,10 @@
+{
+  "analysis": "I can only see the tail end of the audit archive. I need to read the full file from the beginning to understand the Investigation Briefs and reconciliation rules.",
+  "plan": "Read the audit archive in chunks to understand the full content, starting from the beginning.",
+  "commands": [
+    {
+      "keystrokes": "head -200 /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "analysis": "We now have exact line numbers for authoritative Briefs 01–09. Next we must read each brief's directive content to implement the correct reconciliation logic and exception flags, especially the Brief 09 override. We'll use sed to print from each brief heading up to just before the next brief heading (or a fixed window) to capture all rules.",
+  "plan": "Print each brief section (01..09) with bounded line ranges using the known start lines and the next brief start minus 1. This will give us the authoritative rules needed for implementing ledger sourcing, status precedence, mail timing, correction precedence, meeting amendment owner changes, effective date handling, exception flags, artifact determinism, and the mid-year amendment override.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,251p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '252,467p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,684p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,827p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,1057p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1058,1200p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1201,1418p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1419,1669p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1670,1853p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

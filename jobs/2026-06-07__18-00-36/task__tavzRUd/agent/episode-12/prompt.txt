@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@e8e673637164:/app# cat > /app/audit-extractor/src/parser/policy.js << 'EOF'
+> function parsePolicyExceptions(markdown) {
+>   const lines = markdown.split('\n');
+>   // Find "## Policy Exceptions" section (exact match, not draft)
+>   let startIdx = -1;
+>   for (let i = 0; i < lines.length; i++) {
+>     if (/^## Policy Exceptions$/.test(lines[i])) {
+>       startIdx = i;
+>       break;
+>     }
+>   }
+>   if (startIdx < 0) return [];
+>
+>   let endIdx = lines.length;
+>   for (let i = startIdx + 1; i < lines.length; i++) {
+>     if (/^## /.test(lines[i])) {
+>       endIdx = i;
+>       break;
+>     }
+>   }
+>
+>   const section = lines.slice(startIdx, endIdx).join('\n');
+>   const exceptions = [];
+>   const blocks = section.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const txnMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)/im);
+>     const approvedByMatch = block.match(/^approved_by:\s*(.+)$/im);
+>     if (txnMatch) {
+>       exceptions.push({
+>         transaction_id: txnMatch[1],
+>         approved_by: approvedByMatch ? approvedByMatch[1].trim() : null,
+>       });
+>     }
+>   }
+>   return exceptions;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@e8e673637164:/app#

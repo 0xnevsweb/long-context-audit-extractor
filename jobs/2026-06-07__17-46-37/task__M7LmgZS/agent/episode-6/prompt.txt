@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Follow-up #317 confirmed that operations finance had been using an informal spreadsheet for inventory obsolescence reserve. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+Lead reviewer J. Huang noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed
+ tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-9319 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+
+During October count, R. Okonkwo circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #567 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-6665 ties inventory obsolescence reserve to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-7881 ties inventory obsolescence reserve to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Lead reviewer S. Patel noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed
+ tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Lead reviewer M. Chen noted that inventory obsolescence reserve created reconciliation noise in operations finance during October count. Staff initially blamed
+tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-2444 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Memo WP-2714 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+root@30aa72376025:/app#

@@ -1,0 +1,55 @@
+{
+  "analysis": "Corrections parsing now works (6 notices) and reconciliation_report.jsonl is produced with 6 lines sorted by notice_id and previous_value populated correctly. Remaining major tasks: fix ledger decoy parsing (ledger.js likely still using indexOf and may still select working copy), fix duplicate/provisional ledger row selection to avoid drift and wrong mappings, and address compliance hold timing and exception flags per Brief 09. Also confirm transactions.json matches contract envelope `{ \"items\": [...] }` and stable formatting (two decimals) and sorting by transaction_id. Finally rerun extractor twice and diff transactions.json to ensure byte-identical after our changes.",
+  "plan": "1) Inspect current parser/ledger.js to confirm whether it still matches working copy; if so, rewrite to exact heading match and parse only that section. 2) Inspect current normalize/reconcile.js to see how it builds byId; adjust for duplicate ledger rows (provisional vs final) deterministically. 3) Verify transactions.json structure and writer output. 4) Rerun extractor twice and diff transactions.json. 5) If exception/hold logic exists in normalize/exceptions.js, inspect against Brief 09—at minimum ensure mail timing uses ledger date pre-corrections if required. We’ll first stabilize ledger sourcing and duplicates because that directly affects wrong ledger row correction mapping.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,140p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  // The archive contains a decoy heading: \"## Transaction Ledger (working copy)\".\n  // The authoritative ledger heading line is exactly: \"## Transaction Ledger\".\n  const m = markdown.match(/^## Transaction Ledger\\s*$/m);\n  if (!m) return [];\n\n  const after = markdown.slice(m.index + m[0].length);\n  const nextHeading = after.search(/^##\\s+/m);\n  const section = nextHeading === -1 ? after : after.slice(0, nextHeading);\n\n  const items = [];\n  const blocks = section\n    .split(/\\n(?=###\\s+TXN-)/g)\n    .map((b) => b.trim())\n    .filter((b) => b.startsWith(\"### TXN-\"));\n\n  for (const block of blocks) {\n    const lines = block.split(/\\r?\\n/);\n    const transaction_id = lines[0].replace(/^###\\s+/, \"\").trim();\n    const entry = { transaction_id, amount: null, owner: null, status: null, date: null, provisional: false };\n\n    for (const line of lines.slice(1)) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"amount:\")) entry.amount = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"owner:\")) entry.owner = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"status:\")) entry.status = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"date:\")) entry.date = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"provisional:\")) entry.provisional = trimmed.split(\":\", 2)[1].trim() === 'true';\n    }\n\n    if (entry.transaction_id && entry.amount && entry.owner && entry.status && entry.date) items.push(entry);\n  }\n\n  return items;\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"new Map\" -n /app/audit-extractor/src/normalize/reconcile.js | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib, re\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text()\n# Replace naive ledger->Map overwrite with deterministic grouping preferring non-provisional.\npat=re.compile(r\"const byId = new Map\\(\\);\\n\\s*for \\(const row of parsed\\.ledger\\) \\{\\n\\s*byId\\.set\\(row\\.transaction_id, \\{ \\.\\.\\.row \\}\\);\\n\\s*\\}\\n\", re.M)\nm=pat.search(s)\nif not m:\n    print('pattern not found; leaving reconcile.js unchanged')\nelse:\n    repl=(\n\"// Build a deterministic base ledger view. The ledger may contain multiple rows per\\n\"\n\"// transaction_id (e.g. provisional + final). Prefer non-provisional when present;\\n\"\n\"// otherwise prefer the last occurrence.\\n\"\n\"const grouped = new Map();\\n\"\n\"for (const row of parsed.ledger) {\\n\"\n\"  if (!grouped.has(row.transaction_id)) grouped.set(row.transaction_id, []);\\n\"\n\"  grouped.get(row.transaction_id).push({ ...row });\\n\"\n\"}\\n\"\n\"\\n\"\n\"const byId = new Map();\\n\"\n\"for (const [transactionId, rows] of grouped.entries()) {\\n\"\n\"  const finals = rows.filter((r) => !r.provisional);\\n\"\n\"  const pickFrom = finals.length ? finals : rows;\\n\"\n\"  const chosen = pickFrom[pickFrom.length - 1];\\n\"\n\"  byId.set(transactionId, chosen);\\n\"\n\"}\\n\"\n    )\n    s=s[:m.start()]+repl+s[m.end():]\n    p.write_text(s)\n    print('updated base ledger selection in reconcile.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 5 /app/output/transactions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cp /app/output/transactions.json /tmp/transactions.run1.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/transactions.run1.json /app/output/transactions.json || true\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

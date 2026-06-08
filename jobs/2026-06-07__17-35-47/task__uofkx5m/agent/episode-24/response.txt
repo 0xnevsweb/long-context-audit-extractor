@@ -1,0 +1,23 @@
+{
+  "analysis": "We updated meetings parser to include effective date, fixed CSV writer to include exception_reason with correct header/order, and fixed reportWriter to sort by notice_id. Remaining major work: implement normalize/reconcile.js and normalize/exceptions.js according to binding briefs 02–09, including: status merge logic with email from criteria and sent-date gating; correction winning selection and proper application and report previous_value; effective_date logic per Brief06; exception flags per Brief07/08 with compliance_hold timing per Brief09; ensure final items sorted and deterministic and numeric formatting. Also need to ensure transactions.json items envelope already fixed and exceptions.json too.",
+  "plan": "1) Read binding brief 02–04 carefully to get missing specifics: email From criteria and correction winning rule. We'll print those binding briefs fully now (they are short sections). 2) Implement normalize/reconcile.js with a clear pipeline: load ledger rows into map; apply meeting amendments; apply qualifying emails with precedence; snapshot pre-correction date for hold comparison; choose winning corrections per field; apply corrections in deterministic order; compute effective_date; compute exception flags and exception_reason; produce items and report and sort. 3) Implement normalize/exceptions.js to filter items with exception_reason non-null. 4) Run extractor and verify output schema and determinism by rerunning and diffing transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/binding-brief02.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/binding-brief03.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/binding-brief04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'\nfunction buildExceptions(items) {\n  return items.filter((row) => row.exception_reason != null);\n}\n\nmodule.exports = { buildExceptions };\nEOF\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

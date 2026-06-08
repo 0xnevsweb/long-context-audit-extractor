@@ -1,0 +1,23 @@
+{
+  "analysis": "Edits were applied successfully via heredoc. Determinism check passed: transactions.json is byte-identical across two runs (diff empty). However reconciliation_report.jsonl is still empty (0 lines), meaning either the parser isn’t extracting any CORR- notices from the archive or our section slicing is wrong (e.g., heading mismatch: parseCorrections searches for \"## Correction Notices\" but archive uses \"## Correction Notices\" at line ~3866, so it should work; perhaps notices don’t start with \"### CORR-\" or the delimiter is different). We still haven’t addressed compliance hold logic or provisional ledger duplicates per Brief rules, but the task mentions correction notices landing on wrong ledger rows; currently we aren’t applying any corrections at all, so parser likely failing. Next we must inspect the Correction Notices section in the markdown and adjust parser/corrections.js accordingly so it captures them. Then rerun extractor and ensure report is sorted and previous_value correct. After that, verify compliance hold timing per Brief 09 and ensure later mail is considered.",
+  "plan": "1) Inspect the Correction Notices section of /app/data/audit_archive.md around its heading (line ~3866) to see actual formatting (IDs, headings, fields). 2) Fix parser/corrections.js to match the real structure (e.g., maybe notices are bullet lists or use '####' headings, or 'notice:' lines). Ensure we parse notice_id, transaction_id, field, value, effective. 3) Rerun extractor and confirm reconciliation_report.jsonl now has lines, sorted by notice_id, and previous_value is populated. 4) Then inspect email parser and brief text for hold timing (Brief 07/09) and adjust reconcile logic accordingly (likely an exception flag rather than status; may be handled in normalize/exceptions.js).",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '3820,3925p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '3925,3985p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst start=md.indexOf('## Correction Notices');\nconst end=md.indexOf('## Transaction Ledger');\nconsole.log({start,end,len:md.length});\nconsole.log(md.slice(start,start+600));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,10 @@
+{
+  "analysis": "The file is very long and contains a lot of filler content. I need to find the Investigation Briefs 01-09 which contain the binding reconciliation rules.",
+  "plan": "Search for Investigation Brief sections in the file, and also look at the structured data sections near the end.",
+  "commands": [
+    {
+      "keystrokes": "grep -n 'Investigation Brief\\|## Brief\\|### Brief\\|# Brief\\|## Investigation' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "analysis": "We now have authoritative rules for flags/artifacts from Brief 08, plus Brief 09 amendment. We still need Briefs 01-07 content (not shown in this terminal slice) for correction precedence, compliance_hold definition, and other flags (e.g., exception codes list and lexical order). We must implement at least flags: policy_waiver and retroactive_review, and likely compliance_hold (mentioned). Current code lacks parsing of policy exceptions blocks and email sent dates gating. Also need to ensure 'winning correction notice' semantics and that retroactive_review depends on winning correction changing status. Next: view remaining briefs 01-07 output (scroll or rerun targeted) and inspect parser files to know parsed structures. Then implement full reconciliation and exceptions logic accordingly.",
+  "plan": "1) Re-run brief extraction but only for Briefs 01-07 and capture their text to implement missing rules: compliance_hold criteria, correction precedence, meeting owner override rules, mail precedence, and any other exception flag codes. 2) Inspect parser/* to see what fields exist (emails likely have transaction_id, status, sent, and maybe type indicating hold). Inspect policy parser for approved_by. 3) Modify normalize/reconcile.js to follow correct ordering and precedence, and compute exception_reason codes in lexical order. 4) Update parser/emails.js if it’s not extracting sent dates or status changes correctly, and ensure it ignores non-authoritative mailbox exports if required by briefs. 5) Run extractor and verify outputs match contract and flags.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\nfor n in range(1,8):\n    pat=re.compile(r'^#+\\s*Investigation Brief\\s*0?%d\\b'%n)\n    starts=[i for i,l in enumerate(lines,1) if pat.match(l)]\n    if not starts:\n        print('Brief',n,'not found');\n        continue\n    start=starts[0]\n    end=len(lines)\n    for i in range(start+1,len(lines)+1):\n        if re.match(r'^#+\\s*Investigation Brief\\s*\\d+\\b', lines[i-1]):\n            end=i-1; break\n    print(f\"\\n=== Brief {n:02d} lines {start}-{end} ===\")\n    for j in range(start, end+1):\n        print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

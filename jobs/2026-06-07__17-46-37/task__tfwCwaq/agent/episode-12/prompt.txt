@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   }
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => ({
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       effective_date: row.date,
+>       amount_usd: round2(row.amount),
+>       exception_reason: row._flags.size ? [...row._flags].sort().join(";") : null,
+>     })),
+>   );
+>
+>   const sortedReport = sortByNoticeId(report);
+>   return { items, report: sortedReport };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@0f1e383a7916:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@0f1e383a7916:/app# rm -rf /tmp/outfix && mkdir -p /tmp/outfix && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+tmp/outfix
+sortByNoticeId is not a function
+root@0f1e383a7916:/app# ls -la /tmp/outfix && head -n 3 /tmp/outfix/reconciliation_report.jsonl && cat /tmp/outfix/exceptions.json | head
+total 8
+drwxr-xr-x 2 root root 4096 Jun  8 00:51 .
+drwxrwxrwt 1 root root 4096 Jun  8 00:51 ..
+head: cannot open '/tmp/outfix/reconciliation_report.jsonl' for reading: No such file or directory
+root@0f1e383a7916:/app# rm -rf /tmp/outfix2 && mkdir -p /tmp/outfix2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir
+ /tmp/outfix2 && sha256sum /tmp/outfix/transactions.json /tmp/outfix2/transactions.json
+sortByNoticeId is not a function
+root@0f1e383a7916:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+sortByNoticeId is not a function
+root@0f1e383a7916:/app#

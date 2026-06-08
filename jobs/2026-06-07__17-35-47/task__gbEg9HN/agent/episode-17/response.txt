@@ -1,0 +1,43 @@
+{
+  "analysis": "CSV now formats amount_usd with two decimals. Exception handling is currently a stub: buildExceptions merely filters items where exception_reason is already set, but reconcile sets exception_reason null for all, so exceptions.json is empty and compliance hold logic is not implemented at all. Also emails parser lacks a date, so it cannot implement hold timing rules. Policy exceptions parser returns a Set of transaction ids but reconcile/exceptions never uses it. To address the task’s reported issues (compliance holds miss later mail; Brief 09 overrides hold wording), we need to implement exception_reason generation in reconcileTransactions using parsed.emails and parsed.policy, incorporating the correct timing rules from Briefs (especially Brief 09). We must read the Investigation Brief sections covering holds and flags, then implement those semantics. Next step: read Brief 07/09 sections in the markdown to understand compliance_hold logic and required flag codes, then update parsers (emails need date) and reconciliation.",
+  "plan": "1) Locate and read the authoritative parts of Investigation Briefs related to exception flags and compliance holds (likely Brief 03/07/09) in /app/data/audit_archive.md. Extract the flag code names and timing comparison rules (e.g., compare mail date to ledger date before corrections, or to effective_date after corrections, with Brief 09 overriding). 2) Update parser/emails.js to parse a date field from email excerpts (e.g., a `Date:` line) and any hold indicator line (e.g., `hold:` or status). Ensure it selects only the Email Excerpts section and uses exact heading boundaries (avoid decoys). 3) Update parser/policy.js similarly to use exact heading match boundaries. 4) Update normalize/reconcile.js to compute exception_reason per transaction: gather applicable codes, sort lexically, join with ';' or null. Ensure transactions.json and csv include this, and exceptions.json includes only flagged rows. 5) Run extractor and check exceptions.json non-empty if the archive contains policy exceptions/holds; ensure determinism remains.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Compliance\" -n /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Brief 07\" -n /app/data/audit_archive.md | head -n 20\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 07\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1400,1750p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1750,2100p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2100,2450p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Email Excerpts\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3600,3868p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

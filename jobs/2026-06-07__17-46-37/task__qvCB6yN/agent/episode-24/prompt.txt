@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ive context so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+root@7a65087374e8:/app# sed -n '820,845p' /app/data/audit_archive.md
+During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+ state; QA reproduced the drift on a cold run the next morning.
+
+Risk assessment WP-7039 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Risk assessment WP-2085 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+## Investigation Brief 05 — Meeting Amendments and Owners
+
+Committee ruling (binding for extract):
+
+Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+owner when `signed: true` (case insensitive) and, when the amendment includes
+`effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+ledger date for the transaction.
+
+## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+
+During October count, R. Okonkwo circulated a draft finding on inventory obsolescence reserve. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Interview #143 with operations finance highlighted how inventory obsolescence reserve statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-4980 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+root@7a65087374e8:/app#

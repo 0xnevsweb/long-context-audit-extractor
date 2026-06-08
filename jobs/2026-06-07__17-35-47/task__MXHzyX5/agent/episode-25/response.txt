@@ -1,0 +1,35 @@
+{
+  "analysis": "We still haven't surfaced Brief 07/09 headings or text; the displayed range 220-320 is narrative/case study filler, not authoritative. The grep commands for Brief 07/09 didn't show in the captured output again; we need to force-display them and then print the sections. We'll directly grep for 'Investigation Brief 07' and 'Investigation Brief 09' with surrounding lines using sed based on line numbers. We also need to inspect parser/emails.js; that output didn't show, so we should display it separately. Once we get Brief 07/09 rules, we can implement compliance_hold based on mail timestamps/order.",
+  "plan": "1) Run grep for all brief headings and capture line numbers; then immediately echo them to ensure they appear. 2) Print reconcile rules for Brief 07/09 by nl+sed at those lines. 3) Show parser/emails.js to see how it extracts transaction_id/status and whether it captures date. 4) Implement compliance_hold exception flag per Brief 07/09 and update exceptions logic.\n",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | tee /tmp/briefs2.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /tmp/briefs2.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk -F: '/Investigation Brief 07/{print $1}' /tmp/briefs2.txt | head -n1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk -F: '/Investigation Brief 09/{print $1}' /tmp/briefs2.txt | head -n1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "line=$(awk -F: '/Investigation Brief 07/{print $1; exit}' /tmp/briefs2.txt); nl -ba /app/data/audit_archive.md | sed -n \"$line,$((line+260))p\"\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "line=$(awk -F: '/Investigation Brief 09/{print $1; exit}' /tmp/briefs2.txt); nl -ba /app/data/audit_archive.md | sed -n \"$line,$((line+260))p\"\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

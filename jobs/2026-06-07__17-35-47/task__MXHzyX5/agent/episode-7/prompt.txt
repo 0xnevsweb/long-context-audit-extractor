@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  1962  Internal coordination on lease modification restatement. No transaction
+  1963  identifiers appear in this message. Investigators archived it to preserve
+  1964  mailbox ordering around compliance threads.
+  1965
+  1966  From: audit-lead@corp.internal
+  1967  Subject: FY24 sampling plan draft — thread 15
+  1968
+  1969  Internal coordination on lease modification restatement. No transaction
+  1970  identifiers appear in this message. Investigators archived it to preserve
+  1971  mailbox ordering around compliance threads.
+  1972
+  1973  From: controller@corp.internal
+  1974  Subject: close calendar revision — thread 16
+  1975
+  1976  Internal coordination on treasury wire cutoff failures. No transaction
+  1977  identifiers appear in this message. Investigators archived it to preserve
+  1978  mailbox ordering around compliance threads.
+  1979
+  1980  From: hr-payroll@corp.internal
+  1981  Subject: accrual true-up schedule — thread 17
+  1982
+  1983  Internal coordination on lease modification restatement. No transaction
+  1984  identifiers appear in this message. Investigators archived it to preserve
+  1985  mailbox ordering around compliance threads.
+  1986
+  1987  From: legal-notices@corp.internal
+  1988  Subject: retention hold reminder — thread 18
+  1989
+  1990  Internal coordination on revenue cutoff testing. No transaction identifiers
+  1991  appear in this message. Investigators archived it to preserve mailbox ordering
+  1992  around compliance threads.
+  1993
+  1994  From: audit-lead@corp.internal
+  1995  Subject: FY24 sampling plan draft — thread 19
+  1996
+  1997  Internal coordination on FX revaluation lag. No transaction identifiers appear
+  1998  in this message. Investigators archived it to preserve mailbox ordering around
+  1999  compliance threads.
+  2000
+root@e1953a1e27da:/app#

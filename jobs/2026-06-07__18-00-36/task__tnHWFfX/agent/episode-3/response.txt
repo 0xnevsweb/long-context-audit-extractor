@@ -1,0 +1,10 @@
+{
+  "analysis": "I'm still seeing only partial output. I need to read the file from the very beginning and in larger chunks to see the Investigation Briefs.",
+  "plan": "Read the full audit archive file using less or by piping to a file, starting from line 1.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,100p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

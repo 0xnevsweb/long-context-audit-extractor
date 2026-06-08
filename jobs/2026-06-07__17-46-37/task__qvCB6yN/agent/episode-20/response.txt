@@ -1,0 +1,23 @@
+{
+  "analysis": "We now have authoritative text for Brief 06 (effective_date calculation and amount formatting) and Brief 09 (compliance_hold timing override using pre-correction date after ledger+meetings+mail but before corrections that change date/status). We still need the authoritative directives for Brief 01 (ledger sourcing and decoy working copy handling), Brief 03 (qualifying compliance emails and status merge/timing), Brief 04 (correction notice precedence and how to choose winning corrections / ordering), and Brief 05 (signed amendments for owner). Next we should print those brief sections at their known line ranges to capture the exact rules, then proceed to implement code changes across parsers, reconciliation, exceptions, and output writers/validation to satisfy the contract and eliminate drift.",
+  "plan": "1) Print Brief 01 (lines 11-27) to capture canonical ledger sourcing and any section boundary rules. 2) Print Brief 03 (468-520) for compliance mail timing and qualification. 3) Print Brief 04 (685-740) for correction precedence and winning correction definition. 4) Print Brief 05 (828-860) for signed amendment owner override rule. 5) After rules are gathered, update code: ledger parser exact-heading match and section bounding; corrections parser to parse all notices and later pick winners; emails parser to include sent date and enforce compliance@ and timing; meetings parser to require signed true and effective date handling; reconcile.js to implement overlay order and precedence plus deterministic sorting and proper report fields; exceptions and output writers to match contract. Then run extractor twice and diff transactions.json; finally run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,45p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,900p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

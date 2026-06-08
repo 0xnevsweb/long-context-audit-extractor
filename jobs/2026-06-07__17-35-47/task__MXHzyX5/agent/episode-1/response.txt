@@ -1,0 +1,35 @@
+{
+  "analysis": "We confirmed the output contract and CLI already enforces missing --input/--outdir (stderr + exit 1). ripgrep (rg) is not installed, so prior searches failed. We’ve only seen a snippet of the archive and the tail shows ledger rows, including duplicated TXN-ba9e6ade entries (one provisional with owner stale/pending, then a finalowner/approved), suggesting reconciliation must pick correct base row and handle provisional/final. Next we need to search the markdown using available tools (grep/sed/awk) to extract authoritative Investigation Briefs 01–09 and especially Brief 09 amendment, plus find structured sections for mail excerpts and correction notices. Then inspect the Node source for reconciliation logic, likely where nondeterminism and incorrect precedence/mapping live.",
+  "plan": "1) Use grep to locate offsets for Investigation Brief 01–09 and other key sections (mail, correction notices, ledger). 2) Print those sections from the markdown for rule extraction, focusing on hold timing and Brief 09 override language. 3) Inspect src/index.js and relevant modules under src/lib, src/parser, src/normalize, src/output to find where ledger rows, mail, and correction notices are parsed and applied. 4) After identifying the faulty logic, we’ll implement deterministic ordering (stable sorts), correct compliance hold timing per Brief 09, and fix correction-notice-to-ledger matching. For now, gather the needed text and code context.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"Investigation Brief 0[1-9]|Brief 09|mid-year amendment|Amendment\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Correction Notice|Correction|NOTICE-|notice_id\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Mail Excerpt|From:|Subject:|compliance@\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Ledger Rows|### TXN-|provisional:\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -type f -maxdepth 3 -name \"*.js\" -print\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/lib /app/audit-extractor/src/parser /app/audit-extractor/src/normalize /app/audit-extractor/src/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

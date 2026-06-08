@@ -1,0 +1,126 @@
+New Terminal Output:
+
+root@e13b9ef9896e:/app# grep -nE "Investigation Brief[[:space:]]*0[1-9]|INVESTIGATION BRIEF[[:space:]]*0[1-9]|^##[[:space:]]*Brief[[:space:]]*0[1-9]|^#.*Brief[[
+:space:]]*0[1-9]" /app/data/audit_archive.md | head -n 50
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@e13b9ef9896e:/app# grep -nE "Brief[[:space:]]*09|Investigation Brief[[:space:]]*09|INVESTIGATION BRIEF[[:space:]]*09" /app/data/audit_archive.md | head -n
+20
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@e13b9ef9896e:/app# grep -nE "correction notice|Correction Notice|CORRECTION|hold|HOLD|mail|MAIL|ledger" /app/data/audit_archive.md | head -n 80
+3:Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across t
+he file.
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+15:Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+18:contains a working-copy ledger and prose that mentions ledger headings; those
+21:Ignore any ledger block that includes a line `provisional: true` (case
+23:ledger blocks, the last such block in file order is the base row for that id.
+30:In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narr
+ative context so auditors can explain why a given transaction received compliance_hold.
+32:The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+36:Site visit #688 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batch
+es. Reviewers flagged the gap because effective-date logic must honor notice precedence.
+40:The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+42:In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narr
+ative context so auditors can explain why a given transaction received compliance_hold.
+44:Site visit #891 to operations finance captured mailbox exports showing how inventory obsolescence reserve correspondence arrived between two correction batch
+es. Reviewers flagged the gap because effective-date logic must honor notice 
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@e13b9ef9896e:/app# find /app/audit-extractor/src -maxdepth 3 -type f -name '*.js' -print
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@e13b9ef9896e:/app# grep -RInE "reconcil|hold|correction|notice|ledger|mail|provisional|overlay|Brief" /app/audit-extractor/src | head -n 200
+/app/audit-extractor/src/lib/constants.js:4:  SECTION_EMAILS: "## Email Excerpts",
+/app/audit-extractor/src/normalize/reconcile.js:5:function reconcileTransactions(parsed) {
+/app/audit-extractor/src/normalize/reconcile.js:7:  for (const row of parsed.ledger) {
+/app/audit-extractor/src/normalize/reconcile.js:18:  for (const email of parsed.emails) {
+/app/audit-extractor/src/normalize/reconcile.js:19:    const target = byId.get(email.transaction_id);
+/app/audit-extractor/src/normalize/reconcile.js:21:      target.status = email.status;
+/app/audit-extractor/src/normalize/reconcile.js:26:  for (const notice of parsed.corrections) {
+/app/audit-extractor/src/normalize/reconcile.js:27:    const target = byId.get(notice.transaction_id);
+/app/audit-extractor/src/normalize/reconcile.js:31:    if (notice.field === "owner") {
+/app/audit-extractor/src/normalize/reconcile.js:32:      target.owner = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:33:    } else if (notice.field === "status") {
+/app/audit-extractor/src/normalize/reconcile.js:34:      target.status = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:35:    } else if (notice.field === "date") {
+/app/audit-extractor/src/normalize/reconcile.js:36:      target.date = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:39:      notice_id: notice.notice_id,
+/app/audit-extractor/src/normalize/reconcile.js:40:      transaction_id: notice.transaction_id,
+/app/audit-extractor/src/normalize/reconcile.js:41:      field: notice.field,
+/app/audit-extractor/src/normalize/reconcile.js:43:      new_value: notice.value,
+/app/audit-extractor/src/normalize/reconcile.js:44:      effective: notice.effective,
+/app/audit-extractor/src/normalize/reconcile.js:62:module.exports = { reconcileTransactions, STATUS_ORDER };
+/app/audit-extractor/src/index.js:4:const { reconcileTransactions } = require("./normalize/reconcile");
+/app/audit-extractor/src/index.js:14:  const { items, report } = reconcileTransactions(parsed);
+/app/audit-extractor/src/index.js:21:  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+/app/audit-extractor/src/parser/sections.js:1:const { parseLedger } = require("./ledger");
+/app/audit-extractor/src/parser/sections.js:3:const { parseEmails } = require("./emails");
+/app/audit-extractor/src/parser/sections.js:4:const { parseCorrections } = require("./corrections");
+/app/audit-extractor/src/parser/sections.js:9:    ledger: parseLedger(markdown),
+/app/audit-extractor/src/parser/sections.js:11:    emails: parseEmails(markdown),
+/app/audit-extractor/src/parser/sections.js:12:    corrections: parseCorrections(markdown),
+/app/audit-extractor/src/parser/corrections.js:6:  const notices = [];
+/app/audit-extractor/src/parser/corrections.js:10:    const noticeId = lines[0].trim();
+/app/audit-extractor/src/parser/corrections.js:11:    if (!noticeId.startsWith("CORR-")) {
+/app/audit-extractor/src/parser/corrections.js:14:    const entry = { notice_id: noticeId };
+/app/audit-extractor/src/parser/corrections.js:27:    notices.push(entry);
+/app/audit-extractor/src/parser/corrections.js:29:  return notices;
+/app/audit-extractor/src/parser/emails.js:1:function parseEmails(markdown) {
+/app/audit-extractor/src/parser/emails.js:2:  const start = markdown.indexOf("## Email Excerpts");
+/app/audit-extractor/src/parser/emails.js:6:  const emails = [];
+/app/audit-extractor/src/parser/emails.js:15:    emails.push({
+/app/audit-extractor/src/parser/emails.js:21:  return emails;
+/app/audit-extractor/src/parser/emails.js:24:module.exports = { parseEmails };
+root@e13b9ef9896e:/app#

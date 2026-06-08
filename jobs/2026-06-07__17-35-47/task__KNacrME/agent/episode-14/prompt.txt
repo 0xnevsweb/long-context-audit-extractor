@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1179:status: approved
+1743:status: rejected
+1748:status: rejected
+2173:status: rejected
+2178:status: reversed
+2180:## Policy Exceptions
+2182:### Policy Exception
+2187:### Policy Exception
+2192:### Policy Exception
+2201:field: status
+2207:field: status
+2213:field: status
+2240:status: reversed
+2248:status: pending
+2254:status: approved
+2260:status: rejected
+2266:status: approved
+2272:status: pending
+2278:status: pending
+2284:status: approved
+2290:status: rejected
+2296:status: approved
+2302:status: pending
+2308:status: pending
+2314:status: approved
+2320:status: rejected
+2326:status: approved
+2332:status: pending
+2338:status: pending
+2344:status: approved
+2350:status: rejected
+2356:status: approved
+2362:status: pending
+2368:status: pending
+2374:status: approved
+2380:status: rejected
+2386:status: approved
+2392:status: pending
+2398:status: pending
+root@e13b9ef9896e:/app#

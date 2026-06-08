@@ -1,0 +1,43 @@
+{
+  "analysis": "We fixed jsonWriter and csvWriter to match the contract’s envelope keys and CSV header/exception_reason column. Remaining major issues: reportWriter/reconcile report sorting and previous_value; reconcile logic likely incomplete: exception_reason always null so exceptions.json empty; email parser lacks dates and likely From qualification; correction precedence and canonical ledger sourcing not implemented (duplicate provisional row). Also need to ensure reconciliation_report.jsonl sorted by notice_id ascending. Next, we must read the saved /tmp/view_brief03/04/09 and /tmp/view_reconcile to implement the policy and correct drift. Then modify reconcile.js, parsers, exceptions, reportWriter accordingly. Finally run extractor twice and diff transactions.json for determinism.",
+  "plan": "1) Inspect /tmp/view_brief03.txt, /tmp/view_brief04.txt, /tmp/view_brief07/08/09 (top binding rules) and /tmp/view_reconcile.txt to identify exact required logic. 2) Patch reportWriter to sort by notice_id and ensure newline termination already ok. 3) Update parseEmails to include a date (from Date: line) and not require “Re:” in Subject, plus capture From and status. 4) Rewrite normalize/reconcile.js to: pick canonical ledger rows (drop provisional when final exists per Brief 01), apply meeting amendments (Brief 05), apply mail-driven status changes with precedence (Brief 02/03), compute compliance_hold exception per Brief 09 timing rule, apply corrections per Brief 04/09 with previous_value tracking, output items sorted by transaction_id and report sorted by notice_id. 5) Implement buildExceptions to filter non-null exception_reason (already does) but ensure exception_reason is set. 6) Run extractor and validate outputs; run twice and diff transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "ls -ლა /tmp/view_brief03.txt /tmp/view_brief04.txt /tmp/view_brief09.txt /tmp/view_reconcile.txt 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /tmp/view_brief03.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,180p' /tmp/view_brief04.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,160p' /tmp/view_brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/view_reconcile.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output 2> /tmp/extract_err.txt || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/output && for f in /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconciliation_report.jsonl; do echo \"\\n### $f\"; head -n 5 \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /tmp/extract_err.txt || true\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

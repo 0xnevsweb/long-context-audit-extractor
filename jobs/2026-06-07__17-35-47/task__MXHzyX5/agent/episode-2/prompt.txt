@@ -1,0 +1,178 @@
+New Terminal Output:
+
+root@e1953a1e27da:/app# grep -nE "Investigation Brief 0[1-9]|Brief 09|mid-year amendment|Amendment" /app/data/audit_archive.md | head
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+52:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+94:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+110:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+126:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+134:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+146:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+grep: write error: Broken pipe
+root@e1953a1e27da:/app# grep -nE "Correction Notice|Correction|NOTICE-|notice_id" /app/data/audit_archive.md | head -n 50
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+476:apply the status change if precedence allows. Correction notices always apply
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+1437:notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+1438:by notice_id ascending.
+3866:## Correction Notices
+root@e1953a1e27da:/app# grep -nE "Mail Excerpt|From:|Subject:|compliance@" /app/data/audit_archive.md | head -n 50
+242:From: compliance@corp.internal
+243:Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+247:From: compliance@corp.internal
+248:Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+260:contains `compliance@` anywhere in the address; ignore all other senders.
+1207:when final status is `rejected`, a qualifying `compliance@` email referenced
+1861:From: audit-lead@corp.internal
+1862:Subject: FY24 sampling plan draft — thread 0
+1868:From: hr-payroll@corp.internal
+1869:Subject: accrual true-up schedule — thread 1
+1875:From: legal-notices@corp.internal
+1876:Subject: retention hold reminder — thread 2
+1882:From: controller@corp.internal
+1883:Subject: close calendar revision — thread 3
+1889:From: controller@corp.internal
+1890:Subject: close calendar revision — thread 4
+1896:From: treasury-ops@corp.internal
+1897:Subject: wire desk weekend coverage — thread 5
+1903:From: treasury-ops@corp.internal
+1904:Subject: wire desk weekend coverage — thread 6
+1910:From: hr-payroll@corp.internal
+1911:Subject: accrual true-up schedule — thread 7
+1917:From: hr-payroll@corp.internal
+1918:Subject: accrual true-up schedule — thread 8
+1924:From: hr-payroll@corp.internal
+1925:Subject: accrual true-up schedule — thread 9
+1931:From: audit-lead@corp.internal
+1932:Subject: FY24 sampling plan draft — thread 10
+1938:From: controller@corp.internal
+1939:Subject: close calendar revision — thread 11
+1945:From: hr-payroll@corp.internal
+1946:Subject: accrual true-up schedule — thread 12
+1952:From: controller@corp.internal
+1953:Subject: close calendar revision — thread 13
+1959:From: audit-lead@corp.internal
+1960:Subject: FY24 sampling plan draft — thread 14
+1966:From: audit-lead@corp.internal
+1967:Subject: FY24 sampling plan draft — thread 15
+1973:From: control
+[... output limited to 10000 bytes; 70 interior bytes omitted ...]
+# TXN-de3b42d7-919c-5839-a490-b039d9c97092
+3986:### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+3992:### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+3998:### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+4004:### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+4010:### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+4016:### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+4022:### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+4028:### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+4034:### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+4040:### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+4046:### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+4052:### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+4058:### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+4064:### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+4070:### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+4076:### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+4082:### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+4088:### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+4094:### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+4100:### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+4106:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+4111:provisional: true
+4113:### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+root@e1953a1e27da:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@e1953a1e27da:/app# find /app/audit-extractor/src -type f -maxdepth 3 -name "*.js" -print
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@e1953a1e27da:/app# ls -la /app/audit-extractor/src/lib /app/audit-extractor/src/parser /app/audit-extractor/src/normalize /app/audit-extractor/src/output
+/app/audit-extractor/src/lib:
+total 16
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  241 Jun  5 09:03 constants.js
+-rw-r--r-- 1 root root  268 Jun  5 09:03 handbook.js
+
+/app/audit-extractor/src/normalize:
+total 16
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  134 Jun  5 09:03 exceptions.js
+-rw-r--r-- 1 root root 1685 Jun  5 09:03 reconcile.js
+
+/app/audit-extractor/src/output:
+total 20
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  417 Jun  5 09:03 csvWriter.js
+-rw-r--r-- 1 root root  370 Jun  5 09:03 jsonWriter.js
+-rw-r--r-- 1 root root  269 Jun  5 09:03 reportWriter.js
+
+/app/audit-extractor/src/parser:
+total 32
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root 1137 Jun  5 09:03 corrections.js
+-rw-r--r-- 1 root root  828 Jun  5 09:03 emails.js
+-rw-r--r-- 1 root root 1149 Jun  5 09:03 ledger.js
+-rw-r--r-- 1 root root  639 Jun  5 09:03 meetings.js
+-rw-r--r-- 1 root root  482 Jun  5 09:03 policy.js
+-rw-r--r-- 1 root root  564 Jun  5 09:03 sections.js
+root@e1953a1e27da:/app#

@@ -1,0 +1,43 @@
+{
+  "analysis": "Edits applied successfully: ledger parser now ignores provisional and last-wins; sort comparator fixed; JSON and CSV writers now match contract envelopes/headers and add trailing newline. Remaining major work: implement actual reconciliation semantics from Briefs 01–09 (status precedence, mail timing & compliance holds incl Brief 09 amendment, correction precedence & winning notices, meeting amendments/owners, effective_date logic, exception flags), fix exceptions.json/enrichment, and ensure reconciliation_report.jsonl sorted by notice_id and includes correct previous_value/new_value/effective and only winning corrections. Also need determinism: stable sorting of corrections/emails and output report.",
+  "plan": "1) Read the binding Investigation Briefs 01–09 from /tmp/brief*.md to capture exact rules to implement. 2) Locate the structured sections in the archive for Emails, Corrections, Policy Exceptions, Meetings etc near the end; inspect current parsers (emails/corrections/meetings/policy) to see what fields are available and what needs to be parsed (dates/timestamps/hold flags). 3) Update parsers to capture required fields (email date and hold indicators; corrections effective date and precedence keys). 4) Rewrite normalize/reconcile.js and normalize/exceptions.js to implement rules and produce contract-compliant rows and report. 5) Run extractor twice and diff transactions.json for byte-identical output; validate output shapes.",
+  "commands": [
+    {
+      "keystrokes": "echo '--- Brief 01 ---'; sed -n '1,220p' /tmp/brief01.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 02 ---'; sed -n '1,260p' /tmp/brief02.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 03 ---'; sed -n '1,280p' /tmp/brief03.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 04 ---'; sed -n '1,260p' /tmp/brief04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 05 ---'; sed -n '1,320p' /tmp/brief05.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 06 ---'; sed -n '1,240p' /tmp/brief06.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 07 ---'; sed -n '1,320p' /tmp/brief07.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 08 ---'; sed -n '1,340p' /tmp/brief08.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Brief 09 ---'; sed -n '1,260p' /tmp/brief09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

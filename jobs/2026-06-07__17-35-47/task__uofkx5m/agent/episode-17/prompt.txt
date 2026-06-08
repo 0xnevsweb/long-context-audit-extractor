@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ndix commentary as authoritative transaction sources.
+44:Site visit #815 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+46:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+48:Working paper WP-2585 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced di
+fferent status columns for the same transaction id.
+50:Risk assessment WP-6962 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+52:Follow-up #234 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+56:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+root@3f2a24e5dabd:/app# grep -n "indexOf" -n /app/audit-extractor/src/parser/*.js
+/app/audit-extractor/src/parser/corrections.js:2:  const start = markdown.indexOf("## Correction Notices");
+/app/audit-extractor/src/parser/corrections.js:3:  const end = markdown.indexOf("## Transaction Ledger");
+/app/audit-extractor/src/parser/emails.js:2:  const start = markdown.indexOf("## Email Excerpts");
+/app/audit-extractor/src/parser/emails.js:3:  const end = markdown.indexOf("## Policy Exceptions");
+/app/audit-extractor/src/parser/ledger.js:2:  const start = markdown.indexOf("## Transaction Ledger");
+/app/audit-extractor/src/parser/policy.js:2:  const start = markdown.indexOf("## Policy Exceptions");
+/app/audit-extractor/src/parser/policy.js:3:  const end = markdown.indexOf("## Correction Notices");
+root@3f2a24e5dabd:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js | head -n 80
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@3f2a24e5dabd:/app#

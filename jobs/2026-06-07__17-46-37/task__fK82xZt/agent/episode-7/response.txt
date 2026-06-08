@@ -1,0 +1,35 @@
+{
+  "analysis": "We now see part of the extracted briefs output, showing Brief 02 status precedence: base is ledger status; precedence order from lowest to highest is pending, approved, ... (likely rejected, reversed) matching STATUS_ORDER but needs full rule text. We also see compliance email blocks include sent date and status; there are also non-compliance replies with status lines that must be ignored per archive commentary. So parseEmails must filter From: compliance@corp.internal and capture sent. Next we must view /tmp/briefs.txt fully to capture all binding rules for briefs 01–08, then implement fixes accordingly (ledger sourcing with exact heading, handling duplicates/provisional; status precedence + timing; corrections precedence; effective_date semantics; exception flags including compliance_hold with Brief 09 amendment; output determinism; proper previous_value and sorting in report).",
+  "plan": "1) Display /tmp/briefs.txt around the beginning to capture full Brief 01 and 02 binding text; then continue for Briefs 03–08. 2) Also dump Brief 09 again alongside to incorporate hold amendment with the other rules. 3) After rules are known, modify code: parser/emails.js, parser/ledger.js, parser/corrections.js (if needed), normalize/reconcile.js, normalize/exceptions.js, utils/sort.js (make comparator total), output/reportWriter.js (sort before writing handled in reconcile), and ensure deterministic JSON formatting (jsonWriter). Then run extractor twice and diff.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,200p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '200,420p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '420,720p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '720,1100p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1100,1500p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1500,1900p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1685p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

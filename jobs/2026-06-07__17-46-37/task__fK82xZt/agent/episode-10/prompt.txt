@@ -1,0 +1,124 @@
+New Terminal Output:
+
+root@7b07e9f8c4c5:/app# nl -ba /tmp/briefs.txt | sed -n '1,120p'
+     1
+     2  ================================================================================
+     3  BRIEF 1 — ## Investigation Brief 01 — Ledger Sourcing
+     4  ================================================================================
+     5  Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+     6  slice. For extractor output, treat only the markdown section whose heading
+     7  line is exactly `## Transaction Ledger` as authoritative. The archive also
+     8  contains a working-copy ledger and prose that mentions ledger headings; those
+     9  are investigative context only.
+    10
+    11  Ignore any ledger block that includes a line `provisional: true` (case
+    12  insensitive). When the same transaction id appears in multiple non-provisional
+    13  ledger blocks, the last such block in file order is the base row for that id.
+    14
+    15  Locate section boundaries with regular expressions anchored to whole heading
+    16  lines at line start. Do not locate sections with indexOf or substring search.
+    17
+    18  ================================================================================
+    19  BRIEF 2 — ## Investigation Brief 02 — Status Precedence
+    20  ================================================================================
+    21  ## Investigation Brief 02 — Status Precedence
+    22
+    23  Auditor directive (mandatory for extract):
+    24
+    25  Interview notes with the compliance desk confirmed status fights between mail,
+    26  amendments, and corrections. Ledger rows provide the base status (lowercase on
+    27  output). Status precedence from lowest to highest is: pending, approved,
+    28  rejected, reversed. Email excerpts may change status only when the From line
+    29  contains `compliance@` anywhere in the address; ignore all other senders.
+    30
+    31  ================================================================================
+    32  BRIEF 3 — ## Investigation Brief 03 — Compliance Mail Timing
+    33  ================================================================================
+    34  ## Investigation Brief 03 — Compliance Mail Timing
+    35
+    36  Extract policy (authoritative):
+    37
+    38  The March mail-room audit explained missing holds: agents applied compliance
+    39  messages without checking dispatch dates. When an excerpt includes
+    40  `sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+    41  equal to the ledger date for that transaction. When no `sent:` line is present,
+    42  apply the status change if precedence allows. Correction notices always apply
+    43  after ledger rows, meeting amendments, and mail excerpts have been merged.
+    44
+    45  ================================================================================
+    46  BRIEF 4 — ## Investigation Brief 04 — Correction Notice Precedence
+    47  ================================================================================
+    48  ## Investigation Brief 04 — Correction Notice Precedence
+    49
+    50  Controller memo (binding reconciliation rule):
+    51
+    52  The corrections desk ships multiple notices per field. When several notices
+    53  target the same transaction and field, the notice with the lexicographically
+    54  greatest `effective` date wins. For each winning notice, `previous_value` in
+    55  `reconciliation_report.jsonl` is the field value immediately before that notice
+    56  applies (after ledger, amendments, and emails). Owner corrections override
+    57  both ledger owners and signed meeting amendments when applied in this step.
+    58
+    59  ================================================================================
+    60  BRIEF 5 — ## Investigation Brief 05 — Meeting Amendments and Owners
+    61  ================================================================================
+    62  Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+    63  default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+    64  owner when `signed: true` (case insensitive) and, when the amendment includes
+    65  `effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+    66  ledger date for the transaction.
+    67
+    68  ================================================================================
+    69  BRIEF 6 — ## Investigation Brief 06 — Effective Dates on Output
+    70  ================================================================================
+    71  ## Investigation Brief 06 — Effective Dates on Output
+    72
+    73  Auditor directive (mandatory for extract):
+    74
+    75  Auditors compared effective_date columns to correction paperwork. Start from the
+    76  ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+    77  sets field `date` or `status`, use that notice's `effective` date as
+    78  `effective_date` only if that correction modified status or date; otherwise
+    79  keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+    80  places in CSV and as a JSON number.
+    81
+    82  ================================================================================
+    83  BRIEF 7 — ## Investigation Brief 07 — Exception Flags (Part I)
+    84  ================================================================================
+    85  ## Investigation Brief 07 — Exception Flags (Part I)
+    86
+    87  Extract policy (authoritative):
+    88
+    89  Exception coding review: `exception_reason` is null unless a code applies. Set
+    90  `over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+    91  when final status is `rejected`, a qualifying `compliance@` email referenced
+    92  that transaction, and that email block includes a `sent:` line. The sent-date
+    93  comparison used for `compliance_hold` is defined in Investigation Brief 09
+    94  (Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+    95  lexical order of the reason codes.
+    96
+    97  ================================================================================
+    98  BRIEF 8 — ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+    99  ================================================================================
+   100  ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+   101
+   102  Controller memo (binding reconciliation rule):
+   103
+   104  Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+   105  `amount_usd` > 10000, and a Policy Exception block exists for that transaction
+   106  with `approved_by: compliance` on its own line. Set `retroactive_review` when
+   107  final status is `reversed`, `amount_usd` > 5000, and a winning correction
+   108  notice changed status for that transaction.
+   109
+   110  `extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+   111  by `transaction_id` ascending with fields transaction_id, owner, status
+   112  (lowercase), effective_date, amount_usd, exception_reason (null or
+   113  semicolon-joined codes). `transactions.csv` uses header
+   114  transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+   115  same rows; leave exception_reason blank when null. `exceptions.json` is
+   116  `{"items":[...]}` with only rows where exception_reason is set.
+   117  `reconciliation_report.jsonl` is one JSON object per winning correction with
+   118  notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+   119  by notice_id ascending.
+root@7b07e9f8c4c5:/app# nl -ba /tmp/briefs.txt | sed -n '120,240p'
+root@7b07e9f8c4c5:/app#

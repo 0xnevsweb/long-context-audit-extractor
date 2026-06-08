@@ -1,0 +1,31 @@
+{
+  "analysis": "Repo and CLI exist; CLI already enforces missing --input/--outdir to stderr and exit 1 per contract. `rg` (ripgrep) is not installed, so we must use grep/sed/awk. We saw the structured ledger rows at the end of audit_archive.md, including duplicate TXN-ba9e6ade entries (one provisional with owner stale/pending, then a finalowner/approved). This hints at reconciliation/correction/overlay logic. Next we need to (1) locate Investigation Briefs 01–09 in the markdown (especially Brief 09 override) and (2) inspect extractor source to find current parsing/reconciliation and nondeterminism.",
+  "plan": "Use grep to find where Brief 01–09 sections start and extract those ranges for review, plus locate correction notices/holds/mail rules text. Then inspect /app/audit-extractor/src/index.js and relevant lib/parser/normalize modules to understand how ledger rows are built, how mail timing and holds are applied, how corrections are matched to transactions, and where ordering may be unstable. After that, implement fixes and run the extractor. For now, run discovery commands only.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"Investigation Brief[[:space:]]*0[1-9]|INVESTIGATION BRIEF[[:space:]]*0[1-9]|^##[[:space:]]*Brief[[:space:]]*0[1-9]|^#.*Brief[[:space:]]*0[1-9]\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Brief[[:space:]]*09|Investigation Brief[[:space:]]*09|INVESTIGATION BRIEF[[:space:]]*09\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"correction notice|Correction Notice|CORRECTION|hold|HOLD|mail|MAIL|ledger\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -name '*.js' -print\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RInE \"reconcil|hold|correction|notice|ledger|mail|provisional|overlay|Brief\" /app/audit-extractor/src | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

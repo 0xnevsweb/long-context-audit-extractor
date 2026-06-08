@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@9416c0dee655:/app# grep -n "## Correction Notices" -n /app/data/audit_archive.md
+3866:## Correction Notices
+root@9416c0dee655:/app# python3 - <<'PY'
+> import re, pathlib
+> p=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')
+> s=p.read_text()
+> # Common bug: using indexOf on a prefix; ensure exact heading line match for Correction Notices too.
+> if 'indexOf("## Correction Notices")' in s:
+>     s2=s.replace('const start = markdown.indexOf("## Correction Notices");\n  if (start === -1) return [];\n  const slice = markdown.slice(start);',
+>                 "const m = markdown.match(/^## Correction Notices\\s*$/m);\n  if (!m) return [];\n  const start = m.index;\n  const slice = markdown.slice(sta
+rt);")
+>     p.write_text(s2)
+>     print('updated corrections.js heading match')
+> else:
+>     print('no indexOf heading match to update (manual inspection needed)')
+> PY
+updated corrections.js heading match
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 10 /app/output/reconciliation_report.jsonl
+0 /app/output/reconciliation_report.jsonl
+root@9416c0dee655:/app#

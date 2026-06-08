@@ -1,0 +1,22 @@
+{
+  "analysis": "The extractor ran successfully without errors. Now I need to verify the output files are correct.",
+  "plan": "Check the output files to verify they match the expected format and data.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/output/transactions.json\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/output/transactions.csv\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/output/exceptions.json\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.5
+    }
+  ]
+}

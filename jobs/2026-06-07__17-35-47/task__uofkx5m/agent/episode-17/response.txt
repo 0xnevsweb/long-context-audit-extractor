@@ -1,0 +1,23 @@
+{
+  "analysis": "We confirmed multiple parsers use markdown.indexOf to locate section boundaries (ledger, emails, corrections, policy), violating Brief 01's requirement to locate section boundaries using regex anchored to whole heading lines at line start. sections.js simply calls these parsers. We still haven't surfaced actual binding rules from briefs 02–04,06–08 because the grep output shown is still narrative filler, suggesting our /tmp brief extraction includes a lot of field notes and not the actual brief bodies, or our grep matches are mostly in filler. Next we should directly sed from known brief heading lines to the 'field notes' heading lines for each brief, because the binding content appears before field notes. We'll extract just those parts. Then implement parser fixes + reconciliation + output contract fixes.",
+  "plan": "1) For each brief 02–08, extract only from '## Investigation Brief XX' to the next '## Investigation Brief XX — field notes' line, and print it. That should isolate binding rules. 2) For brief 09 we already have the committee ruling and likely only amendment text; ok. 3) Inspect corrections.js, policy.js, ledger.js to implement regex-based section slicing and correct parsing (ignore provisional). 4) Implement normalize/reconcile.js logic per briefs: status precedence, mail timing, correction precedence and report previous_value, compliance_hold timing per Brief 09, exception flags from policy exceptions + computed conditions. 5) Fix jsonWriter envelopes and sorting and determinism.",
+  "commands": [
+    {
+      "keystrokes": "for b in 02 03 04 06 07 08; do echo \"\\n===== BRIEF $b (binding section) =====\"; start=$(grep -n \"^## Investigation Brief $b\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); end=$(grep -n \"^## Investigation Brief $b .*— field notes\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); if [ -n \"$start\" ] && [ -n \"$end\" ]; then sed -n \"${start},$((end-1))p\" /app/data/audit_archive.md; else echo \"missing range $b start=$start end=$end\"; fi; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@9416c0dee655:/app# sed -n '360,760p' /app/audit-extractor/src/normalize/reconcile.js
+root@9416c0dee655:/app# grep -nE "Transaction Ledger|working copy|Ledger" /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/ledger.js:1:function parseLedger(markdown) {
+/app/audit-extractor/src/parser/ledger.js:2:  const start = markdown.indexOf("## Transaction Ledger");
+/app/audit-extractor/src/parser/ledger.js:36:module.exports = { parseLedger };
+/app/audit-extractor/src/parser/sections.js:1:const { parseLedger } = require("./ledger");
+/app/audit-extractor/src/parser/sections.js:9:    ledger: parseLedger(markdown),
+root@9416c0dee655:/app#

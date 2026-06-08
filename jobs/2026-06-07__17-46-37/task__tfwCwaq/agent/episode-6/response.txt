@@ -1,0 +1,35 @@
+{
+  "analysis": "reconcile.js is overly simplistic and clearly violates Brief 03/09: it applies meeting owner changes fine, but applies emails by blindly overwriting status without checking sent date vs ledger date, without precedence, and without distinguishing compliance_hold flag. It applies corrections but report previous_value is always empty and doesn’t enforce ‘winning correction notice’ semantics; likely should choose latest/effective correction per notice_id precedence and map correctly. Also transaction rows use row.date/row.amount fields; might mismatch schema names from parser. Need to inspect parser to see email shape (includes sent?) and corrections shape (field, effective?). Also exceptions builder currently sets exception_reason via flags; must incorporate compliance_hold into exception_reason codes maybe. We must implement rules from briefs and amendment: corrections after merges; mail status conditional on sent date >= pre-correction ledger date; compliance_hold computed using qualifying emails sent date vs pre-correction date (after mail merges) and should not disappear after corrections. Also need correction precedence and correct ledger row mapping.",
+  "plan": "1) Inspect parser/sections.js to learn exact parsed shapes for ledger, meetings, emails, corrections, and policy exceptions, including sent dates and hold indicators. 2) Inspect normalize/exceptions.js to see how exception_reason is formed and which flag codes expected; then implement compliance_hold as part of exceptions. 3) Update reconcile.js: maintain a per-transaction working object with base ledger fields; apply meeting amendments; apply mail excerpts with sent-date gating (Brief 03) and precedence; compute hold flags per Brief 09 using pre-correction date snapshot; apply corrections with proper precedence and populate reconciliation_report with previous/new values, sorted by notice_id; then emit items with correct fields (effective_date) and amount rounding and deterministic sorting.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src/parser\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '200,520p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

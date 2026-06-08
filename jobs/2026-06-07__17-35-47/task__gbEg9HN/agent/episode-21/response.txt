@@ -1,0 +1,31 @@
+{
+  "analysis": "The attempted sed/grep to view briefs didn’t surface; terminal currently shows part of Email Excerpts filler threads, not the Investigation Brief rules. We need targeted extraction of Brief 07 and Brief 09 sections by locating their line numbers and printing those ranges precisely. We'll use grep -n to find the headings and then sed around those exact lines.",
+  "plan": "1) Find exact line numbers for Investigation Brief 03, 07, and 09 headings. 2) Print the sections for Brief 07 and Brief 09 (and any brief that defines exception flags) using sed with those ranges. 3) Once we have authoritative rules, implement exception_reason logic accordingly.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\ntext=open(path,'r',encoding='utf-8').read().splitlines()\n# collect brief heading line numbers\nbriefs={}\nfor i,line in enumerate(text,1):\n    m=re.match(r'^## Investigation Brief (\\d\\d)\\b', line)\n    if m:\n        briefs[m.group(1)]=i\nfor k in sorted(briefs):\n    print(k, briefs[k])\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nlines=open('/app/data/audit_archive.md','r',encoding='utf-8').read().splitlines()\nbrief_starts=[]\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^## Investigation Brief (\\d\\d)\\b', l)\n    if m:\n        brief_starts.append((int(m.group(1)), i))\nbrief_starts.sort()\n# print brief 07 and 09 ranges\nfor num in [7,9]:\n    start=dict(brief_starts)[num]\n    # end at next brief or start of structured sections\n    nexts=[ln for n,ln in brief_starts if ln>start]\n    end=(min(nexts)-1) if nexts else len(lines)\n    print('BRIEF',num,'RANGE',start,end)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nlines=open('/app/data/audit_archive.md','r',encoding='utf-8').read().splitlines()\n# compute brief ranges\nstarts=[]\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^## Investigation Brief (\\d\\d)\\b', l)\n    if m:\n        starts.append((int(m.group(1)), i))\nstarts.sort()\nidx={n:i for n,i in starts}\nfor num in [7,9]:\n    start=idx[num]\n    end=min([i-1 for n,i in starts if i>start] or [len(lines)])\n    print('\\n'.join(lines[start-1:end][:260]))\n    print('\\n---END BRIEF',num,'---\\n')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

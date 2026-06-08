@@ -1,0 +1,51 @@
+{
+  "analysis": "We still don't have the Brief 01–09 directive text; the last command output shows we accidentally dumped a large section around Email Excerpts (lines ~1857+), and awk broke due to head/broken pipe. Need to directly locate each Investigation Brief heading (01..09) line numbers and then print a small range after each heading. We'll avoid piping to head to prevent broken pipe warnings by using sed with explicit ranges. We'll also specifically extract Brief 09 content to capture the mid-year amendment override about hold timing.",
+  "plan": "1) Capture exact line numbers for each '## Investigation Brief 0X' (non-field-notes). 2) For each brief, print ~120 lines from its heading to read directives. 3) Specifically extract Brief 09 region until next top-level heading. 4) Once rules are captured, proceed to implement fixes in parsers/reconcile/output.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md | grep -v \"field notes\" > /tmp/brief_lines.txt\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "cat /tmp/brief_lines.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "brief1=$(awk -F: '/Brief 01/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief1},$((brief1+140))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief2=$(awk -F: '/Brief 02/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief2},$((brief2+160))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief3=$(awk -F: '/Brief 03/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief3},$((brief3+180))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief4=$(awk -F: '/Brief 04/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief4},$((brief4+180))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief5=$(awk -F: '/Brief 05/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief5},$((brief5+220))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief6=$(awk -F: '/Brief 06/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief6},$((brief6+220))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief7=$(awk -F: '/Brief 07/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief7},$((brief7+220))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief8=$(awk -F: '/Brief 08/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief8},$((brief8+260))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "brief9=$(awk -F: '/Brief 09/{print $1; exit}' /tmp/brief_lines.txt); sed -n \"${brief9},$((brief9+320))p\" /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

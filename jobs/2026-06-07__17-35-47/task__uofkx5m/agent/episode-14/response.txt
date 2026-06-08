@@ -1,0 +1,39 @@
+{
+  "analysis": "We captured three binding committee rulings: Brief 01 ledger sourcing rules; Brief 05 owner amendment rules (signed true + optional effective date constraint); Brief 09 amendment for compliance_hold timing comparing email sent date to ledger date before corrections. We still need binding rules from Briefs 02,03,04,06,07,08 (status precedence, compliance mail timing for statuses, correction notice precedence, effective date output rules, exception flags + artifact requirements). Next step: extract those brief sections and isolate the binding parts (they may not be labeled 'Committee ruling'). We'll search within each brief for 'binding', 'Extractor must', 'Rule:', etc and capture concise excerpts. Also we must fix code: output envelope keys, stable sort, implement signed amendments, mail merges with precedence, compliance_hold computed pre-corrections, correction precedence and report previous_value and sorting, exception flags and output shapes.",
+  "plan": "1) Extract each brief section 02–08 (heading to next heading) into /tmp and grep for binding keywords to surface rules. 2) Inspect structured sections: Email Excerpts, Policy Exceptions, Correction Notices to understand fields and how to join to transaction ids, plus correction precedence rules. 3) Inspect parsers (sections/ledger/emails/corrections) to ensure they select correct canonical sections. 4) Implement fixes across parsers, normalize/reconcile.js, normalize/exceptions.js, output writers, and utils/sort.js. 5) Run extractor and verify determinism and artifact shapes.",
+  "commands": [
+    {
+      "keystrokes": "for b in 02 03 04 06 07 08; do awk -v b=\"$b\" 'BEGIN{p=0} $0 ~ \"^## Investigation Brief \"b\" \" {p=1} (p && $0 ~ /^## / && $0 !~ (\"^## Investigation Brief \"b\" \")){exit} p{print}' /app/data/audit_archive.md > /tmp/brief${b}.md; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{2,3,4,6,7,8}.md; do echo \"\\n===== $f binding-ish =====\"; grep -nE \"binding|Extractor|extractor|must |Ignore|Sort|precedence|status|compliance_hold|correction|effective_date|exception\" \"$f\" | head -n 120; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1857,2005p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3849,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3866,3912p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

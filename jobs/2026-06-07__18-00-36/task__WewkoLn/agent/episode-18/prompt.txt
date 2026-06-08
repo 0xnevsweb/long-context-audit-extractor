@@ -1,0 +1,58 @@
+New Terminal Output:
+
+}root@b5558c31e8a7:/app# node -e "const d=require('/app/output/transactions.json'); console.log(d.items.length); d.items.forEach(r => console.log(r.transaction_
+id, r.owner, r.status, r.effective_date, r.amount_usd, r.exception_reason));"
+32
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594 dlee pending 2024-02-26 15335.5 over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c bwong pending 2024-10-10 12860.78 over_limit
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3 dlee approved 2024-07-19 5721.56 null
+TXN-1b083448-63e3-5527-a20a-edd71416341c jdoe rejected 2024-09-01 10113.94 compliance_hold;over_limit
+TXN-20cd5f27-165a-55cf-90db-b472725bb03b bwong approved 2024-12-24 12588.66 over_limit
+TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0 frost pending 2024-09-21 8468.4 null
+TXN-33c930a7-114e-50c1-b790-e26c53e5f025 ckim pending 2024-11-11 14234.2 over_limit
+TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a ckim rejected 2024-06-18 4348.14 null
+TXN-378cf202-0cc9-578e-91ea-d8d008c534e9 jdoe pending 2024-03-15 19727.88 over_limit
+TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f asmith reversed 2024-06-15 7500 retroactive_review
+TXN-53e38083-cc01-56a8-be81-f412d80c5f5d frost approved 2024-02-14 18354.46 over_limit
+TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1 jdoe approved 2024-05-02 19455.76 over_limit
+TXN-68b5423c-1abb-59e6-947e-7e56011cec58 frost approved 2024-07-07 8740.52 null
+TXN-6a290cff-b5f2-5992-9a90-1f22dedca980 evans approved 2024-03-27 16708.92 over_limit
+TXN-6b005945-fb10-584b-91bf-629e2cfe98a3 ckim approved 2024-08-05 4076.02 null
+TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f jdoe approved 2024-10-22 9841.82 null
+TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a bwong pending 2024-07-04 2702.6 null
+TXN-88519dfd-79ff-5de0-ae59-862ab932bc25 jdoe pending 2024-01-01 500 null
+TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966 evans pending 2024-08-20 7094.98 null
+TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a ckim pending 2024-01-25 13962.08 over_limit
+TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f evans rejected 2024-01-13 16981.04 over_limit
+TXN-a4dc6038-0c06-5338-9a45-fccff83a6194 evans pending 2024-06-06 7367.1 null
+TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8 frost rejected 2024-04-01 18082.34 over_limit
+TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb finalowner approved 2024-04-04 4620.26 null
+TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9 asmith pending 2024-06-03 1329.18 null
+TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c bwong approved 2024-05-17 2974.72 null
+TXN-c7416874-b91b-5c2d-92de-0098b1224d18 asmith rejected 2024-11-23 11215.24 over_limit
+TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f dlee approved 2024-09-09 11487.36 over_limit
+TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15 bwong rejected 2024-03-03 3246.84 null
+TXN-de3b42d7-919c-5839-a490-b039d9c97092 dlee rejected 2024-12-12 15607.62 over_limit
+TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f asmith reversed 2024-08-01 1601.3 null
+TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4 dlee rejected 2024-05-05 5993.68 compliance_hold
+root@b5558c31e8a7:/app# node -e "const d=require('/app/output/exceptions.json'); console.log(d.items.length); d.items.forEach(r => console.log(r.transaction_id,
+ r.exception_reason));"
+17
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594 over_limit
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c over_limit
+TXN-1b083448-63e3-5527-a20a-edd71416341c compliance_hold;over_limit
+TXN-20cd5f27-165a-55cf-90db-b472725bb03b over_limit
+TXN-33c930a7-114e-50c1-b790-e26c53e5f025 over_limit
+TXN-378cf202-0cc9-578e-91ea-d8d008c534e9 over_limit
+TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f retroactive_review
+TXN-53e38083-cc01-56a8-be81-f412d80c5f5d over_limit
+TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1 over_limit
+TXN-6a290cff-b5f2-5992-9a90-1f22dedca980 over_limit
+TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a over_limit
+TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f over_limit
+TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8 over_limit
+TXN-c7416874-b91b-5c2d-92de-0098b1224d18 over_limit
+TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f over_limit
+TXN-de3b42d7-919c-5839-a490-b039d9c97092 over_limit
+TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4 compliance_hold
+root@b5558c31e8a7:/app#

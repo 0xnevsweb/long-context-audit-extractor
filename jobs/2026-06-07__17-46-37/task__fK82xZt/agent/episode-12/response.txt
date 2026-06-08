@@ -1,0 +1,23 @@
+{
+  "analysis": "Code changes applied and outputs are deterministic across reruns (diffs empty). However outputs currently violate the output contract: transactions.json must be {\"items\":[...]} but the file shows {\"transactions\":[...]}. CSV header is missing exception_reason column, and amount formatting is not two decimals. reconciliation_report.jsonl is empty, suggesting corrections parser/reconcile pipeline not producing winning corrections (likely because corrections parser file got truncated earlier in viewing; we didn't modify it, but it might be broken: the earlier output showed it was cut mid-module.exports, implying syntax/logic errors or incomplete file; yet node extract ran, so parser/corrections.js is syntactically okay, but may not parse because it searches for '## Transaction Ledger' and archive includes '## Transaction Ledger (working copy)' before it, end index might be wrong). Also jsonWriter/csvWriter likely implement wrong envelope/columns. We must fix writers to comply with contract, and fix corrections parsing boundaries so notices are captured and report non-empty.\n\nNext steps: inspect jsonWriter.js, csvWriter.js, parser/corrections.js, and schema/validate.js to ensure expected shapes. Then adjust jsonWriter/csvWriter/reportWriter or reconcile output accordingly.",
+  "plan": "1) Inspect current output writers (jsonWriter.js, csvWriter.js) and corrections parser to find why envelope/header mismatch and report empty. 2) Update writers to match contract exactly: transactions.json -> {items:[...]}; exceptions.json same; transactions.csv header includes exception_reason column; empty cell for null; amounts formatted to two decimals in CSV. 3) Fix corrections parser to locate the correct section boundaries using anchored regex, not indexOf, and end at the authoritative `## Transaction Ledger` heading line exactly (not working copy). 4) Rerun extractor and verify artifacts and that report has winning corrections sorted by notice_id.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

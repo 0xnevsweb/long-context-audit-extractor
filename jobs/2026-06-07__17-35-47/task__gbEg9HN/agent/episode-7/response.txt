@@ -1,0 +1,51 @@
+{
+  "analysis": "The attempted code changes did not apply because `apply_patch` is not available in this environment, so the source is unchanged. Running the extractor twice currently produces identical transactions.json (diff empty), but reconciliation_report.jsonl is empty (0 lines), suggesting corrections are not being parsed/applied or are being filtered out. Also, ledger parsing likely still incorrectly matches the working copy section due to indexOf prefix match, and previous_value in report (if any) would still be wrong. We must edit files using available tools (e.g., sed/perl or heredoc overwrite) and then rerun. Next: inspect current parser/corrections.js and parser/ledger.js to see why corrections are empty and how ledger section is selected.",
+  "plan": "1) Inspect current parser/corrections.js, parser/ledger.js, and parser/sections.js to confirm the bugs: ledger heading match and correction notice parsing. 2) Modify files using `perl -0777 -pe` or `python3` to perform safe in-place edits, or use heredoc to rewrite small modules. 3) Re-run extractor and confirm: (a) reconciliation_report.jsonl has lines sorted by notice_id, (b) transactions.json reflects corrections and correct ledger sourcing (ignores working copy), (c) byte-identical output across reruns still holds. 4) Spot-check a transaction known to differ between working copy and canonical ledger (TXN-88519dfd...) to ensure correct base values.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -e \"const fs=require('fs');const p=require('/app/audit-extractor/src/parser/sections');const md=fs.readFileSync('/app/data/audit_archive.md','utf8');const parsed=p.parseArchive? p.parseArchive(md):require('/app/audit-extractor/src/parser/sections').parseArchive(md); console.log(Object.keys(parsed)); console.log('ledger', parsed.ledger.length); console.log('corrections', parsed.corrections.length);\"\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" -n /app/data/audit_archive.md | tail -n 5\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, pathlib\np=pathlib.Path('/app/audit-extractor/src/parser/ledger.js')\ns=p.read_text()\n# Replace indexOf-based start with exact heading match using multiline regex.\ns2=re.sub(r\"const start = markdown\\.indexOf\\(\\\"## Transaction Ledger\\\"\\);\\n\\s*if \\(start === -1\\) return \\[\\];\\n\\s*const slice = markdown\\.slice\\(start\\);\",\n          \"// The archive contains a decoy '## Transaction Ledger (working copy)'.\\n  // The authoritative ledger heading line is exactly '## Transaction Ledger'.\\n  const m = markdown.match(/^## Transaction Ledger\\\\s*$/m);\\n  if (!m) return [];\\n  const start = m.index;\\n  const slice = markdown.slice(start);\",\n          s, count=1)\nif s2==s:\n    raise SystemExit('ledger.js pattern not found; aborting')\np.write_text(s2)\nprint('updated ledger.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, pathlib\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text()\n# Insert deterministic notice sorting + previous_value capture.\n# This is a targeted transform: find the loop \"for (const notice of parsed.corrections)\" and replace block header and report push previous_value.\nif 'for (const notice of parsed.corrections)' not in s:\n    raise SystemExit('expected loop not found')\n# Ensure report declared before loop; if currently \"const report = []\" exists, keep it and just sort notices.\nif 'const report = []' in s:\n    s=re.sub(r\"const report = \\[\\];\\n\\s*for \\(const notice of parsed\\.corrections\\) \\{\",\n             \"const report = [];\\n  const notices = [...parsed.corrections].sort((a,b)=>String(a.notice_id).localeCompare(String(b.notice_id)));\\n  for (const notice of notices) {\",\n             s, count=1)\nelse:\n    # if report is declared later, we’ll just introduce notices and report together\n    s=re.sub(r\"for \\(const notice of parsed\\.corrections\\) \\{\",\n             \"const notices = [...parsed.corrections].sort((a,b)=>String(a.notice_id).localeCompare(String(b.notice_id)));\\n  const report = [];\\n  for (const notice of notices) {\",\n             s, count=1)\n# Add prev computation before field switch\ns=re.sub(r\"(\\s*const target = byId\\.get\\(notice\\.transaction_id\\);\\n\\s*if \\(!target\\) continue;\\n)\",\n         r\"\\1\\n    const prev = notice.field === 'owner' ? String(target.owner ?? '') : (notice.field === 'status' ? String(target.status ?? '') : (notice.field === 'date' ? String(target.date ?? '') : ''));\\n\",\n         s, count=1)\n# Replace previous_value: \"\" with previous_value: prev\ns=re.sub(r\"previous_value:\\s*\\\"\\\"\",\n         \"previous_value: prev\",\n         s, count=1)\n# Ensure new_value is string\ns=re.sub(r\"new_value:\\s*notice\\.value\",\n         \"new_value: String(notice.value)\",\n         s, count=1)\np.write_text(s)\nprint('updated reconcile.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -e \"const t=require('/app/output/transactions.json').items; console.log(t.find(x=>x.transaction_id==='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25'));\"\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

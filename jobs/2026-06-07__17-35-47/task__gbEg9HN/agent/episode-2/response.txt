@@ -1,0 +1,47 @@
+{
+  "analysis": "We’ve identified the main extraction pipeline in src/index.js: parseArchive() then reconcileTransactions() then buildExceptions(), then writers and schema validation. We have a list of relevant JS modules, including normalize/reconcile.js which likely contains the buggy reconciliation logic causing drift, hold timing issues, and correction misapplication. We still need to read the authoritative rules in audit_archive.md (Investigation Briefs 01–09, especially 09) and then inspect reconcile + parsers to see where it diverges or is nondeterministic (likely missing stable sorting, Map iteration dependence, or ambiguous matching for correction notices).",
+  "plan": "1) Read the reconciliation logic in normalize/reconcile.js and related utilities (sort/date) to find nondeterminism and current rule implementation. 2) Read parser modules for ledger, corrections, emails, policy to see what fields are captured and how IDs are matched. 3) If needed, open lib/handbook.js to see if rules are hardcoded or configurable. 4) After code understanding, we’ll cross-check against Brief 09 wording in the markdown (we still haven’t captured that text output) and then implement fixes.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

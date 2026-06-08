@@ -1,0 +1,27 @@
+{
+  "analysis": "reconcile.js is overly naive: meetings always override owner (ignores Brief 05 signed requirement), emails always override status (ignores compliance@ and precedence rules), corrections apply in input order with previous_value blank and no timing ordering; report not sorted; STATUS_ORDER defined but unused. Also ledger ingestion uses Map set so last ledger row wins (good) but ledger parser currently reads from first '## Transaction Ledger' occurrence, which hits the working copy and includes a decoy owner/status/date for TXN-885..., contaminating. We must locate and implement authoritative reconciliation semantics from Briefs 01–09 and the Brief 09 hold timing override. Also need to implement exception_reason flags (currently always null) from policyExceptions and compliance holds logic. Output shape fixes are required too.",
+  "plan": "1) Read Investigation Briefs 01–09 fully to implement binding semantics: ledger sourcing, mail timing, correction precedence, exception flags, overlay order; note Brief 09 override. 2) Update parsers: ledger should start at the exact heading line '## Transaction Ledger' (not working copy) and stop at next top-level section; corrections should slice between '## Correction Notices' and the exact '## Transaction Ledger' heading; meetings and emails should likely slice to their sections as well. 3) Update reconcile.js to implement: base ledger rows; apply meetings only if signed (per Brief 05); apply email status only from compliance@ and use STATUS_ORDER to take highest-precedence status rather than last-seen; apply corrections ordered by effective date then notice_id, and generate previous_value/new_value properly; ensure deterministic ordering. 4) Update exceptions logic: set exception_reason semicolon-joined codes in lexical order (include policy exceptions and compliance_hold flags), and output exceptions.json items only. 5) Update writers to match contract envelopes and CSV header/order. 6) Strengthen validateOutputs to enforce required columns and sorting. 7) Run extractor twice and diff transactions.json to ensure byte-identical; then run into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} /^## Investigation Brief 10/{p=0} {if(p) print}' /app/data/audit_archive.md > /tmp/briefs_01_09.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/briefs_01_09.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /tmp/briefs_01_09.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '520,780p' /tmp/briefs_01_09.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '780,1040p' /tmp/briefs_01_09.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

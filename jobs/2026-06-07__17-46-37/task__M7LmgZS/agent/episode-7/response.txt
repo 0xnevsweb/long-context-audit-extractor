@@ -1,0 +1,35 @@
+{
+  "analysis": "Our grep confirms at least one authoritative rule from Brief 02: status precedence order pending < approved < rejected < reversed, and email excerpts can change status only when From line qualifies (details truncated due to head; need full lines 6-20). Brief 09 mentions ordering: hold flag comparison happens before any correction notice changes date or status; Brief 03 still governs mail-driven status changes; Brief 09 governs hold flag. We still need the full normative text for Briefs 01–09; current greps are pulling lots of filler. We should print the beginning parts of each brief file (first ~40 lines) which likely include the binding bullets, then implement code changes. Also need to open reconcile.js and parser files fully (but in smaller chunks) to patch. Known concrete code fixes independent of policy: output writers contract, report previous_value, exception flagging infrastructure, deterministic sorting, apply corrections ordering and stable report sort.",
+  "plan": "1) View the top ~80 lines of each brief extract to capture the binding rules before filler starts, especially Brief 03 (mail timing) and Brief 09 (amendment) and Brief 04 (correction precedence) and Brief 01 (ledger sourcing). 2) View reconcile.js from the top to see current pipeline and identify where to insert these rules. 3) Implement code patches: writers, exceptions, email parsing (add date), corrections application with previous_value and stable ordering, and ensure items sorted by transaction_id and report sorted by notice_id. 4) Run extractor twice and diff transactions.json for determinism.",
+  "commands": [
+    {
+      "keystrokes": "for b in 01 02 03 04 05 06 07 08 09; do echo \"\\n=== BRIEF $b (top) ===\"; sed -n '1,120p' /tmp/brief${b}.txt; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief03.txt | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief04.txt | sed -n '1,140p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief09.txt | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,240p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js | sed -n '1,160p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,200p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

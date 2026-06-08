@@ -1,0 +1,31 @@
+{
+  "analysis": "We now have exact hit lines for key directives: Brief 05 signed amendment rules around lines ~832-834; Brief 06 effective_date rules around 1062-1065; Brief 09 supersedes hold timing at lines 1675+. We still need Brief 01 canonical ledger sourcing rule (including ignoring working copy and decoy headings), Brief 03 compliance mail timing, and Brief 04 correction notice precedence/ordering. Next we should print tight sed ranges around these line numbers (and around the Brief 01/03/04 headings) to capture full directive text. Once rules are fully captured, implement fixes: ledger parser exact heading match, correction parsing and application ordering, signed amendments logic, email status precedence restricted to compliance@ and using STATUS_ORDER, effective_date calculation from Brief 06, exception_reason codes including over_limit and compliance_hold based on Brief 09 timing, output writers contract conformance and deterministic sorting.",
+  "plan": "1) Print directive blocks via sed around: Brief 01 heading (11..27), Brief 03 heading (468..500), Brief 04 heading (685..720), Brief 05 directive lines around 828..850, Brief 06 directive lines around 1058..1070, and Brief 09 directive lines around 1670..1685. 2) After confirming exact rules, edit Node sources: parser/ledger.js and parser/corrections.js for exact section boundaries; parser/meetings.js to honor signed true and effective; parser/emails.js to include sent date and filter compliance@; normalize/reconcile.js to apply overlays in correct order with deterministic sorting and build reconciliation_report with previous_value/new_value; normalize/exceptions.js to build exception_reason codes in lexical order; output writers and validate schema per contract. 3) Run extractor twice and diff transactions.json; then run into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,45p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,520p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,740p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '828,860p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1058,1070p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1670,1690p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

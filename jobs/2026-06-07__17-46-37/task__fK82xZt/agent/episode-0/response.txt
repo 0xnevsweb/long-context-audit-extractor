@@ -1,0 +1,59 @@
+{
+  "analysis": "No prior commands have been run in this session. We need to inspect the audit-extractor Node project, read the output contract, and study /app/data/audit_archive.md (especially Investigation Briefs 01–09 and amendment in Brief 09) to correct reconciliation logic causing drifting statuses, missed compliance holds (later mail), and misapplied correction notices to ledger rows. Then run the extractor CLI with required flags behavior and verify outputs match the contract. Tests directory must not be modified.",
+  "plan": "1) Explore repository structure and locate current extraction/reconciliation logic. 2) Read the extractor output contract to understand required artifacts/row shapes. 3) Inspect the FY24 archive to extract authoritative reconciliation policy (Briefs 01–09; note Brief 09 override) and locate structured data near end (ledger rows). 4) Identify code paths responsible for status computation, hold logic, and correction notice matching; fix determinism (no order-dependent updates), incorporate later mail holds, and correct mapping of correction notices to ledger rows per policy. 5) Ensure CLI enforces --input and --outdir (stderr + exit 1). 6) Run the extractor with the grader command and review outputs for stability across reruns.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor -maxdepth 3 -type f -name \"*.md\" -o -name \"*.js\" -o -name \"*.json\" | sed 's|^|FILE: |'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '200,400p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -type f -maxdepth 4 -print\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/index.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"reconcil|ledger|hold|correction|status|Brief 09|Investigation Brief\" /app/audit-extractor/src\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "ls -lh /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 0[1-9]|Brief 0[1-9]|Mid-year|amendment|override\" /app/data/audit_archive.md | head -n 200\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    txt=f.read()\n# find start offsets for Investigation Brief 01-09\nfor i in range(1,10):\n    pat=re.compile(rf\"(^|\\n)#+\\s*Investigation\\s*Brief\\s*0?{i}\\b.*\",re.IGNORECASE)\n    m=pat.search(txt)\n    if m:\n        print(i, m.start())\n    else:\n        # fallback: 'Brief 0i'\n        pat2=re.compile(rf\"(^|\\n)#+\\s*Brief\\s*0?{i}\\b.*\",re.IGNORECASE)\n        m2=pat2.search(txt)\n        print(i, m2.start() if m2 else None)\nPY\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

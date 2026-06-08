@@ -1,0 +1,27 @@
+{
+  "analysis": "We’re still only seeing the tail of reconcile.js, not the top, and we haven’t seen /tmp/briefs.txt output (so we don’t yet have brief line numbers). The key bug in reconcile.js is confirmed: previous_value is always empty, and corrections aren’t guaranteed to be applied in notice_id order nor is the report sorted. Next we need to re-run commands to display /tmp/briefs.txt and print reconcile.js from the top using a method that will show in the terminal (sed -n '1,120p' etc.). Then we can implement fixes directly in code.",
+  "plan": "1) Display /tmp/briefs.txt again (and if it doesn’t exist, regenerate) to obtain authoritative brief positions. 2) Print reconcile.js from the start in smaller chunks. 3) Print parser/corrections.js to see if it parses notice_id/effective and whether it sorts. 4) Apply code changes: stable sorting, correct previous_value, correction ordering and report sorting, deterministic ledger row selection for duplicates/provisional, and ensure compliance hold timing per Brief 09 once we can read it. Then run extractor to /app/output and diff transactions.json across reruns.",
+  "commands": [
+    {
+      "keystrokes": "test -f /tmp/briefs.txt || grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md > /tmp/briefs.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /tmp/briefs.txt && sed -n '1,20p' /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

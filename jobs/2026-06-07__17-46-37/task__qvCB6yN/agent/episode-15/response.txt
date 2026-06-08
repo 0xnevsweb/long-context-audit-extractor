@@ -1,0 +1,19 @@
+{
+  "analysis": "The sed windows are still showing mostly filler, meaning the actual directive text might be very short and perhaps above what we’re currently seeing, or it’s present but scrolled past. We need a more precise extraction: print only the lines immediately after each brief heading up to the next blank line after the directive block. We'll search within each brief range for the literal string 'Auditor directive' in the original archive and print a tight context around it by line number in the full file.",
+  "plan": "1) Grep the full archive for 'Auditor directive' occurrences with line numbers. 2) For each occurrence within Briefs 01–09 region, print ~30-60 lines starting at that line. This should capture the authoritative rule text for each brief without filler. 3) Also grep for 'exception_reason' and 'overlay order' and 'compliance_hold' in full archive and print surrounding context near their first occurrences within briefs.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"Auditor directive\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport subprocess,sys\np='/app/data/audit_archive.md'\n# get all line numbers for 'Auditor directive'\nimport re\nlines=open(p,'r',encoding='utf8').read().splitlines()\nidxs=[i for i,l in enumerate(lines,1) if 'Auditor directive' in l]\nprint('found',len(idxs),'Auditor directive markers')\nfor i in idxs[:30]:\n    s=i; e=min(len(lines), i+45)\n    print('\\n--- context starting at line',i,'---')\n    for j in range(s,e+1):\n        print(f\"{j}: {lines[j-1]}\")\nPY\n",
+      "duration": 2
+    },
+    {
+      "keystrokes": "grep -nEi \"overlay order|exception_reason|exception flags|compliance_hold\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

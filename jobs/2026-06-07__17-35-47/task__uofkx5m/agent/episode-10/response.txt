@@ -1,0 +1,51 @@
+{
+  "analysis": "We again only see the tail of the Transaction Ledger output, not the brief extraction outputs. The brief extraction likely produced files in /tmp, but their contents didn't appear in the provided screen capture. We'll directly inspect /tmp/brief02.md etc with sed/head to confirm they contain the binding rules. Once we can read those, we can implement the proper reconciliation and exception logic. Also we must fix output envelopes and sorting.",
+  "plan": "1) List /tmp/brief*.md and show their first ~80 lines to confirm correct extraction. 2) If empty/incorrect, adjust extraction by using the known line numbers for each brief heading and the next heading’s line number, then sed those ranges directly. 3) After obtaining brief rules, move on to code changes (parsers, reconcile, exceptions, writers).",
+  "commands": [
+    {
+      "keystrokes": "ls -la /tmp/brief*.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{2,3,4,5,6,7,8,9}.md; do echo \"\\n===== $f =====\"; head -n 120 \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '252,467p' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,684p' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,827p' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1057p' /app/data/audit_archive.md | head -n 140\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1200p' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1418p' /app/data/audit_archive.md | head -n 140\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1669p' /app/data/audit_archive.md | head -n 140\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1856p' /app/data/audit_archive.md | head -n 140\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,59 @@
+{
+  "analysis": "We can see the tail of normalize/reconcile.js. Issues are immediately apparent: (1) report.previous_value is always \"\" instead of the actual prior value required by contract. (2) It mutates a 'target' row in-place when applying corrections but doesn’t show any deterministic ordering of correction notices; if notices are iterated in input order and parsing is nondeterministic, results can drift. (3) It builds byId as a Map (we need earlier part) likely overwriting duplicates, which would mishandle the provisional/final duplicate ledger rows (TXN-ba9e6ade...) and could cause status drift. (4) parseLedger uses markdown.indexOf(\"## Transaction Ledger\"), which will match the earlier decoy heading \"## Transaction Ledger (working copy)\" because it’s a prefix, so it likely parses the working copy instead of the canonical section. That explains wrong ledger sourcing and mismatched corrections. We need to fix ledger parser to match the exact canonical heading line `## Transaction Ledger` and ignore working copy. Then fix reconciliation: stable selection among duplicate ledger rows (prefer non-provisional; if multiple finals, define deterministic tie-break), apply correction precedence/order per Brief 04, compute previous_value correctly, sort report by notice_id, and ensure transactions.json determinism.",
+  "plan": "1) Open full parser/ledger.js and parser/corrections.js plus the top of normalize/reconcile.js to confirm structures and current behavior. 2) Patch parser/ledger.js to locate the canonical section using a regex that matches an exact heading line (`^## Transaction Ledger\\s*$`), then parse until next `## ` heading. 3) In reconcile.js: build base ledger rows deterministically: group by transaction_id, drop provisional when a non-provisional exists, otherwise pick the last occurrence (or per brief). 4) Parse and sort correction notices by notice_id ascending (and apply precedence rules per Brief 04; if they specify effective date ordering, incorporate). While applying each correction, record previous_value from the current target field before mutation. 5) Ensure report is sorted by notice_id ascending before writing. 6) Run extractor twice and diff /app/output/transactions.json for byte-identical output; run schema validation via existing pipeline.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: app/audit-extractor/src/parser/ledger.js\n@@\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  if (start === -1) return [];\n-  const slice = markdown.slice(start);\n+  // The archive contains a decoy \"## Transaction Ledger (working copy)\" section.\n+  // The authoritative ledger section heading line is exactly:\n+  //   ## Transaction Ledger\n+  // So we must match the full heading line, not a prefix.\n+  const m = markdown.match(/^## Transaction Ledger\\s*$/m);\n+  if (!m) return [];\n+  const start = m.index;\n+  const slice = markdown.slice(start);\n   const lines = slice.split(/\\r?\\n/);\n   const items = [];\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: app/audit-extractor/src/normalize/reconcile.js\n@@\n function reconcileTransactions(parsed) {\n-  const byId = new Map();\n-  for (const row of parsed.ledger) {\n-    byId.set(row.transaction_id, { ...row });\n-  }\n+  // Build a deterministic base ledger view.\n+  // The ledger can contain multiple rows for the same transaction_id (e.g. provisional + final).\n+  // Prefer non-provisional rows when present; otherwise prefer the last occurrence to match\n+  // the archive’s \"canonical ledger\" expectation.\n+  const grouped = new Map();\n+  for (const row of parsed.ledger) {\n+    if (!grouped.has(row.transaction_id)) grouped.set(row.transaction_id, []);\n+    grouped.get(row.transaction_id).push({ ...row });\n+  }\n+\n+  const byId = new Map();\n+  for (const [transactionId, rows] of grouped.entries()) {\n+    const finals = rows.filter((r) => !r.provisional);\n+    const chosen = (finals.length ? finals : rows)[(finals.length ? finals : rows).length - 1];\n+    byId.set(transactionId, chosen);\n+  }\n@@\n-  for (const notice of parsed.corrections) {\n+  // Apply correction notices deterministically. Contract requires report sorted by notice_id.\n+  const notices = [...parsed.corrections].sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));\n+  const report = [];\n+  for (const notice of notices) {\n     const target = byId.get(notice.transaction_id);\n     if (!target) continue;\n \n+    const prev =\n+      notice.field === \"owner\"\n+        ? String(target.owner ?? \"\")\n+        : notice.field === \"status\"\n+          ? String(target.status ?? \"\")\n+          : notice.field === \"date\"\n+            ? String(target.date ?? \"\")\n+            : \"\";\n+\n     if (notice.field === \"owner\") {\n       target.owner = notice.value;\n     } else if (notice.field === \"status\") {\n       target.status = notice.value;\n     } else if (notice.field === \"date\") {\n       target.date = notice.value;\n     }\n-    report.push({\n-      notice_id: notice.notice_id,\n-      transaction_id: notice.transaction_id,\n-      field: notice.field,\n-      previous_value: \"\",\n-      new_value: notice.value,\n-      effective: notice.effective,\n-    });\n+    report.push({\n+      notice_id: notice.notice_id,\n+      transaction_id: notice.transaction_id,\n+      field: notice.field,\n+      previous_value: prev,\n+      new_value: String(notice.value),\n+      effective: notice.effective,\n+    });\n   }\n@@\n-  return { items, report };\n+  return { items, report };\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cp /app/output/transactions.json /tmp/transactions.run1.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/transactions.run1.json /app/output/transactions.json || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/output && wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

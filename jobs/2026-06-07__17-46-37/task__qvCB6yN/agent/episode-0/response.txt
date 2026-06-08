@@ -1,0 +1,55 @@
+{
+  "analysis": "We are at /app with no prior commands run. Need to inspect the audit-extractor Node project, understand output contract, read the FY24 archive to reconcile authoritative rules (Investigation Briefs 01–09 with Brief 09 override), then fix extraction logic so reruns are stable, holds incorporate later mail, and correction notices map to correct ledger rows. Also ensure CLI requires --input and --outdir (stderr + exit 1). Finally run the extractor with the fixed code to /app/output using the required command.",
+  "plan": "1) Inspect repository structure and docs, especially extractor-output-contract.md. 2) Run existing extractor to reproduce issues and see current outputs. 3) Read authoritative parts of /app/data/audit_archive.md focusing on Briefs 01–09 and the structured ledger/corrections section near the end. 4) Locate parsing/reconciliation code in src; identify nondeterminism (e.g., iteration order), hold logic that ignores later mail, and correction-to-ledger matching bugs. 5) Implement deterministic sorting, correct rule precedence (Brief 09 override), and robust matching keys for corrections/holds. 6) Fix CLI argument validation and exit codes. 7) Run extractor into /app/output and sanity-check artifacts match contract. 8) Run any available tests (without modifying /tests).",
+  "commands": [
+    {
+      "keystrokes": "ls -ლა /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js --help\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out && mkdir -p /tmp/audit_out\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out\n",
+      "duration": 5
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_out\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/audit_out/*; do echo \"===== $f\"; head -n 40 \"$f\"; done\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief\" -n /app/data/audit_archive.md | head\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" -n /app/data/audit_archive.md | head\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

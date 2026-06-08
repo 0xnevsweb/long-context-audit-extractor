@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       // policy_waiver (Brief 08): final status approved, amount > 10000,
+>       // Policy Exception with approved_by: compliance
+>       if (finalStatus === 'approved' && amount > 10000) {
+>         const hasWaiver = parsed.policyExceptions.some(pe =>
+>           pe.transaction_id === row.transaction_id &&
+>           pe.approved_by === 'compliance'
+>         );
+>         if (hasWaiver) {
+>           reasons.push('policy_waiver');
+>         }
+>       }
+>
+>       // retroactive_review (Brief 08): final status reversed, amount > 5000,
+>       // winning correction changed status
+>       if (finalStatus === 'reversed' && amount > 5000 &&
+>           statusChangedByCorrection.has(row.transaction_id)) {
+>         reasons.push('retroactive_review');
+>       }
+>
+>       // Sort reasons lexically and join with semicolon
+>       reasons.sort();
+>       const exceptionReason = reasons.length > 0 ? reasons.join(';') : null;
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: finalStatus,
+>         effective_date: effectiveDates.get(row.transaction_id),
+>         amount_usd: amount,
+>         exception_reason: exceptionReason,
+>       };
+>     })
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@7aa6d0745461:/app#

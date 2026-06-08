@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1147:In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves na
+rrative context so auditors can explain why a given transaction received compliance_hold.
+1169:In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves na
+rrative context so auditors can explain why a given transaction received compliance_hold.
+1181:In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves na
+rrative context so auditors can explain why a given transaction received compliance_hold.
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1205:Exception coding review: `exception_reason` is null unless a code applies. Set
+1206:`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+1209:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1217:In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative co
+ntext so auditors can explain why a given transaction received compliance_hold.
+1241:In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative co
+ntext so auditors can explain why a given transaction received compliance_hold.
+1259:In Q1 close, external advisors reviewed vendor onboarding backlog and asked for a machine-readable reconciliation trace. The archive preserves narrative co
+ntext so auditors can explain why a given transaction received compliance_hold.
+1293:In November certification, external advisors reviewed grant compliance attestation and asked for a machine-readable reconciliation trace. The archive prese
+rves narrative context so auditors can explain why a given transaction received compliance_hold.
+1303:In November certification, external advisors reviewed grant compliance attestation and asked for a machine-readable reconciliation trace. The archive prese
+rves narrative context so auditors can explain why a given transaction received compliance_hold.
+1337:In November certification, external advisors reviewed grant compliance attestation and asked for a machine-readable reconciliation trace. The archive prese
+rves narrative context so auditors can explain why a given transaction received compliance_hold.
+1355:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+1361:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+1389:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+1401:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+1407:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves
+narrative context so auditors can explain why a given transaction received compliance_hold.
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1431:(lowercase), effective_date, amount_usd, exception_reason (null or
+1433:transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+1434:same rows; leave exception_reason blank when null. `exceptions.json` is
+1435:`{"items":[...]}` with only rows where exception_reason is set.
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+root@7a65087374e8:/app#

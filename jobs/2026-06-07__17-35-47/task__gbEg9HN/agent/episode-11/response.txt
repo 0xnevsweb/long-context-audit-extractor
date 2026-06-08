@@ -1,0 +1,27 @@
+{
+  "analysis": "parseArchive shows ledger:32 but corrections:0, so the corrections parser is failing to extract any notices. Current corrections.js uses indexOf(\"## Correction Notices\") and indexOf(\"## Transaction Ledger\") to bound the slice. This likely fails because indexOf(\"## Transaction Ledger\") hits the decoy \"## Transaction Ledger (working copy)\" first, which is still after corrections so slicing should still be non-empty; however it then splits blocks with slice.split(/^### /m) which in JS does not work as intended because split with a regex anchor may behave but should; still it takes .slice(1) and then checks first line startsWith('CORR-') but the first line will be like 'CORR-xxxx' only if the '### ' prefix was removed—OK. Yet corrections is 0, meaning slice is empty (start/end not found or end<=start). Most likely end indexOf finds an earlier ledger occurrence before corrections due to the substring appearing earlier in briefs. So end>start fails. We must rewrite parseCorrections to: (a) find the exact heading line `## Correction Notices` via regex, then find the next level-2 heading AFTER it (not indexOf Transaction Ledger string), and parse within that section. We attempted rewrite but Python regex replacement failed due to backslash escapes. We'll overwrite the whole file via heredoc. Then rerun parseArchive and extractor.",
+  "plan": "1) Overwrite /app/audit-extractor/src/parser/corrections.js with a clean implementation using exact heading match and next-`##` delimiter. 2) Re-run a Node snippet to confirm parsed.corrections length > 0. 3) Re-run extractor and verify reconciliation_report.jsonl now contains lines. 4) If still empty, inspect sections.js wiring, but likely resolved.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  // Extract only the authoritative \"## Correction Notices\" section.\n  const m = markdown.match(/^## Correction Notices\\s*$/m);\n  if (!m) return [];\n\n  const after = markdown.slice(m.index + m[0].length);\n  const nextHeading = after.search(/^##\\s+/m);\n  const section = nextHeading === -1 ? after : after.slice(0, nextHeading);\n\n  const notices = [];\n  const blocks = section\n    .split(/\\n(?=###\\s+CORR-)/g)\n    .map((b) => b.trim())\n    .filter((b) => b.startsWith(\"### CORR-\"));\n\n  for (const block of blocks) {\n    const lines = block.split(/\\r?\\n/);\n    const notice_id = lines[0].replace(/^###\\s+/, \"\").trim();\n    const entry = { notice_id, transaction_id: null, field: null, value: null, effective: null };\n\n    for (const line of lines.slice(1)) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) entry.transaction_id = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"field:\")) entry.field = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"value:\")) entry.value = trimmed.split(\":\", 2)[1].trim();\n      else if (trimmed.startsWith(\"effective:\")) entry.effective = trimmed.split(\":\", 2)[1].trim();\n    }\n\n    if (entry.notice_id && entry.transaction_id && entry.field && entry.value && entry.effective) {\n      notices.push(entry);\n    }\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed=parseArchive(md);\nconsole.log({ledger: parsed.ledger.length, corrections: parsed.corrections.length});\nconsole.log(parsed.corrections.slice(0,5));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 10 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

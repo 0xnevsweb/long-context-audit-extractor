@@ -1,0 +1,127 @@
+New Terminal Output:
+
+root@9416c0dee655:/app# node - <<'NODE'
+> const fs=require('fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed=parseArchive(md);
+> console.log({ledger: parsed.ledger.length, corrections: parsed.corrections.length});
+> console.log(parsed.corrections.slice(0,3));
+> NODE
+{ ledger: 32, corrections: 0 }
+[]
+root@9416c0dee655:/app# sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@9416c0dee655:/app# python3 - <<'PY'
+> import re, pathlib
+> p=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')
+> s=p.read_text()
+> # Rewrite parseCorrections to reliably extract only the Correction Notices section
+> # between the exact heading and the next level-2 heading.
+> new = '''function parseCorrections(markdown) {
+>   const m = markdown.match(/^## Correction Notices\s*$/m);
+>   if (!m) return [];
+>   const after = markdown.slice(m.index + m[0].length);
+>   const next = after.search(/^##\s+/m);
+>   const section = (next === -1 ? after : after.slice(0, next));
+>
+>   const blocks = section.split(/\n(?=###\s+CORR-)/g).filter((b) => b.trim().startsWith('### CORR-'));
+>   const notices = [];
+>
+>   for (const block of blocks) {
+>     const lines = block.split(/\r?\n/);
+>     const header = lines[0].trim();
+>     const notice_id = header.replace(/^###\s+/, '').trim();
+>     const entry = { notice_id, transaction_id: null, field: null, value: null, effective: null };
+>
+>     for (const line of lines.slice(1)) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith('targets:')) entry.transaction_id = trimmed.split(':', 2)[1].trim();
+>       else if (trimmed.startsWith('field:')) entry.field = trimmed.split(':', 2)[1].trim();
+>       else if (trimmed.startsWith('value:')) entry.value = trimmed.split(':', 2)[1].trim();
+>       else if (trimmed.startsWith('effective:')) entry.effective = trimmed.split(':', 2)[1].trim();
+>     }
+>
+>     if (entry.notice_id && entry.transaction_id && entry.field && entry.value && entry.effective) notices.push(entry);
+>   }
+>
+>   return notices;
+> }
+> '''
+> # Replace function body wholesale
+> s2=re.sub(r"function parseCorrections\(markdown\) \{[\s\S]*?\n\}\n\nmodule\.exports", new + "\nmodule.exports", s, count=1)
+> if s2==s:
+>     raise SystemExit('failed to rewrite parseCorrections')
+> p.write_text(s2)
+> print('rewrote parseCorrections')
+> PY
+Traceback (most recent call last):
+  File "<stdin>", line 37, in <module>
+  File "/usr/lib/python3.11/re/__init__.py", line 185, in sub
+    return _compile(pattern, flags).sub(repl, string, count)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/re/__init__.py", line 317, in _subx
+    template = _compile_repl(template, pattern)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/re/__init__.py", line 308, in _compile_repl
+    return _parser.parse_template(repl, pattern)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.11/re/_parser.py", line 1078, in parse_template
+    raise s.error('bad escape %s' % this, len(this)) from None
+re.error: bad escape \s at position 88 (line 2, column 51)
+root@9416c0dee655:/app# python3 - <<'PY'
+> import re, pathlib
+> p=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')
+> s=p.read_text()
+> # Ensure prev is computed before use (fix ReferenceError).
+> if 'previous_value: prev' in s and 'const prev' not in s:
+>     # Insert prev computation right after the target null-check.
+>     s=re.sub(r"const target = byId\.get\(notice\.transaction_id\);\n\s*if \(!target\) \{\n\s*continue;\n\s*\}\n",
+>              "const target = byId.get(notice.transaction_id);\n    if (!target) {\n      continue;\n    }\n    const prev = notice.field === 'owner' ? String(
+target.owner ?? '') : (notice.field === 'status' ? String(target.status ?? '') : (notice.field === 'date' ? String(target.date ?? '') : ''));\n",
+>              s, count=1)
+> # Also handle the variant without braces.
+> s=re.sub(r"const target = byId\.get\(notice\.transaction_id\);\n\s*if \(!target\) continue;\n",
+>          "const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n    const prev = notice.field === 'owner' ? String(target.owner ?? '')
+: (notice.field === 'status' ? String(target.status ?? '') : (notice.field === 'date' ? String(target.date ?? '') : ''));\n",
+>          s, count=1)
+> p.write_text(s)
+> print('patched prev in reconcile.js')
+> PY
+patched prev in reconcile.js
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl
+0 /app/output/reconciliation_report.jsonl
+root@9416c0dee655:/app#

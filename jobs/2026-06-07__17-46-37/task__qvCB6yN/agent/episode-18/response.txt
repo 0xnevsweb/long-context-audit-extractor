@@ -1,0 +1,51 @@
+{
+  "analysis": "The current screen is showing filler/narrative around Brief 09 rather than the specific directive lines. We already know Brief 09 contains the hold-timing override (from earlier extraction showing it compares compliance mail against the pre-correction ledger date). We still need the exact directive text from Briefs 01–06 (ledger sourcing boundaries, mail timing rule from Brief 03, correction precedence from Brief 04, signed amendments rule from Brief 05, effective_date semantics from Brief 06) and we should capture the exact paragraph lines for Brief 09 as well. We'll use focused greps for distinctive phrases from each brief (e.g., 'exactly `## Transaction Ledger`', 'Status precedence from lowest to highest', 'Correction notice', 'signed', 'effective_date') and print tight context around those matches to avoid filler.",
+  "plan": "1) Grep the archive for key directive phrases tied to each brief and print surrounding context with sed around the match line numbers. 2) Specifically extract: Brief 01 canonical ledger rule about heading exactly '## Transaction Ledger'; Brief 03 mail timing rule for compliance_hold; Brief 04 correction precedence and ordering; Brief 05 signed amendments and owner override rules; Brief 06 effective_date output definition; Brief 09 hold timing override paragraph. 3) With these authoritative rules captured, implement code changes in parser/ledger.js and parser/corrections.js (exact heading match), normalize/reconcile.js (proper overlay/ordering/previous_value), normalize/exceptions.js (exception_reason codes), and output writers/schema validation (contract).",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"exactly `## Transaction Ledger`\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Status precedence from lowest to highest\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Compliance Mail Timing\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"compliance_hold.*sent|mail.*timing|compare.*mail\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Correction Notice Precedence\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"correction notices.*apply|winning correction|notice_id\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Meeting Amendments and Owners\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"unsigned|signed amendments|signed:\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"Effective Dates on Output\" -n /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"effective_date\" /app/data/audit_archive.md | head -n 60\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -nEi \"Brief 09.*supersedes|amendment supersedes\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,10 @@
+{
+  "analysis": "The terminal keeps showing the tail of the file. Let me redirect to a temp file to capture all the data I need.",
+  "plan": "Save the canonical Transaction Ledger, the working copy ledger, and the full list to a temp file, then cat it.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '3912,4118p' /app/data/audit_archive.md > /tmp/ledger.txt && wc -l /tmp/ledger.txt && cat /tmp/ledger.txt\n",
+      "duration": 0.5
+    }
+  ]
+}

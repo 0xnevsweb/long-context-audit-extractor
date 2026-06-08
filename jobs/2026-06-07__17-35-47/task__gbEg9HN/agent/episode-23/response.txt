@@ -1,0 +1,35 @@
+{
+  "analysis": "We still didn’t get the Brief 07/09 sections printed—only grep output for hold mentions. The xargs+sed commands likely didn’t run due to missing grep matches outputting nothing (maybe the headings use an em dash variant or extra spaces so grep -F didn’t match). We previously saw heading '## Investigation Brief 01 — ...' etc, so the literal should match. Maybe terminal truncated earlier outputs. We need to explicitly run grep for 'Investigation Brief 07' without leading ## and then print around that line. We'll also use grep for 'Brief 09' etc. Once we have the text, we can implement compliance_hold: likely flag when compliance email sent date is after ledger date (pre-correction) and status indicates non-approved. Brief 09 says compare against ledger date immediately before corrections, not post-correction dates. We'll implement that: use base ledger date (before corrections) as comparison anchor for mail timing, store it before applying correction notices.\n",
+  "plan": "1) Find line numbers for 'Brief 07' and 'Brief 09' using grep that is robust to heading variants. 2) Use sed to print those ranges. 3) Implement compliance_hold rule with the inferred Brief 09 override: compare email.sent to original ledger date (before corrections). If email.sent > original_date, add flag 'compliance_hold'. Also add 'policy_exception' for policyExceptions membership. Sort codes lexically and join with ';'. Ensure deterministic and update exceptions.json accordingly.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"Investigation Brief 0?7\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Investigation Brief 0?9\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Brief 07\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Brief 09\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "LINE=$(grep -nE \"Investigation Brief 0?7\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo $LINE; if [ -n \"$LINE\" ]; then sed -n \"$((LINE-3)),$((LINE+220))p\" /app/data/audit_archive.md; fi\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "LINE=$(grep -nE \"Investigation Brief 0?9\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo $LINE; if [ -n \"$LINE\" ]; then sed -n \"$((LINE-3)),$((LINE+260))p\" /app/data/audit_archive.md; fi\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text().splitlines()\nout=[]\nfor line in s:\n    out.append(line)\n# no-op: we'll do a targeted manual edit using a full rewrite of reconcileTransactions exception section next step\np.write_text('\\n'.join(out)+\"\\n\")\nprint('ok')\nPY\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,55 @@
+{
+  "analysis": "We have index.js showing pipeline: parseArchive -> reconcileTransactions -> buildExceptions -> write outputs -> validate. handbook.js only loads defaults. Prior commands to dump contract and briefs didn’t run in this pasted output; we still need to extract Investigation Briefs 01–09 text and inspect reconciliation/normalization code (normalize/reconcile.js, normalize/exceptions.js) plus parser/sections.js. The issues (drift, missed later mail, wrong correction mapping) likely live in reconcileTransactions and sorting utilities/output writers.",
+  "plan": "1) Inspect parser/sections.js to see how archive is parsed and whether it incorrectly ingests non-authoritative sections. 2) Inspect normalize/reconcile.js and related policy/constants to see how holds, mail timing, and correction mapping are implemented. 3) Inspect utils/sort.js and output writers to ensure deterministic ordering. 4) Extract and read Investigation Brief 01–09 text ranges from the archive to implement Brief 09 amendment. 5) Reproduce drift by running extractor twice and diffing transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f:\n    lines=f.readlines()\nidx=[]\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^(#+)\\s*Investigation Brief\\s*0?([1-9])\\b',l)\n    if m:\n        idx.append((int(m.group(2)),i))\nidx=sorted(idx)\nprint(idx)\nfor k,(n,start) in enumerate(idx):\n    end=(idx[k+1][1]-1) if k+1<len(idx) else len(lines)\n    print(f\"\\n--- Brief {n:02d} lines {start}-{end} ---\")\n    # print entire brief but cap to 400 lines each to keep terminal reasonable\n    for j in range(start, min(end, start+399)+1):\n        print(lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sha256sum /tmp/out1/transactions.json /tmp/out2/transactions.json || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json | head\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

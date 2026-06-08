@@ -1,0 +1,67 @@
+New Terminal Output:
+
+root@9416c0dee655:/app# sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@9416c0dee655:/app# sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header = "transaction_id,owner,status,effective_date,amount_usd";
+  const lines = items.map(
+    (row) =>
+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+  );
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@9416c0dee655:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("fs");
+>
+> function writeTransactionsJson(outPath, items) {
+>   const payload = { items };
+>   fs.writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
+> }
+>
+> function writeExceptionsJson(outPath, items) {
+>   const payload = { items };
+>   fs.writeFileSync(outPath, JSON.stringify(payload, null, 2) + "\n", "utf8");
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@9416c0dee655:/app# rm -rf /app/output && mkdir -p /app/output
+root@9416c0dee655:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@9416c0dee655:/app# head -n 8 /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+root@9416c0dee655:/app# cat /app/output/exceptions.json
+{
+  "items": []
+}
+root@9416c0dee655:/app# ls -la /app/output && wc -l /app/output/reconciliation_report.jsonl
+total 32
+drwxr-xr-x 2 root root 4096 Jun  8 00:40 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:40 ..
+-rw-r--r-- 1 root root   18 Jun  8 00:40 exceptions.json
+-rw-r--r-- 1 root root 1094 Jun  8 00:40 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2438 Jun  8 00:40 transactions.csv
+-rw-r--r-- 1 root root 7397 Jun  8 00:40 transactions.json
+6 /app/output/reconciliation_report.jsonl
+root@9416c0dee655:/app#

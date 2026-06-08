@@ -1,0 +1,55 @@
+{
+  "analysis": "Brief 01 requires: only the section headed exactly '## Transaction Ledger' is authoritative; ignore any ledger block with 'provisional: true' (case-insensitive); if same transaction id appears multiple times in non-provisional blocks, the last one in file order is base. Also: locate section boundaries using regex anchored to whole heading lines at line start (not substring search). Current reconcile.js is overly naive: it simply takes parsed.ledger rows (unknown if correctly sourced), overwrites owners from meetings unconditionally, overwrites status from every email unconditionally (no timing/precedence), applies all corrections in input order without precedence or previous_value, writes field name 'date' but output contract expects 'effective_date' field changes with proper previous_value, and report is unsorted. Exceptions logic is incomplete (never sets exception_reason). sortByTransactionId comparator is unstable for equals (returns 1 even when equal) and not total ordering. This likely causes drift. We still must read Briefs 02–09 and inspect parsers to implement correct rules.",
+  "plan": "1) Read remaining briefs (02–09) fully to capture binding rules about status precedence, compliance mail timing (and Brief 09 amendment), correction precedence, owners, effective dates, exception flags, and artifact requirements. 2) Inspect parser/sections.js and individual parsers (ledger/emails/corrections/meetings/policy) to confirm whether they properly identify canonical sections/ignore provisional blocks. 3) Rewrite normalize/reconcile.js to: build base ledger per Brief 01; apply meeting amendments only when allowed; apply status precedence rules; compute compliance_hold and other exception flags and join into exception_reason sorted; apply correction notices in correct precedence/tie-breaker order, recording previous_value and producing jsonl sorted by notice_id; ensure deterministic output ordering and stable sorts; ensure amount has two decimals. 4) Update output writers if needed to ensure byte-identical JSON (stable stringify, newline handling).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '920,1325p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1325,1765p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1765,1860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

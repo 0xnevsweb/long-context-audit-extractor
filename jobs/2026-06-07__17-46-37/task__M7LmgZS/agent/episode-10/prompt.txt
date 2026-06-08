@@ -1,0 +1,57 @@
+New Terminal Output:
+
+root@30aa72376025:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@30aa72376025:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const exception = row.exception_reason == null ? "" : row.exception_reason;
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${exception}`;
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@30aa72376025:/app# sed -n '1,120p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@30aa72376025:/app# sed -n '1,140p' /app/audit-extractor/src/output/csvWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsCsv(filePath, items) {
+  const header =
+    "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+  const lines = items.map((row) => {
+    const exception = row.exception_reason == null ? "" : row.exception_reason;
+    return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${exception}`;
+  });
+  fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+}
+
+module.exports = { writeTransactionsCsv };
+root@30aa72376025:/app#

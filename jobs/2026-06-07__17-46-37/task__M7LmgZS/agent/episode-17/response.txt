@@ -1,0 +1,6 @@
+{
+  "analysis": "All required artifacts are produced under /app/output, with correct shapes: transactions.json uses {items:[...]}, transactions.csv has correct header including exception_reason, exceptions.json includes only flagged rows and is sorted, and reconciliation_report.jsonl is populated and sorted by notice_id (verified earlier). Determinism check passed (diff empty across reruns). CLI missing args prints to stderr and exits non-zero as required. Core fixes addressed: decoy section heading issue by using lastIndexOf for structured sections; ledger duplicate/provisional handling; meeting amendments require signed; mail parsing now includes Date and robust subject parsing; reconciliation now computes exception_reason (policy_exception and compliance_hold) and produces proper correction report with previous_value. Ready for grading.",
+  "plan": "Mark task complete.",
+  "commands": [],
+  "task_complete": true
+}

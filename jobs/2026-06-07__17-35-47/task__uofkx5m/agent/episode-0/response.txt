@@ -1,0 +1,43 @@
+{
+  "analysis": "No commands have been run yet. We need to inspect the audit-extractor Node project, read the output contract, and study the authoritative reconciliation policy inside /app/data/audit_archive.md (especially Investigation Briefs 01–09 and the Brief 09 amendment). Then we must fix the extractor so outputs are deterministic across reruns, compliance holds incorporate later mail per amended wording, and correction notices map to the correct ledger rows. Finally, run the provided CLI with --input and --outdir, ensuring missing args error to stderr and exit 1.",
+  "plan": "1) Inspect repository structure and read docs/extractor-output-contract.md to understand required artifacts and schemas. 2) Open /app/data/audit_archive.md and locate Investigation Briefs 01–09, focusing on Brief 09 override language, plus the structured data near the end (likely ledger rows / notices). 3) Examine src/cli.js and extractor logic to find nondeterminism (iteration over object keys, unstable sorts, random IDs, timestamps) and incorrect reconciliation mapping rules. 4) Implement rule reconciliation per briefs, add stable sorting and deterministic IDs, and fix correction-notice-to-ledger-row joining logic and hold logic. 5) Run node cli.js extract with the fixed code to /app/output and spot-check artifacts. 6) Verify CLI argument validation (missing --input/--outdir => stderr + exit 1).",
+  "commands": [
+    {
+      "keystrokes": "ls -ლა\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/data\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "wc -l /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 0[1-9]|Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

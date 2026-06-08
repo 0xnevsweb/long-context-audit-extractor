@@ -1,0 +1,55 @@
+{
+  "analysis": "Current reconcile.js is extremely naive: it loads ledger rows into a Map (last-write-wins based on parse order), then overwrites owner from meetings, overwrites status from emails (no timing/holds), then applies all corrections blindly with previous_value always empty and without sorting/precedence. Report is unsorted and does not compute previous_value. This likely causes drifting outcomes if parse order varies (e.g., object iteration, unstable sorting) and definitely mishandles holds and correction application. Ledger parser also drops duplicate TXN blocks entirely (keeps first occurrence), which can mis-handle provisional vs final ledger rows (we saw TXN-ba9e6ade duplicated with provisional:true then final row). We still need the authoritative rules from Briefs 01–09 (especially Brief 09 amendment) and to inspect meetings/policy/exceptions parsers. Also need to view the correction notices section and email excerpts to understand available fields (dates, notice ids, etc.).",
+  "plan": "1) Inspect remaining parsers (meetings, policy, sections) and exceptions normalization to understand pipeline and available fields. 2) Extract and read Investigation Briefs 01–09 from the markdown (previous python output was truncated; we’ll directly slice by line numbers around known headings/offsets and also locate Brief 09 amendment text). 3) Inspect the markdown around '## Correction Notices' and '## Transaction Ledger' and '## Email Excerpts' to see exact formats (do emails include dates/hold flags, do corrections target multiple rows, etc.). 4) Based on rules: fix ledger parsing to select the correct ledger row when duplicates exist (e.g., prefer non-provisional / later block), and make selection deterministic. 5) Fix reconciliation to: apply meeting overlays per rules, apply email-driven statuses with hold timing (including later mail per Brief 09), and apply correction notices with correct precedence + deterministic ordering; generate report sorted by notice_id and with correct previous_value. 6) Run extractor twice and diff transactions.json to ensure byte-identical stability.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3800,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3925,4105p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    lines=f.readlines()\n# print line numbers for the Investigation Brief headings\nfor i,l in enumerate(lines, start=1):\n    if re.match(r\"^#+\\s*Investigation\\s*Brief\\s*0?[1-9]\\b\", l, re.I):\n        print(f\"{i}: {l.strip()}\")\nPY\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\n# dump Investigation Brief 09 fully (line-based) for the hold amendment\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8',errors='replace') as f:\n    lines=f.readlines()\nstarts=[]\nfor i,l in enumerate(lines):\n    if re.match(r\"^#+\\s*Investigation\\s*Brief\\s*0?9\\b\", l, re.I):\n        starts.append(i)\nif not starts:\n    raise SystemExit('no brief 09 heading found')\nstart=starts[0]\nend=len(lines)\nfor j in range(start+1,len(lines)):\n    if re.match(r\"^#+\\s*Investigation\\s*Brief\\s*\\d+\\b\", lines[j], re.I):\n        end=j\n        break\n# print the whole section\nfor k in range(start, end):\n    print(f\"{k+1}:{lines[k]}\", end='')\nPY\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

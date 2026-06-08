@@ -1,0 +1,26 @@
+{
+  "analysis": "I can see multiple bugs:\n1. Meetings parser doesn't extract `effective` date\n2. Policy exceptions parser doesn't track `approved_by` field (Brief 08 requires `approved_by: compliance`)\n3. Corrections parser has a bug with the `targets:` field split by `:` which will truncate UUIDs\n\nLet me read the remaining source files.",
+  "plan": "Read reconcile, exceptions, and output modules.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "cat /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.5
+    }
+  ]
+}

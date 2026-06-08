@@ -1,0 +1,190 @@
+New Terminal Output:
+ot found
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/utils/sectionSlice.js <<'EOF'
+> // Utility to slice a markdown document between exact heading lines.
+> // Brief 01 requires locating section boundaries with regex anchored to whole
+> // heading lines at line start.
+>
+> function escapeRegex(s) {
+>   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> }
+>
+> function findHeadingIndex(markdown, headingLine) {
+>   const re = new RegExp(`^${escapeRegex(headingLine)}$`, "m");
+>   const match = re.exec(markdown);
+>   return match ? match.index : -1;
+> }
+>
+> function sliceSection(markdown, startHeadingLine, endHeadingLine) {
+>   const start = findHeadingIndex(markdown, startHeadingLine);
+>   if (start < 0) return "";
+>   if (!endHeadingLine) return markdown.slice(start);
+>   const end = findHeadingIndex(markdown, endHeadingLine);
+>   if (end < 0 || end <= start) return markdown.slice(start);
+>   return markdown.slice(start, end);
+> }
+>
+> module.exports = { sliceSection, findHeadingIndex };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> const { sliceSection } = require("../utils/sectionSlice");
+>
+> function parseLedger(markdown) {
+>   // Only exact heading line is authoritative (Brief 01)
+>   const slice = sliceSection(markdown, "## Transaction Ledger");
+>   if (!slice) return [];
+>
+>   const rows = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!/^TXN-[0-9a-f-]+$/i.test(transactionId)) continue;
+>
+>     // Ignore any ledger block that includes `provisional: true` (case insensitive)
+>     if (lines.some((l) => /^provisional:\s*true\s*$/i.test(l.trim()))) {
+>       continue;
+>     }
+>
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (/^amount:/i.test(trimmed)) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (/^owner:/i.test(trimmed)) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (/^status:/i.test(trimmed)) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (/^date:/i.test(trimmed)) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     // When same id appears multiple times in non-provisional blocks,
+>     // the last such block in file order is the base row.
+>     const existingIdx = rows.findIndex((r) => r.transaction_id === transactionId);
+>     if (existingIdx >= 0) rows.splice(existingIdx, 1);
+>     rows.push(row);
+>   }
+>
+>   return rows;
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> const { sliceSection } = require("../utils/sectionSlice");
+>
+> function parseEmails(markdown) {
+>   const slice = sliceSection(markdown, "## Email Excerpts", "## Policy Exceptions");
+>   if (!slice) return [];
+>
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     const sentMatch = block.match(/^sent:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})$/im);
+>
+>     if (!fromMatch || !subjectMatch || !statusMatch) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1].trim(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>       sent: sentMatch ? sentMatch[1].trim() : null,
+>       raw: block,
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> const { sliceSection } = require("../utils/sectionSlice");
+>
+> function parseCorrections(markdown) {
+>   const slice = sliceSection(markdown, "## Correction Notices", "## Transaction Ledger");
+>   if (!slice) return [];
+>
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = (lines[0] || "").trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("targets:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (entry.transaction_id && entry.field && Object.hasOwn(entry, "value") && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> const { sliceSection } = require("../utils/sectionSlice");
+>
+> function parsePolicyExceptions(markdown) {
+>   const slice = sliceSection(markdown, "## Policy Exceptions", "## Correction Notices");
+>   if (!slice) return new Set();
+>
+>   const ids = new Set();
+>   const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(slice)) !== null) {
+>     ids.add(match[1]);
+>   }
+>   return ids;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@3f2a24e5dabd:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, `${JSON.stringify({ items }, null, 2)}\n`);
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, `${JSON.stringify({ items }, null, 2)}\n`);
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@3f2a24e5dabd:/app#

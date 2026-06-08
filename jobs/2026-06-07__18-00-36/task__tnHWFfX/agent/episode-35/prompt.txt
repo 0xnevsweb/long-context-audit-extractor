@@ -1,0 +1,38 @@
+New Terminal Output:
+
+
+root@7aa6d0745461:/app# sed -n '3904,3912p' /app/data/audit_archive.md
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+root@7aa6d0745461:/app# sed -n '2835,2845p' /app/data/audit_archive.md
+Subject: FY24 sampling plan draft — thread 139
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+root@7aa6d0745461:/app# sed -n '2840,2850p' /app/data/audit_archive.md
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+status: approved
+
+From: controller@corp.internal
+root@7aa6d0745461:/app#

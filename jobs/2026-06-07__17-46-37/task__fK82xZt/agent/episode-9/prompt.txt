@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    84  ================================================================================
+    85  ## Investigation Brief 07 — Exception Flags (Part I)
+    86
+    87  Extract policy (authoritative):
+    88
+    89  Exception coding review: `exception_reason` is null unless a code applies. Set
+    90  `over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+    91  when final status is `rejected`, a qualifying `compliance@` email referenced
+    92  that transaction, and that email block includes a `sent:` line. The sent-date
+    93  comparison used for `compliance_hold` is defined in Investigation Brief 09
+    94  (Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+    95  lexical order of the reason codes.
+    96
+    97  ================================================================================
+    98  BRIEF 8 — ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+    99  ================================================================================
+   100  ## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+   101
+   102  Controller memo (binding reconciliation rule):
+   103
+   104  Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+   105  `amount_usd` > 10000, and a Policy Exception block exists for that transaction
+   106  with `approved_by: compliance` on its own line. Set `retroactive_review` when
+   107  final status is `reversed`, `amount_usd` > 5000, and a winning correction
+   108  notice changed status for that transaction.
+   109
+   110  `extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+   111  by `transaction_id` ascending with fields transaction_id, owner, status
+   112  (lowercase), effective_date, amount_usd, exception_reason (null or
+   113  semicolon-joined codes). `transactions.csv` uses header
+   114  transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+   115  same rows; leave exception_reason blank when null. `exceptions.json` is
+   116  `{"items":[...]}` with only rows where exception_reason is set.
+   117  `reconciliation_report.jsonl` is one JSON object per winning correction with
+   118  notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+   119  by notice_id ascending.
+root@7b07e9f8c4c5:/app# nl -ba /tmp/briefs.txt | sed -n '260,520p'
+root@7b07e9f8c4c5:/app# nl -ba /tmp/briefs.txt | sed -n '520,820p'
+root@7b07e9f8c4c5:/app# nl -ba /tmp/briefs.txt | sed -n '820,1200p'
+root@7b07e9f8c4c5:/app#

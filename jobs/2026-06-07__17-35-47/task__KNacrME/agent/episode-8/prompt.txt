@@ -1,0 +1,102 @@
+New Terminal Output:
+
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   const start = markdown.indexOf("## Transaction Ledger");
+>   if (start < 0) {
+>     return [];
+>   }
+>
+>   const slice = markdown.slice(start);
+>   const blocks = slice.split(/^### /m).slice(1);
+>
+>   // Policy (per archive notes):
+>   // - Ignore any ledger block that includes a line `provisional: true` (case-insensitive)
+>   // - If multiple non-provisional blocks exist for the same transaction_id, the last
+>   //   such block in file order is the base row.
+>   const byId = new Map();
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     const row = { transaction_id: transactionId };
+>     let provisional = false;
+>
+>     for (const line of lines) {
+>       const trimmed = String(line).trim();
+>       if (trimmed.startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       } else if (/^provisional\s*:\s*true\s*$/i.test(trimmed)) {
+>         provisional = true;
+>       }
+>     }
+>
+>     if (provisional) continue;
+>
+>     // last one wins
+>     byId.set(transactionId, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId };
+> EOF
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   // Contract: top-level envelope must be {"items": [...]}
+>   // Include trailing newline for stable byte-identical output.
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + "\n");
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   // Contract: top-level envelope must be {"items": [...]}
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + "\n");
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@e13b9ef9896e:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   // Contract header order (exact):
+>   // transaction_id,owner,status,effective_date,amount_usd,exception_reason
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>
+>   const lines = items.map((row) => {
+>     const exception = row.exception_reason == null ? "" : row.exception_reason;
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${exception}`;
+>   });
+>
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n") + "\n");
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/parser/ledger.js
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/utils/sort.js
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/output/jsonWriter.js
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/output/csvWriter.js
+root@e13b9ef9896e:/app#

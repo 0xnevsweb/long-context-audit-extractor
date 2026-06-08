@@ -1,0 +1,55 @@
+{
+  "analysis": "We located the authoritative brief section headers and line numbers (Briefs 01–09, with 09 starting around line 1670). We also found that source reconciliation happens in src/normalize/reconcile.js with inputs from parser/sections.js. Next we must read the actual policy text in briefs 01–09 (especially 03,04,07,09) and then inspect reconcile.js and related parsers (ledger/emails/corrections/meetings/policy) to find why statuses drift, holds miss later mail, and corrections map to wrong ledger rows or apply in wrong order.",
+  "plan": "1) Use sed to extract and read the binding policy sections for Briefs 01–09 (skipping field notes where possible but capturing any binding bullet rules). 2) Inspect the parsing code for ledger, emails, corrections, meetings, and how sections are detected. 3) Inspect normalize/reconcile.js and normalize/exceptions.js plus utils/sort.js to find nondeterministic ordering and incorrect rule implementation. 4) After understanding mismatches vs policy, implement fixes (stable deterministic sorting, correct hold timing per Brief 09, correct correction precedence and mapping).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,780p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,940p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1145p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1315p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1515p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1765p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

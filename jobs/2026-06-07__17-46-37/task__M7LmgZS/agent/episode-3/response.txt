@@ -1,0 +1,55 @@
+{
+  "analysis": "The terminal is currently showing narrative/case-study filler about capital project capitalization and repeated non-binding draft guidance. This indicates our previous sed output likely landed in a non-authoritative section (case study/decoy content) rather than the Investigation Briefs or code. We still need to view the remaining source files (reconcile/exceptions/etc.) and the authoritative Investigation Brief 01–09 sections (not field notes, not case studies) to implement correct reconciliation. Next step is to re-run targeted sed ranges and also directly extract by headings to avoid being stuck in filler, and separately continue inspecting code modules.",
+  "plan": "1) Re-run the code inspection commands for parser/ledger.js etc. plus normalize and utils to identify bugs (output shape, sorting, timing, correction mapping). 2) Extract Investigation Brief 01–09 sections precisely by heading boundaries using awk to print between headings, avoiding case studies and field notes where possible. 3) After we have both policy text and code understanding, we will implement fixes and rerun extractor.",
+  "commands": [
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/src/parser/meetings.js /app/audit-extractor/src/parser/policy.js /app/audit-extractor/src/parser/sections.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/normalize/reconcile.js /app/audit-extractor/src/normalize/exceptions.js; do echo \"\\n### $f\"; sed -n '1,340p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /app/audit-extractor/src/utils/date.js /app/audit-extractor/src/utils/sort.js /app/audit-extractor/src/schema/validate.js; do echo \"\\n### $f\"; sed -n '1,260p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01 /{p=1} /^## Investigation Brief 02 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 02 /{p=1} /^## Investigation Brief 03 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 03 /{p=1} /^## Investigation Brief 04 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 04 /{p=1} /^## Investigation Brief 05 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05 /{p=1} /^## Investigation Brief 06 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,280p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 06 /{p=1} /^## Investigation Brief 07 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 07 /{p=1} /^## Investigation Brief 08 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,320p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 08 /{p=1} /^## Investigation Brief 09 /{p=0} {if(p)print}' /app/data/audit_archive.md | sed -n '1,320p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09 /{p=1} /^## / && $0 !~ /^## Investigation Brief 09 /{if(p){exit}} {if(p)print}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

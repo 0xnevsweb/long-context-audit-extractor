@@ -1,0 +1,47 @@
+{
+  "analysis": "We found at least one correction notice block in the archive and it matches the current parser format (targets/field/value/effective). Yet reconciliation_report.jsonl was empty, which suggests parseCorrections is not seeing the Correction Notices section boundaries (maybe headings differ earlier, or multiple sections, or end marker not found), or reconcile is skipping because transaction_id not in ledgerById after our new ledger selection, or parseLedger fails to include that transaction. But that transaction TXN-1b083... exists in the ledger tail; so more likely parseCorrections slice is empty due to start/end indexes mismatch (e.g., '## Transaction Ledger' maybe appears earlier as a decoy heading). The parser uses markdown.indexOf for first occurrence; a decoy '## Transaction Ledger' earlier could cause end before real correction notices, resulting in empty slice. Similarly '## Correction Notices' could have a decoy. We must anchor to the structured data near file end, maybe by using lastIndexOf for these headings. Fix parseCorrections (and also parsePolicyExceptions/emails/ledger) to use lastIndexOf to ensure we use canonical structured sections near end. This likely also fixes drift and missing later mail. We'll update parsers to use lastIndexOf for section starts/ends.\n",
+  "plan": "1) Confirm there are multiple occurrences of '## Transaction Ledger' and '## Correction Notices' and where they are. 2) Update parser/corrections.js, ledger.js, emails.js, policy.js to use lastIndexOf for starts and to find end relative to that start (search after start). This ensures we ignore decoy headings in narrative. 3) Rerun extractor and verify reconciliation_report.jsonl now contains lines and corrections apply. 4) Ensure determinism still holds.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const start = markdown.lastIndexOf(\"## Correction Notices\");\n  if (start < 0) return [];\n\n  const end = markdown.indexOf(\"## Transaction Ledger\", start);\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\") || trimmed.startsWith(\"target:\") || trimmed.startsWith(\"transaction:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\") || trimmed.startsWith(\"new_value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.field && entry.value) notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  const start = markdown.lastIndexOf(\"## Policy Exceptions\");\n  if (start < 0) return new Set();\n  const end = markdown.indexOf(\"## Correction Notices\", start);\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const ids = new Set();\n  const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(slice)) !== null) {\n    ids.add(match[1]);\n  }\n  return ids;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  const start = markdown.lastIndexOf(\"## Transaction Ledger\");\n  if (start < 0) return [];\n  const slice = markdown.slice(start);\n\n  const rows = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const transactionId = lines[0].trim();\n    if (!transactionId.startsWith(\"TXN-\")) continue;\n\n    const row = { transaction_id: transactionId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"amount:\")) {\n        row.amount = Number(trimmed.split(\":\")[1].trim());\n      } else if (trimmed.startsWith(\"owner:\")) {\n        row.owner = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"status:\")) {\n        row.status = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"date:\")) {\n        row.date = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"provisional:\")) {\n        row.provisional = trimmed.split(\":\")[1].trim().toLowerCase() === \"true\";\n      }\n    }\n    rows.push(row);\n  }\n  return rows;\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nconst { toYmd } = require(\"../utils/date\");\n\nfunction parseEmails(markdown) {\n  const start = markdown.lastIndexOf(\"## Email Excerpts\");\n  if (start < 0) return [];\n  const end = markdown.indexOf(\"## Policy Exceptions\", start);\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*(.+)$/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    const dateMatch = block.match(/^Date:\\s*(.+)$/im);\n    if (!fromMatch || !subjectMatch || !statusMatch) continue;\n\n    const txnMatch = subjectMatch[1].match(/(TXN-[0-9a-f-]+)/i);\n    if (!txnMatch) continue;\n\n    const date = dateMatch ? toYmd(dateMatch[1].trim()) : null;\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: txnMatch[1],\n      status: statusMatch[1].trim().toLowerCase(),\n      date,\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

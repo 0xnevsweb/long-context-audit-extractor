@@ -1,0 +1,27 @@
+{
+  "analysis": "Our Python script output is not showing the brief headings/rules; it looks like it printed unrelated email excerpt content and then '---END BRIEF 9---', suggesting our brief heading detection is wrong because the markdown headings might use an em dash or different formatting (e.g., '## Investigation Brief 09 — ...' with a unicode dash) but our regex should still match; however we may be reading the wrong range due to dict(brief_starts) misuse (it overwrites) and/or output is truncated by terminal buffer. We need a more direct approach: use grep -n with fixed string '## Investigation Brief 09' (already known exists) and then sed around those line numbers. We previously saw references near ~685 for Brief 04 etc, so briefs are early. Let's locate exact line numbers for Brief 07 and Brief 09 via grep and then print a limited range around them with sed.",
+  "plan": "1) Use grep -nF to locate the exact line numbers for '## Investigation Brief 07' and '## Investigation Brief 09'. 2) Use sed -n with those ranges (e.g., line-20 to line+200) to display the brief text. 3) Search within those displayed sections for 'compliance hold', 'exception_reason', and flag codes to implement in code.",
+  "commands": [
+    {
+      "keystrokes": "grep -nF \"## Investigation Brief 07\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nF \"## Investigation Brief 09\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nF \"## Investigation Brief 07\" /app/data/audit_archive.md | head -n 1 | cut -d: -f1 | xargs -I{} sh -lc 'start=$(({}-5)); end=$(({}+220)); sed -n \"${start},${end}p\" /app/data/audit_archive.md'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nF \"## Investigation Brief 09\" /app/data/audit_archive.md | head -n 1 | cut -d: -f1 | xargs -I{} sh -lc 'start=$(({}-5)); end=$(({}+260)); sed -n \"${start},${end}p\" /app/data/audit_archive.md'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"exception_reason|exception reason|flag code|flag codes|COMPLIANCE_HOLD|POLICY_EXCEPTION|hold\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

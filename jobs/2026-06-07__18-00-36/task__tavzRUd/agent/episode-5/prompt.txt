@@ -1,0 +1,139 @@
+New Terminal Output:
+
+root@e8e673637164:/app# sed -n '300,600p' /app/data/audit_archive.md
+During July review, R. Okonkwo circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cac
+he state; QA reproduced the drift on a cold run the next morning.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+Interview #611 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #540 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-2260 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+During July review, J. Huang circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+ state; QA reproduced the drift on a cold run the next morning.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Lead reviewer A. Ndiaye noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Interview #340 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+## Case Study 03 — Sox Sampling Mismatch
+
+Interview #796 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving t
+he full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #231 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows onl
+y from the canonical ledger and structured sections at file end.
+
+Interview #737 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving t
+he full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-5795 ties SOX sampling mismatch to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix comment
+ary as authoritative transaction sources.
+
+Interview #266 with internal audit highlighted how SOX sampling mismatch statements were forwarded without the matching ledger row. Counsel advised preserving t
+he full thread because downstream exception coding depends on mail timestamps.
+
+Follow-up #130 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows onl
+y from the canonical ledger and structured sections at file end.
+
+Follow-up #559 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows onl
+y from the canonical ledger and structured sections at file end.
+
+Memo WP-7928 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledger ow
+ners; Brief 05 resolves that question for the extractor.
+
+The committee packet references SOX sampling mismatch as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amend
+ment minutes before accepting any owner change.
+
+Follow-up #741 confirmed that internal audit had been using an informal spreadsheet for SOX sampling mismatch. The formal extractor must instead derive rows onl
+y from the canonical ledger and structured sections at file end.
+
+Lead reviewer R. Okonkwo noted that SOX sampling mismatch created reconciliation noise in internal audit during March walkthrough. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Working paper WP-6664 documents a t
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+wners; Brief 05 resolves that question for the extractor.
+
+During May journal, L. Bergstrom circulated a draft finding on payroll accrual true-up. Finance operations pushed back, arguing the issue was transient cache st
+ate; QA reproduced the drift on a cold run the next morning.
+
+Lead reviewer R. Okonkwo noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but t
+imeline reconstruction showed manual overrides arriving after batch lock.
+
+The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against ame
+ndment minutes before accepting any owner change.
+
+Working paper WP-2518 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different st
+atus columns for the same transaction id.
+
+Working paper WP-9312 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different st
+atus columns for the same transaction id.
+
+Working paper WP-1184 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different st
+atus columns for the same transaction id.
+
+Lead reviewer J. Huang noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but tim
+eline reconstruction showed manual overrides arriving after batch lock.
+
+Memo WP-5976 summarizes stakeholder interviews about payroll accrual true-up. Participants disagreed on whether unsigned amendments should ever override ledger
+owners; Brief 05 resolves that question for the extractor.
+
+Site visit #755 to HR finance captured mailbox exports showing how payroll accrual true-up correspondence arrived between two correction batches. Reviewers flag
+ged the gap because effective-date logic must honor notice precedence.
+
+Interview #601 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the
+ full thread because downstream exception coding depends on mail timestamps.
+
+Interview #530 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the
+ full thread because downstream exception coding depends on mail timestamps.
+
+The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against ame
+ndment minutes before accepting any owner change.
+
+Interview #479 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the
+ full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-2358 ties payroll accrual true-up to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix comme
+ntary as authoritative transaction sources.
+
+Memo WP-6359 summarizes stakeholder interviews about payroll accrual true-up. Participants disagreed on whether unsigned amendments should ever override ledger
+owners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer M. Chen noted that payroll accrual true-up created reconciliation noise in HR finance during May journal. Staff initially blamed tooling, but time
+line reconstruction showed manual overrides arriving after batch lock.
+
+Risk assessment WP-4618 ties payroll accrual true-up to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix comme
+ntary as authoritative transaction sources.
+
+Interview #588 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the
+ full thread because downstream exception coding depends on mail timestamps.
+
+In May journal, external advisors reviewed payroll accrual true-up and asked for a machine-readable reconciliation trace. The archive preserves narrative contex
+t so auditors can explain why a given transaction received compliance_hold.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Interview #592 with HR finance highlighted how payroll accrual true-up statements were forwarded without the matching ledger row. Counsel advised preserving the
+ full thread because downstream exception coding depends on mail timestamps.
+
+Working paper WP-4915 documents a three-way match failure tied to payroll accrual true-up. The team escalated when repeated extractor runs produced different st
+atus columns for the same transaction id.
+
+root@e8e673637164:/app#

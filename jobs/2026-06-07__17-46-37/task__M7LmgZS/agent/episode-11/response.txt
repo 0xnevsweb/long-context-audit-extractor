@@ -1,0 +1,31 @@
+{
+  "analysis": "Extractor now runs and outputs files with corrected JSON envelope and CSV header/column. However, exceptions.json is empty (exception_reason never set), and reconciliation_report.jsonl is empty (likely no corrections parsed/applied or report not written due to logic). reconcile.js still ends at line ~62 per view, so it is simplistic. We still haven’t successfully displayed the brief rule texts (view_brief03/04/09) due to output truncation earlier; but we must implement the actual reconciliation semantics: compliance_hold timing (Brief 09), mail-driven status changes (Brief 03), correction notice precedence and report contents (Brief 04/contract), ledger sourcing with provisional/final duplicates (Brief 01), meeting amendments (Brief 05), effective dates (Brief 06), exception flags (Brief 07/08). Next, re-open the /tmp/view_brief*.txt files in small ranges by line numbers and implement the core logic in reconcile.js and parsers accordingly. Also update reportWriter to sort by notice_id.",
+  "plan": "1) Display the top binding sections of briefs 01–09 from /tmp/briefXX.txt with nl/sed but only first ~30-60 lines each, to capture actual rules before filler begins. 2) Inspect parser/sections.js to see what it returns, and confirm whether corrections/emails/policy/meetings/ledger sections are parsed correctly. 3) Rewrite normalize/reconcile.js to implement policy: canonical ledger row selection (ignore provisional duplicates), incorporate meeting owner amendments, apply email-driven status changes only from authorized sender(s) and with precedence, compute compliance_hold exception using Brief 09 timing comparison (likely compare email date to pre-correction effective_date), apply corrections in correct order and track previous_value, and generate report sorted by notice_id. 4) Update parseEmails to parse Date and allow different subject formats. 5) Update reportWriter to sort report by notice_id before writing. 6) Run extractor twice and diff transactions.json for determinism; spot-check that exceptions and report are populated.",
+  "commands": [
+    {
+      "keystrokes": "for b in 01 02 03 04 05 06 07 08 09; do echo \"\\n=== BRIEF $b RULES (first 80 lines) ===\"; nl -ba /tmp/brief${b}.txt | sed -n '1,90p'; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

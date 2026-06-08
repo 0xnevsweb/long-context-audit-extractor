@@ -1,0 +1,27 @@
+{
+  "analysis": "We found the root cause of empty corrections: parser/corrections.js slices from start index of \"## Correction Notices\" to end index of \"## Transaction Ledger\" using markdown.indexOf. But md.indexOf('## Transaction Ledger') returns 1027, which is before start (271454), because there is an earlier decoy heading near the top. The slice condition (end > start) fails, returning an empty slice, hence no notices parsed and empty report. Fix: in parseCorrections, find the transaction ledger heading *after* the correction notices section (search from start), or better, parse by headings using regex and take the nearest following \"## Transaction Ledger\" after start. This will also prevent other decoy headings from breaking extraction. After fixing, rerun extractor and ensure reconciliation_report.jsonl is populated and sorted; transactions.json should remain deterministic.",
+  "plan": "1) Update parser/corrections.js: compute end = markdown.indexOf('## Transaction Ledger', start) (or start+1) so it finds the correct later heading; if not found, slice to end-of-file. 2) Rerun extractor to /app/output. 3) Verify reconciliation_report.jsonl line count > 0 and first lines are sorted by notice_id; also spot-check a correction report previous_value is non-empty where applicable. 4) Re-run determinism diff check quickly.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const start = markdown.indexOf(\"## Correction Notices\");\n  if (start < 0) return [];\n\n  // There may be decoy headings earlier in the archive. Only treat the\n  // Transaction Ledger heading that occurs *after* the Correction Notices\n  // section as the delimiter.\n  const end = markdown.indexOf(\"## Transaction Ledger\", start + 1);\n  const slice = end >= 0 ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) {\n      continue;\n    }\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n    if (entry.transaction_id && entry.field && typeof entry.value !== \"undefined\" && entry.effective) {\n      notices.push(entry);\n    }\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "diff -u /app/output/transactions.json /tmp/out2/transactions.json || true\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

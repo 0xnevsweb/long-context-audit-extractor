@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: amount,
+>         exception_reason: flags.length ? flags.join(";") : null,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_RANK };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@e13b9ef9896e:/app# rm -rf /app/output && mkdir -p /app/output
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# ls -la /app/output
+total 36
+drwxr-xr-x 2 root root 4096 Jun  8 00:45 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:45 ..
+-rw-r--r-- 1 root root 4370 Jun  8 00:45 exceptions.json
+-rw-r--r-- 1 root root 1094 Jun  8 00:45 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2731 Jun  8 00:45 transactions.csv
+-rw-r--r-- 1 root root 7592 Jun  8 00:45 transactions.json
+root@e13b9ef9896e:/app# python3 - <<'PY'
+> import json
+> with open('/app/output/exceptions.json') as f:
+>   items=json.load(f)['items']
+> print('exceptions', len(items))
+> print('has_compliance_hold', any('compliance_hold' in (r.get('exception_reason') or '') for r in items))
+> PY
+exceptions 18
+has_compliance_hold True
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json > /tmp/txn_fix.sha
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json >> /tmp/txn_fix.sha
+root@e13b9ef9896e:/app# cat /tmp/txn_fix.sha
+d64968e997e1a9893057b2bd980d6762753014420f4bfbc20c68e1e0d10dfa70  /app/output/transactions.json
+d64968e997e1a9893057b2bd980d6762753014420f4bfbc20c68e1e0d10dfa70  /app/output/transactions.json
+root@e13b9ef9896e:/app#

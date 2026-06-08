@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-16df04da-aef5-5537-ae87-993fc75b7be3",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-07-19",
+      "amount_usd": 5721.56,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+      "owner": "jdoe",
+      "status": "rejected",
+      "effective_date": "2024-09-01",
+      "amount_usd": 10113.94,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-20cd5f27-165a-55cf-90db-b472725bb03b",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-12-24",
+      "amount_usd": 12588.66,
+root@e1953a1e27da:/app#

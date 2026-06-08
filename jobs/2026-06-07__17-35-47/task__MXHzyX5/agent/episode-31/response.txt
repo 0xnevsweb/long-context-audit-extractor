@@ -1,0 +1,31 @@
+{
+  "analysis": "We now see compliance email excerpts contain a 'sent: YYYY-MM-DD' line and 'status:' line, and From is compliance@corp.internal. parser/emails.js currently does not parse 'sent', and it does not filter compliance-only. We also learn this particular Email Excerpts (archived thread) section is non-authoritative and says do not merge these rows—so parser/emails.js is currently wrong because it uses '## Email Excerpts' to '## Policy Exceptions' section near end, but there is an earlier decoy '## Email Excerpts (archived thread)' at line 238. That may cause it to parse wrong emails and miss later ones. We must fix email parser similarly: find the authoritative Email Excerpts section near end (after Meeting Notes), not the archived thread. Use indexOf from the later '## Email Excerpts' that appears after Meeting Notes (line 1857). Approach: search for the last occurrence of '## Email Excerpts' before Policy Exceptions, or find the '## Meeting Notes' then following '## Email Excerpts'. Then parse within that slice. Also parse sent date. Next: extract Brief 03/07/09 text and implement compliance_hold per those rules.",
+  "plan": "1) Fix parser/emails.js to locate the correct Email Excerpts section: use lastIndexOf('## Email Excerpts') or indexOf after '## Meeting Notes'. Ensure end delimiter is the Policy Exceptions heading after that start (search from start+1). 2) Parse sent date from 'sent:' line as email.sent. 3) In reconcile.js, only apply status changes when from_addr includes 'compliance@' per Brief 02. Also implement compliance_hold flag per Brief 07/09 once we read them; it will likely compare email.sent to some effective date baseline.\n4) Extract Brief 03 (Compliance Mail Timing) and Brief 09 amendment, plus Brief 07 flags.\n5) Rerun extractor and ensure outputs are deterministic.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '468,560p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1201,1295p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1295,1418p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1670,1765p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // There is a non-authoritative \"Email Excerpts (archived thread)\" early in the\n  // archive. The authoritative structured mail section appears later, after\n  // Meeting Notes.\n  const meetingIdx = markdown.indexOf(\"## Meeting Notes\");\n  const start = markdown.indexOf(\"## Email Excerpts\", meetingIdx >= 0 ? meetingIdx : 0);\n  if (start < 0) return [];\n\n  const end = markdown.indexOf(\"## Policy Exceptions\", start + 1);\n  const slice = end >= 0 ? markdown.slice(start, end) : markdown.slice(start);\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})$/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    if (!fromMatch || !subjectMatch || !statusMatch) {\n      continue;\n    }\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      sent: sentMatch ? sentMatch[1] : null,\n      status: statusMatch[1].trim().toLowerCase(),\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst {parseEmails}=require('/app/audit-extractor/src/parser/emails');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst emails=parseEmails(md);\nconsole.log('emails', emails.length);\nconsole.log(emails.slice(0,5));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Auditor directive (mandatory for extract):
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+
+
+============================================================
+COMPLIANCE EMAIL 3 at line 2841
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+sent: 2024-06-15
+status: rejected
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+status: approved
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 0
+
+
+
+============================================================
+COMPLIANCE EMAIL 4 at line 3414
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+sent: 2024-08-15
+status: rejected
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 0
+
+Internal coordination on revenue cutoff testing. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+
+root@7b07e9f8c4c5:/app#

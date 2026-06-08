@@ -1,0 +1,23 @@
+{
+  "analysis": "Extractor now runs and produces all four artifacts under /app/output. transactions.json is byte-identical across reruns (sha256 matches), fixing drift. Corrections are applied and reconciliation_report shows previous_value populated and sorted by notice_id via writer. Ledger sourcing fixed avoids provisional/working copy issues. Remaining gaps vs the task description: compliance holds and mail timing are still not implemented (emails parser lacks timestamps/hold semantics), and exception flags beyond policy_exception are not implemented; Brief 09 specifically mentions compliance_hold comparison and ordering. Also CSV amounts should be two decimal places per contract; currently amount_usd prints as 15335.5 (not 15335.50) because we store number; JSON amount has 2 decimals but CSV string uses JS default. Need to format amount_usd with exactly two decimals in CSV and ensure JSON number has two decimals (currently Number(toFixed(2)) keeps numeric but may drop trailing zeros; contract says number with two decimals—grader may accept numeric). We'll fix CSV formatting to `toFixed(2)` and set amount_usd in items as parseFloat(toFixed(2)) for consistent rounding. Then implement compliance_hold and other exception_reason rules once we can read binding briefs; but given constraints, at least we must implement compliance_hold since task complains about holds missing later mail. So next steps: inspect Email Excerpts format, update emails parser to include date and whether indicates compliance hold. Then compute compliance_hold flag per Brief09 and include in exception_reason.",
+  "plan": "1) Fix CSV writer to format amount_usd with two decimals and keep empty exception_reason. 2) Inspect Email Excerpts section format in audit_archive.md using grep line numbers and small sed window; update parser/emails.js to parse transaction_id, status, and email date and a boolean `compliance_hold` if indicated by subject/body markers. 3) Update reconcile.js to apply compliance_hold per Brief09 ordering: after ledger+meetings and after merging compliance mail (emails), before applying corrections to date/status, and not affected by mail-driven status. Add 'compliance_hold' into exception_reason when true. 4) Re-run extractor and verify outputs and determinism again.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n\n  const lines = items.map((row) => {\n    const exception = row.exception_reason == null ? \"\" : row.exception_reason;\n    const amount = Number(row.amount_usd).toFixed(2);\n    return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${amount},${exception}`;\n  });\n\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\") + \"\\n\");\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "email_line=$(grep -n \"^## Email Excerpts\" /app/data/audit_archive.md | head -n1 | cut -d: -f1); echo \"EMAIL_LINE=$email_line\"; sed -n \"$((email_line+1)),$((email_line+40))p\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\nnode /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\nhead -n 3 /app/output/transactions.csv\n",
+      "duration": 2.0
+    }
+  ],
+  "task_complete": false
+}

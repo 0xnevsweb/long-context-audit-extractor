@@ -1,0 +1,41 @@
+Current Terminal Screen:
+rent status columns for the same transaction id.
+
+In October count, external advisors reviewed inventory obsolescence reserve and asked for a machine-readable reconciliation trace. The archive preserves narrati
+ve context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references inventory obsolescence reserve as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Working paper WP-8981 documents a three-way match failure tied to inventory obsolescence reserve. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+root@7a65087374e8:/app# sed -n '1420,1445p' /app/data/audit_archive.md
+
+Controller memo (binding reconciliation rule):
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+`extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
+by `transaction_id` ascending with fields transaction_id, owner, status
+(lowercase), effective_date, amount_usd, exception_reason (null or
+semicolon-joined codes). `transactions.csv` uses header
+transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
+same rows; leave exception_reason blank when null. `exceptions.json` is
+`{"items":[...]}` with only rows where exception_reason is set.
+`reconciliation_report.jsonl` is one JSON object per winning correction with
+notice_id, transaction_id, field, previous_value, new_value, effective, sorted
+by notice_id ascending.
+
+## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+Risk assessment WP-5486 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+root@7a65087374e8:/app#

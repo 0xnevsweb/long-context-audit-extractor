@@ -1,0 +1,6 @@
+{
+  "analysis": "CSV now formats amount_usd to exactly two decimals (e.g., 15335.50). Extract run succeeds and produces all four required artifacts in /app/output. Determinism requirement is satisfied: transactions.json is byte-identical across reruns (diff empty). Parsers now use regex-anchored heading slicing, canonical ledger selection, ignore provisional rows, apply last non-provisional per transaction id; reconciliation applies signed/effective meeting amendments, compliance@ emails with precedence and sent-date gating, correction winner selection by effective date, compliance_hold timing per Brief 09, exception flags per Brief 07/08, and output envelopes/shapes per contract.",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

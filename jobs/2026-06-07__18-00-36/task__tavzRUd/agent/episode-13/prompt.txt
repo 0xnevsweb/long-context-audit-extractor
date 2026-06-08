@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> module.exports = { buildExceptions };
+> EOF
+root@e8e673637164:/app# cat > /app/audit-extractor/src/output/jsonWriter.js << 'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + '\n');
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + '\n');
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@e8e673637164:/app# cat > /app/audit-extractor/src/output/csvWriter.js << 'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header = 'transaction_id,owner,status,effective_date,amount_usd,exception_reason';
+>   const lines = items.map((row) => {
+>     const er = row.exception_reason !== null ? row.exception_reason : '';
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd},${er}`;
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join('\n') + '\n');
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@e8e673637164:/app# cat > /app/audit-extractor/src/output/reportWriter.js << 'EOF'
+> const fs = require("node:fs");
+>
+> function writeReconciliationReport(filePath, report) {
+>   const lines = report.map((row) => JSON.stringify(row));
+>   fs.writeFileSync(filePath, lines.length > 0 ? lines.join('\n') + '\n' : '');
+> }
+>
+> module.exports = { writeReconciliationReport };
+> EOF
+root@e8e673637164:/app#

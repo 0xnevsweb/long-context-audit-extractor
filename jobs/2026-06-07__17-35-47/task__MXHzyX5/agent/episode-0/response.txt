@@ -1,0 +1,83 @@
+{
+  "analysis": "No commands have been run yet in this session. We need to inspect the FY24 audit archive and the extractor implementation, identify where reconciliation rules are implemented incorrectly (drifting statuses, compliance hold rule precedence including Brief 09 amendment, correction notices mapping to wrong ledger rows), then update Node sources accordingly. Finally we must run the CLI with the required flags to /app/output. Also need to ensure CLI errors properly when --input/--outdir are missing, and conform outputs to /app/audit-extractor/docs/extractor-output-contract.md.",
+  "plan": "1) Inspect repository structure and read the output contract doc to understand required artifacts/shapes. 2) Read the audit archive focusing on authoritative Investigation Briefs 01–09 (especially Brief 09 amendment) and the structured data near the end (likely ledger rows / notices tables). 3) Locate reconciliation logic in src (parser, reconciler, mapping for holds/corrections) and identify bugs causing nondeterminism (e.g., iteration over object keys without sorting, unstable grouping), missed later mail for holds (rule ordering), and wrong ledger row mapping for corrections (matching key). 4) Implement deterministic reconciliation: stable sorting, explicit precedence rules per Brief 09, correct matching keys for corrections to ledger rows, and ensure holds consider later mail updates. 5) Add/adjust CLI arg validation for --input/--outdir to stderr + exit 1. 6) Run extractor command to /app/output and quickly validate outputs exist and are stable across reruns (optional second run + diff).",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"hold|compliance|correction|ledger|reconcil|Brief 09|amend\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -lh /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 0[1-9]|Brief 09|mid-year amendment|Amendment\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 01\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 02\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 03\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 04\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 05\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 06\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 07\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 08\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 200 /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

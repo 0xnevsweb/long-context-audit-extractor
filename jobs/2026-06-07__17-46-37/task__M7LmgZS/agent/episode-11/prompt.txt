@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    60  }
+    61
+    62  module.exports = { reconcileTransactions, STATUS_ORDER };
+root@30aa72376025:/app# sed -n '1,120p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@30aa72376025:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output 2> /tmp/extract_err.txt || true
+root@30aa72376025:/app# ls -la /app/output && for f in /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconc
+iliation_report.jsonl; do echo "\n### $f"; head -n 5 "$f"; done
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 00:51 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:51 ..
+-rw-r--r-- 1 root root   17 Jun  8 00:51 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 00:51 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2491 Jun  8 00:51 transactions.csv
+-rw-r--r-- 1 root root 7400 Jun  8 00:51 transactions.json
+\n### /app/output/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+\n### /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78,
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56,
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94,
+\n### /app/output/exceptions.json
+{
+  "items": []
+}\n### /app/output/reconciliation_report.jsonl
+root@30aa72376025:/app# cat /tmp/extract_err.txt || true
+root@30aa72376025:/app#

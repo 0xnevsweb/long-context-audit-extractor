@@ -1,0 +1,43 @@
+{
+  "analysis": "We finally saw a key excerpt from Brief 09: compliance_hold is set after ledger load, meeting amendments, and compliance mail merges, but before any correction notice changes date or status. Brief 03 still governs mail-driven status changes; amendment governs only hold flag. We still haven’t captured Brief 01–04 excerpts due to truncation, but we can proceed with implementing deterministic contract compliance plus the known Brief 09 ordering constraint. Next: inspect structured sections for emails and corrections to see available fields and update parsers to include dates/effective. Also update reconcile.js to apply overlays in correct order: ledger -> meetings -> compliance mail merges -> compute hold -> apply corrections (date/status) -> apply mail-driven status changes. Current parsers don’t have timestamps, so we must parse them from markdown sections.",
+  "plan": "1) Inspect /app/audit-extractor/src/parser/emails.js and corrections.js formats vs actual markdown sections by locating '## Email Excerpts' and '## Correction Notices' in the archive and printing a small sample. 2) Update parsers to capture timestamps/effective dates and any hold markers needed. 3) Rewrite normalize/reconcile.js to: build base ledger map (already fixed), apply meeting amendments, merge compliance mail (for hold), compute compliance_hold exception flag per Brief 09 comparison, then apply corrections with proper precedence and report previous_value; finally apply mail-driven status changes per Brief 03. 4) Fix json/csv envelopes already done; next fix report sorting and exceptions computation. 5) Run extractor to /app/output twice and diff transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Email Excerpts\" /app/data/audit_archive.md | head -n 5\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Correction Notices\" /app/data/audit_archive.md | head -n 5\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" /app/data/audit_archive.md | head -n 5\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Committee Minutes\" /app/data/audit_archive.md | head -n 5\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Email excerpt sample ---'; sed -n '1825,1915p' /app/data/audit_archive.md | sed -n '1,80p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- Correction notice sample ---'; sed -n '1915,2065p' /app/data/audit_archive.md | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

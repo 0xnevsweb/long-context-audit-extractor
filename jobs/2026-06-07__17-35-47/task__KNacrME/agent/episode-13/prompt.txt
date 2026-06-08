@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  156 /tmp/brief09.md
+  366 total
+root@e13b9ef9896e:/app# grep -nE "BINDING|Binding|Extractor must|MUST|SHALL|Rule:" /tmp/brief01.md | head -n 20
+root@e13b9ef9896e:/app# grep -nE "BINDING|Binding|Extractor must|MUST|SHALL|supersed|amend" /tmp/brief09.md | head -n 40
+6:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+9:in effect after ledger load, meeting amendments, and compliance mail merges, but
+11:mail-driven status changes; this amendment governs only the hold flag.
+31:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+33:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+41:Memo WP-2693 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+45:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+51:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+65:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+67:Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+71:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+83:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+85:The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts a
+gainst amendment minutes before accepting any owner change.
+93:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+113:Memo WP-6435 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+131:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+135:Memo WP-5659 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+145:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+153:Memo WP-4038 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+root@e13b9ef9896e:/app#

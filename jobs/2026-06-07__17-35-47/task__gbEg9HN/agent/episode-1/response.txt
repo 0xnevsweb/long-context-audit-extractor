@@ -1,0 +1,55 @@
+{
+  "analysis": "We’ve located the project and read the output contract. Key requirements: deterministic byte-identical transactions.json across reruns; sorted by transaction_id; exceptions sorted; reconciliation_report sorted by notice_id; CLI must error on missing --input/--outdir. We also found where structured data lives near the end of /app/data/audit_archive.md: Correction Notices (~3866) and Transaction Ledger headings (~3912 authoritative). Next we need to read Investigation Briefs 01–09 (especially Brief 09 mid-year amendment about compliance hold timing) and then inspect current source code to find why statuses drift, holds miss later mail, and corrections map to wrong ledger rows.",
+  "plan": "1) Extract and read the text of Investigation Briefs 01–09 plus the Brief 09 amendment section to understand the authoritative rules. 2) Inspect the structured sections (Email Excerpts, Policy Exceptions, Correction Notices, authoritative Transaction Ledger) to see what keys/fields exist for matching. 3) Review current code in src (parser/lib/normalize/output) to identify nondeterminism (object key iteration, Set/Map usage without sorting), incorrect hold timing comparisons, and correction matching logic. 4) After understanding rules and current implementation, implement fixes and then run the extractor twice to confirm byte-identical output and correct mappings.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1600,1900p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1900,2300p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2300,2700p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2700,3200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3200,3600p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3600,4120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -name \"*.js\" | sort\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,43 @@
+New Terminal Output:
+
+root@b5558c31e8a7:/app# sed -n '238,252p' /app/data/audit_archive.md
+## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+root@b5558c31e8a7:/app# sed -n '1857,3849p' /app/data/audit_archive.md | grep -B2 'Subject: Re: TXN'
+
+From: compliance@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+--
+
+From: alice@corp.internal
+Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+--
+
+From: compliance@audit.corp
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+--
+
+From: compliance@corp.internal
+Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+--
+
+From: compliance@corp.internal
+Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+--
+
+From: compliance@corp.internal
+Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+root@b5558c31e8a7:/app#

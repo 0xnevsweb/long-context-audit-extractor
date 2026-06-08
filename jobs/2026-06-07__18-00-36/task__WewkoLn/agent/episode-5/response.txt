@@ -1,0 +1,10 @@
+{
+  "analysis": "I can see the structure. Brief 01 says to use regex anchored to whole heading lines (not indexOf), ignore `provisional: true` blocks, and use the last non-provisional block for duplicate IDs. Brief 02 says status precedence is pending < approved < rejected < reversed, and emails only change status when From contains `compliance@`. Let me continue reading to get Briefs 03-09 and the structured data.",
+  "plan": "Continue reading the audit archive to get the remaining Investigation Briefs and the structured data sections.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '300,600p' /app/data/audit_archive.md\n",
+      "duration": 0.5
+    }
+  ]
+}

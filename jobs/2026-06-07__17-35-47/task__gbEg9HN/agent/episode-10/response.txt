@@ -1,0 +1,35 @@
+{
+  "analysis": "We found a new bug introduced by our automatic reconcile.js edit: report.push references `prev` but the `prev` variable is not present in the shown snippet (so either it exists earlier in file but likely not, meaning this would throw; however extractor run didn’t show an error, implying this code path isn’t executed because parsed.corrections is empty). That aligns with reconciliation_report.jsonl being empty. So the immediate priority is: get corrections parsing working (parsed.corrections non-empty) and then fix reconcile.js to compute prev correctly before using it. Next we must run parseArchive counts (not yet shown) and inspect sections.js/corrections.js to understand why corrections array is empty even after heading fix.",
+  "plan": "1) Run a Node snippet to print parsed.corrections length and sample entries. 2) If corrections length is 0, inspect parseCorrections: ensure it slices from exact heading to the next top-level heading and correctly finds \"### CORR-\" blocks. Fix parseCorrections to isolate the section between `## Correction Notices` and the next `## ` heading, then parse blocks robustly. 3) Once corrections parse, fix reconcile.js: add computation of prev before mutation, and ensure no ReferenceError. 4) Rerun extractor; verify reconciliation_report.jsonl has expected number of lines and is sorted by notice_id; verify previous_value populated. 5) Finally, address ledger decoy and duplicate/provisional selection if still failing (we already attempted ledger heading fix but must confirm applied).",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed=parseArchive(md);\nconsole.log({ledger: parsed.ledger.length, corrections: parsed.corrections.length});\nconsole.log(parsed.corrections.slice(0,3));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, pathlib\np=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')\ns=p.read_text()\n# Rewrite parseCorrections to reliably extract only the Correction Notices section\n# between the exact heading and the next level-2 heading.\nnew = '''function parseCorrections(markdown) {\n  const m = markdown.match(/^## Correction Notices\\s*$/m);\n  if (!m) return [];\n  const after = markdown.slice(m.index + m[0].length);\n  const next = after.search(/^##\\s+/m);\n  const section = (next === -1 ? after : after.slice(0, next));\n\n  const blocks = section.split(/\\n(?=###\\s+CORR-)/g).filter((b) => b.trim().startsWith('### CORR-'));\n  const notices = [];\n\n  for (const block of blocks) {\n    const lines = block.split(/\\r?\\n/);\n    const header = lines[0].trim();\n    const notice_id = header.replace(/^###\\s+/, '').trim();\n    const entry = { notice_id, transaction_id: null, field: null, value: null, effective: null };\n\n    for (const line of lines.slice(1)) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith('targets:')) entry.transaction_id = trimmed.split(':', 2)[1].trim();\n      else if (trimmed.startsWith('field:')) entry.field = trimmed.split(':', 2)[1].trim();\n      else if (trimmed.startsWith('value:')) entry.value = trimmed.split(':', 2)[1].trim();\n      else if (trimmed.startsWith('effective:')) entry.effective = trimmed.split(':', 2)[1].trim();\n    }\n\n    if (entry.notice_id && entry.transaction_id && entry.field && entry.value && entry.effective) notices.push(entry);\n  }\n\n  return notices;\n}\n'''\n# Replace function body wholesale\ns2=re.sub(r\"function parseCorrections\\(markdown\\) \\{[\\s\\S]*?\\n\\}\\n\\nmodule\\.exports\", new + \"\\nmodule.exports\", s, count=1)\nif s2==s:\n    raise SystemExit('failed to rewrite parseCorrections')\np.write_text(s2)\nprint('rewrote parseCorrections')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, pathlib\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text()\n# Ensure prev is computed before use (fix ReferenceError).\nif 'previous_value: prev' in s and 'const prev' not in s:\n    # Insert prev computation right after the target null-check.\n    s=re.sub(r\"const target = byId\\.get\\(notice\\.transaction_id\\);\\n\\s*if \\(!target\\) \\{\\n\\s*continue;\\n\\s*\\}\\n\",\n             \"const target = byId.get(notice.transaction_id);\\n    if (!target) {\\n      continue;\\n    }\\n    const prev = notice.field === 'owner' ? String(target.owner ?? '') : (notice.field === 'status' ? String(target.status ?? '') : (notice.field === 'date' ? String(target.date ?? '') : ''));\\n\",\n             s, count=1)\n# Also handle the variant without braces.\ns=re.sub(r\"const target = byId\\.get\\(notice\\.transaction_id\\);\\n\\s*if \\(!target\\) continue;\\n\",\n         \"const target = byId.get(notice.transaction_id);\\n    if (!target) continue;\\n    const prev = notice.field === 'owner' ? String(target.owner ?? '') : (notice.field === 'status' ? String(target.status ?? '') : (notice.field === 'date' ? String(target.date ?? '') : ''));\\n\",\n         s, count=1)\np.write_text(s)\nprint('patched prev in reconcile.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /app/output/reconciliation_report.jsonl && head -n 5 /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,39 @@
+{
+  "analysis": "transactions.json and exceptions.json now match the required envelope {\"items\": [...]}. reconciliation_report.jsonl has 6 lines. Remaining contract mismatches: transactions.csv header must include exception_reason column and values; csvWriter currently omits exception_reason and amount formatting (contract wants two decimals). Also transactions.json amount_usd should be two decimals; currently shows 15335.5 (not fixed to 2). exceptions.json is empty—likely exception logic missing/incorrect relative to briefs, including compliance hold timing. We must update csvWriter to include exception_reason and blank when null, and ensure amount_usd is rounded to 2 decimals in reconcile output (or in writer). Also implement exception_reason generation per normalize/exceptions.js and briefs, especially compliance hold logic with later emails and Brief 09 override. First, fix the clear contract issues (CSV columns, numeric formatting, sorting already OK).",
+  "plan": "1) Patch src/output/csvWriter.js to write the exact header and include exception_reason field (empty string when null). Also ensure newline at EOF. 2) Patch reconcile.js to set amount_usd rounded to 2 decimals as a number (e.g., Math.round(n*100)/100) to make JSON stable and compliant. 3) Review normalize/exceptions.js to see what it currently does; ensure reconcile sets exception_reason from buildExceptions output or incorporate into items correctly (right now reconcile sets exception_reason:null for all and buildExceptions likely returns subset but doesn’t modify items). Fix pipeline so items contain exception_reason and exceptions.json contains flagged subset sorted. 4) Re-run extractor and verify CSV header, amount formatting, and that exceptions.json contains expected flagged items (if any in archive).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib, re\np=pathlib.Path('/app/audit-extractor/src/output/csvWriter.js')\ns=p.read_text()\n# Rewrite to exact contract header + exception_reason handling.\nnew = '''const fs = require(\"node:fs\");\n\nfunction csvEscape(v) {\n  const s = String(v ?? \"\");\n  if (/[\\n\\r,\"]/.test(s)) return '\"' + s.replace(/\"/g, '\"\"') + '\"';\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header = \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const ex = row.exception_reason == null ? \"\" : row.exception_reason;\n    return [\n      csvEscape(row.transaction_id),\n      csvEscape(row.owner),\n      csvEscape(row.status),\n      csvEscape(row.effective_date),\n      csvEscape(row.amount_usd),\n      csvEscape(ex),\n    ].join(\",\");\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\") + \"\\n\", \"utf8\");\n}\n\nmodule.exports = { writeTransactionsCsv };\n'''\n# Replace whole file\np.write_text(new)\nprint('updated csvWriter.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib, re\np=pathlib.Path('/app/audit-extractor/src/normalize/reconcile.js')\ns=p.read_text()\n# Ensure amount_usd is rounded to 2 decimals as number.\n# Replace Number(row.amount) with rounding helper.\nif 'Number(row.amount)' in s:\n    s=s.replace('amount_usd: Number(row.amount),', 'amount_usd: Math.round(Number(row.amount) * 100) / 100,')\np.write_text(s)\nprint('updated amount_usd rounding')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 2 /app/output/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -e \"const j=require('/app/output/transactions.json'); console.log(j.items[0].amount_usd);\"\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

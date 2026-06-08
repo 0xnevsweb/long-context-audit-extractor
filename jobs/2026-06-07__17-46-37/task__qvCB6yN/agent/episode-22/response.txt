@@ -1,0 +1,31 @@
+{
+  "analysis": "We now have precise anchors for remaining directives: Brief 03 has a key line around 476 about correction notices always applying; Brief 04 starts at 685; Brief 05 signed-amendment owner rule spans around 832-835; we still need Brief 01 canonical ledger rule (likely near top lines 11-20 and also line 17 referenced earlier). We should print tight windows around these line numbers: 450-500 for Brief 03 directives, 685-695 for Brief 04 directive header and initial rule text, 820-850 for Brief 05 rule text, and 1-30 for Brief 01. After capturing these, we can implement code updates confidently.",
+  "plan": "1) Print concise directive windows: lines 1-30 (Brief 01 and overall notes), 252-265 (Brief 02 status precedence rule), 450-500 (Brief 03 compliance mail timing and correction interaction), 685-695 and a bit further (Brief 04 correction precedence), 828-845 (Brief 05 signed amendments), and 1420-1445 (Brief 08 artifact/report requirements incl winning correction definition fragments). 2) Then begin edits: fix ledger/corrections section slicing (exact heading), implement precedence/order in reconcile.js, implement exception_reason and compliance_hold timing per Brief 09, fix output writers and validation. We'll do printing first in this batch.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,40p' /app/data/audit_archive.md\n",
+    "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '252,275p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '450,510p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,735p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '820,860p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1420,1445p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

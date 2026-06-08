@@ -1,0 +1,19 @@
+{
+  "analysis": "We now have the full binding rule for Brief 05: meeting amendments replace owner only if signed true (case-insensitive) and if an effective date is present, only when effective >= ledger date. Great. We still need Brief 01, 03, 04 directives; the sed for 1-30 and 468-505 and 685-725 likely scrolled off. We'll re-run them and capture. Brief 03 should define qualifying emails and timing for compliance_hold and status changes (but Brief 09 overrides hold comparison date baseline). Brief 04 should define 'winning correction notice' selection and application order plus report requirements (previous_value etc). Brief 01 defines canonical ledger sourcing: exact heading '## Transaction Ledger' authoritative; ignore working copy. Next, we print those directives and then start coding changes.",
+  "plan": "1) Print Brief 01 (lines 1-30) and especially around line 17 for canonical heading requirement. 2) Print Brief 03 section around its heading 468 and a bit further. 3) Print Brief 04 section around 685 and a bit further to include correction precedence rules. 4) After rules are fully gathered, edit parsers and reconcile logic accordingly, then adjust output writers and validations per Brief 08 contract, run extractor twice and diff for determinism, then run final extraction to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,35p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '468,540p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '685,760p' /app/data/audit_archive.md\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

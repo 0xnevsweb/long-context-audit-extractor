@@ -1,0 +1,46 @@
+New Terminal Output:
+
+root@9416c0dee655:/app# sed -n '1,120p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@9416c0dee655:/app# node - <<'NODE'
+> const fs=require('fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md=fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed=parseArchive(md);
+> console.log('keys', Object.keys(parsed));
+> for (const k of Object.keys(parsed)) {
+>   const v=parsed[k];
+>   const n = Array.isArray(v) ? v.length : (v && typeof v.size === 'number' ? v.size : (v && typeof v.length==='number'?v.length: null));
+>   console.log(k, n);
+> }
+> console.log('sample email', parsed.emails && parsed.emails[0]);
+> NODE
+keys [ 'ledger', 'meetings', 'emails', 'corrections', 'policyExceptions' ]
+ledger 34
+meetings 4
+emails 4
+corrections 6
+policyExceptions 3
+sample email {
+  from_addr: 'compliance@corp.internal',
+  transaction_id: 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',
+  sent: '2024-06-15',
+  status: 'rejected'
+}
+root@9416c0dee655:/app#

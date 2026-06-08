@@ -1,0 +1,46 @@
+New Terminal Output:
+
+root@b5558c31e8a7:/app# grep -n "^## " /app/data/audit_archive.md
+5:## Reconciliation and Exception Policy (FY24 Audit Handbook)
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+90:## Case Study 01 — Vendor Onboarding Backlog
+164:## Case Study 02 — Treasury Wire Cutoff Failures
+238:## Email Excerpts (archived thread)
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+320:## Case Study 03 — Sox Sampling Mismatch
+394:## Case Study 04 — Intercompany Netting Dispute
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+537:## Case Study 05 — Payroll Accrual True-Up
+611:## Case Study 06 — Fx Revaluation Lag
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+754:## Case Study 07 — Capital Project Capitalization
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+896:## Case Study 08 — Lease Modification Restatement
+970:## Policy Exceptions (draft)
+984:## Case Study 09 — Revenue Cutoff Testing
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1127:## Case Study 10 — Inventory Obsolescence Reserve
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1271:## Case Study 11 — Grant Compliance Attestation
+1345:## Case Study 12 — Year-End Close Checklist Drift
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1498:## Case Study 01 — Vendor Onboarding Backlog
+1584:## Case Study 04 — Intercompany Netting Dispute
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+1748:## Case Study 07 — Capital Project Capitalization
+1834:## Meeting Notes
+1857:## Email Excerpts
+3849:## Policy Exceptions
+3866:## Correction Notices
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@b5558c31e8a7:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+   251
+   252  ## Investigation Brief 02 — Status Precedence
+   253
+   254  Auditor directive (mandatory for extract):
+   255
+   256  Interview notes with the compliance desk confirmed status fights between mail,
+   257  amendments, and corrections. Ledger rows provide the base status (lowercase on
+   258  output). Status precedence from lowest to highest is: pending, approved,
+   259  rejected, reversed. Email excerpts may change status only when the From line
+   260  contains `compliance@` anywhere in the address; ignore all other senders.
+   261
+   262  ## Investigation Brief 02 — Status Precedence — field notes
+   263
+   264  Risk assessment WP-2138 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or
+ appendix commentary as authoritative transaction sources.
+   265
+   266  Working paper WP-3210 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+   267
+   268  Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds
+. The mid-year amendment later in this archive supersedes that draft practice.
+   269
+   270  Working paper WP-6073 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+   271
+   272  Lead reviewer J. Huang noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed
+ tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+   273
+   274  The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excer
+pts against amendment minutes before accepting any owner change.
+   275
+   276  Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially bl
+amed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+   277
+   278  Follow-up #238 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead
+derive rows only from the canonical ledger and structured sections at file end.
+   279
+   280  Working paper WP-3893 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produc
+ed different status columns for the same transaction id.
+root@e1953a1e27da:/app#

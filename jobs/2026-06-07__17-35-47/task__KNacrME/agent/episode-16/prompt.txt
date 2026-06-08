@@ -1,0 +1,41 @@
+Current Terminal Screen:
+e rows only from the canonical ledger and structured sections at file end.
+55:Interview #913 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised pr
+eserving the full thread because downstream exception coding depends on mail timestamps.
+57:Risk assessment WP-6250 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+59:Working paper WP-1770 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced di
+fferent status columns for the same transaction id.
+63:Site visit #134 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+67:Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+69:Site visit #521 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+75:Site visit #638 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+81:Risk assessment WP-3391 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+87:Follow-up #634 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+89:Working paper WP-5723 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced di
+fferent status columns for the same transaction id.
+95:Follow-up #106 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+101:Interview #898 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised p
+reserving the full thread because downstream exception coding depends on mail timestamps.
+103:Site visit #452 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. R
+eviewers flagged the gap because effective-date logic must honor notice precedence.
+105:Working paper WP-6375 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced d
+ifferent status columns for the same transaction id.
+107:Follow-up #449 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deri
+ve rows only from the canonical ledger and structured sections at file end.
+111:Interview #698 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised p
+reserving the full thread because downstream exception coding depends on mail timestamps.
+113:Memo WP-6435 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+123:Site visit #186 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. R
+eviewers flagged the gap because effective-date logic must honor notice precedence.
+125:Risk assessment WP-1294 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or app
+endix commentary as authoritative transaction sources.
+root@e13b9ef9896e:/app#

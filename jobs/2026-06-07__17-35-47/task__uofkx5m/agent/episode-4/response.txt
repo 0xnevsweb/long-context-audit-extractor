@@ -1,0 +1,51 @@
+{
+  "analysis": "We now see parseMeetings(): it captures '#### Amendment for TXN-…' blocks, extracting owner and signed boolean. Current reconcile.js ignores signed and always applies meeting owner, which conflicts with the earlier hints that unsigned amendments should not override ledger owners (resolved in Brief 05). jsonWriter writes wrong envelope keys: it outputs {transactions: items} and {exceptions: items} but contract requires {\"items\": [...]}. Also deterministic requirement mentions byte-identical transactions.json; JSON.stringify with 2-space indent is deterministic given stable input order, but we must ensure ordering and numeric formatting. reportWriter does not sort by notice_id as required. We still need to read remaining brief policy (02–09) and inspect parsers for ledger/emails/corrections/sections plus exception logic.",
+  "plan": "1) Display the missing files we attempted earlier but didn’t capture in the last output: parser/sections.js, ledger.js, emails.js, corrections.js, plus briefs 02–09 portions already queued if not shown. 2) After reading briefs, implement fixes: correct output envelopes, sort report by notice_id, update reconciliation to respect signed amendments, apply status precedence, compliance mail timing per Brief 09, correction precedence and previous_value, and compute exception_reason flags with lexical order. 3) Update sort comparator to handle equality deterministically. 4) Run extractor to /app/output and validate artifacts via schema/validate.js; then rerun to ensure byte-identical transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,940p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1145p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1515p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

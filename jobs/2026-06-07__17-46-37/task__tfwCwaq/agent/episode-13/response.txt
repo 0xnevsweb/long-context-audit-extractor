@@ -1,0 +1,27 @@
+{
+  "analysis": "Extractor now runs and produces artifacts deterministically (transactions.json hash matches). However reconciliation_report.jsonl is empty, and exceptions.json has 0 items, meaning our parsing/reconciliation isn't finding any corrections, holds, or policy waivers. That indicates parsing slices are likely wrong: corrections parser slices from '## Correction Notices' to '## Transaction Ledger'—but in the archive, ledger might appear before corrections (or headings differ), resulting in empty corrections. Similarly, policy exceptions parser expects '### ' blocks; maybe format differs. Emails parser expects a TXN id in subject; may be absent for qualifying hold mails per Briefs. We must inspect parser/sections.js and the archive structure near the end to ensure section order and headings match constants, and update parsers to locate sections robustly (e.g., slice between known headings regardless of order using regex). Primary bug for wrong ledger rows is likely correction parser using wrong end boundary.",
+  "plan": "1) Inspect parser/sections.js to see how sections are extracted and whether it uses constants. 2) Inspect /app/data/audit_archive.md near the structured data end: locate exact headings and order for Transaction Ledger, Meeting Notes, Email Excerpts, Policy Exceptions, Correction Notices. 3) Fix parsers (especially corrections.js) to slice correctly even if ledger appears after corrections or vice versa, by finding next heading among known section headings. 4) Re-run extractor and confirm reconciliation_report.jsonl non-empty and exceptions populated per rules (at least some compliance_hold/policy_waiver/retroactive_review if present).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nwith open(p,'r',encoding='utf-8') as f:\n    txt=f.read()\nfor h in [\"## Transaction Ledger\",\"## Meeting Notes\",\"## Email Excerpts\",\"## Policy Exceptions\",\"## Correction Notices\"]:\n    i=txt.find(h)\n    print(h, i)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nwith open(p,'r',encoding='utf-8') as f:\n    lines=f.readlines()\nheads=[]\nfor i,l in enumerate(lines,1):\n    if l.startswith('## '):\n        if any(k in l for k in ['Transaction Ledger','Meeting Notes','Email Excerpts','Policy Exceptions','Correction Notices']):\n            heads.append((i,l.strip()))\nprint('\\n'.join([f\"{i}: {h}\" for i,h in heads]))\n# show 40 lines around each heading\nfor i,h in heads:\n    print('\\n---',i,h,'---')\n    for j in range(max(1,i-5), i+35):\n        print(f\"{j}:\"+lines[j-1].rstrip('\\n'))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

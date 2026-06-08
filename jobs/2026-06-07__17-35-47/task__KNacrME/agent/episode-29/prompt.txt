@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>
+>       flags.sort();
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: amount,
+>         exception_reason: flags.length ? flags.join(";") : null,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_RANK };
+> EOF
+root@e13b9ef9896e:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@e13b9ef9896e:/app# rm -rf /app/output && mkdir -p /app/output
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# python3 - <<'PY'
+> import json
+> p='/app/output/exceptions.json'
+> with open(p) as f:
+>   data=json.load(f)
+> print('exceptions', len(data.get('items',[])))
+> print('sample', data.get('items',[None])[0])
+> PY
+exceptions 17
+sample {'transaction_id': 'TXN-08b4472a-f4b7-5455-9f43-e97005d4a594', 'owner': 'dlee', 'status': 'pending', 'effective_date': '2024-02-26', 'amount_usd': 15335.
+5, 'exception_reason': 'over_limit'}
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json > /tmp/txn2.sha
+root@e13b9ef9896e:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@e13b9ef9896e:/app# sha256sum /app/output/transactions.json >> /tmp/txn2.sha
+root@e13b9ef9896e:/app# cat /tmp/txn2.sha
+1d05d0198baa4d1807f1933b624367f47285b792487a161597fb0e39713ea461  /app/output/transactions.json
+1d05d0198baa4d1807f1933b624367f47285b792487a161597fb0e39713ea461  /app/output/transactions.json
+root@e13b9ef9896e:/app#

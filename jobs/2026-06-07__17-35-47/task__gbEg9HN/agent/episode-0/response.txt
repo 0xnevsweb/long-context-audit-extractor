@@ -1,0 +1,47 @@
+{
+  "analysis": "No commands have been run yet. We need to inspect the audit-extractor Node project, read the output contract and the authoritative reconciliation rules embedded in /app/data/audit_archive.md (especially Investigation Briefs 01–09 with Brief 09 overriding hold wording), then adjust extractor logic so statuses are stable across reruns, compliance holds incorporate later mail, and correction notices map to the correct ledger rows. Finally, run the CLI with the required arguments and verify outputs are produced in /app/output. Also ensure CLI validates missing --input/--outdir by printing to stderr and exiting with code 1.",
+  "plan": "1) Inspect repository structure and read the extractor output contract. 2) Open and search the audit archive for Investigation Briefs 01–09 and the mid-year amendment in Brief 09; also locate the structured ledger/corrections data near file end. 3) Review current extraction/reconciliation code paths to identify nondeterminism (iteration order), hold logic, and correction-to-ledger matching rules. 4) Implement deterministic ordering, update hold rules per Brief 09, and correct notice-to-ledger mapping using stable keys defined in the archive/contract. 5) Ensure CLI argument validation matches requirements (stderr + exit 1). 6) Run the extractor with the grader’s command and inspect outputs for correctness and stability.",
+  "commands": [
+    {
+      "keystrokes": "ls -ლა\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/docs\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '200,400p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "wc -l /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Investigation Brief\\s+0[1-9]|Brief\\s+0[1-9]\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Investigation Brief\\s+09|Brief\\s+09|mid-year amendment|amendment\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Ledger|LEDGER|ledger rows|Correction Notice|correction notice|Structured\" /app/data/audit_archive.md | tail -n 50\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

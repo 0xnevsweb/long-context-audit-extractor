@@ -1,0 +1,47 @@
+{
+  "analysis": "The output shown is still dominated by non-binding narrative/case study filler; the key brief excerpts and parser code are again not visible in the provided screen capture (likely scrolled). We need a more reliable way to extract only the binding bullet/committee ruling paragraphs from each brief and to view parser files without losing them. We'll use grep to find the next heading after each brief and then sed only between those headings, and we’ll also write those excerpts temporarily to /tmp for viewing in smaller chunks. Similarly for parser code, we can use sed with smaller windows and/or cat with pager-less chunking.",
+  "plan": "1) Extract each Investigation Brief section text precisely: from its heading line to just before the next '## ' heading. Save to /tmp/briefXX.md and print the first ~120 lines of each. 2) Extract and print the parser sources similarly in chunks and/or save to /tmp for easier viewing. 3) Extract structured headings section (Email Excerpts, Policy Exceptions, Correction Notices, Transaction Ledger) into /tmp/structured.md for analysis of parser expectations.",
+  "commands": [
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 02 /{p=1} /^## Investigation Brief 03 /{if(p&&NR!=1) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief02.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 03 /{p=1} /^## Investigation Brief 04 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief03.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 04 /{p=1} /^## Investigation Brief 05 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief04.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05 /{p=1} /^## Investigation Brief 06 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief05.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 06 /{p=1} /^## Investigation Brief 07 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief06.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 07 /{p=1} /^## Investigation Brief 08 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief07.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 08 /{p=1} /^## Investigation Brief 09 /{if(p) p=0} p{print}' /app/data/audit_archive.md > /tmp/brief08.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09 /{p=1} /^## /{if(p && NR>1) {exit}} {if(p) print}' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{2,3,4,5,6,7,8,9}.md; do echo \"\\n===== $f =====\"; sed -n '1,140p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)$\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

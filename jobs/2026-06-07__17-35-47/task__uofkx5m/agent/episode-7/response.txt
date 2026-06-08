@@ -1,0 +1,63 @@
+{
+  "analysis": "We now can see part of the canonical Transaction Ledger at the end of the archive, including an example where a provisional ledger row (with 'provisional: true') must be ignored in favor of the later non-provisional row with the same transaction_id. This aligns with Brief 01. However, we still don't have the printed parser code and the brief policy excerpts in the visible output, so we must capture them in smaller segments. Once we see parser/sections.js and ledger parsing, we can ensure it selects only the exact '## Transaction Ledger' section and ignores provisional rows/blocks, taking the last non-provisional occurrence per transaction id. We also still need Briefs 02–09 for status precedence, mail timing/holds, corrections precedence, owners, dates, and exception flags.",
+  "plan": "1) Capture structured headings line numbers and show the beginning of the '## Transaction Ledger' section to confirm formatting our ledger parser should match. 2) Re-run printing of parser/sections.js and ledger.js in smaller chunks (head/tail) to ensure we see them. 3) Print each Investigation Brief 02–09 binding text in tight windows around headings (first ~80 lines after each heading) so we can implement exact rules.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)$\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "LEDGER_LINE=$(grep -nE \"^## Transaction Ledger$\" /app/data/audit_archive.md | cut -d: -f1); echo $LEDGER_LINE; sed -n \"$LEDGER_LINE,$((LEDGER_LINE+80))p\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,340p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,780p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,940p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1145p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1325p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1505p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,43 @@
+{
+  "analysis": "We successfully created utils/sectionSlice.js and rewrote parsers for ledger/emails/corrections/policy to use regex-anchored heading slicing. Ledger parser now keeps last non-provisional occurrence, and ignores provisional rows. Email parser now captures sent date. Corrections/policy parsers now avoid indexOf drift. We still must: update meetings parser to parse effective date and enforce signed/effective logic in reconciliation; implement full reconciliation logic per briefs 02–09 (email From criteria, status precedence rules, correction winning selection, effective_date logic, exceptions flags); fix CSV writer if needed; fix report sorting; fix JSON envelope already done; ensure exceptions.json uses items; implement deterministic ordering; and run extractor twice to confirm stable output.",
+  "plan": "1) Read full binding-brief files (02–04,06–08) to capture missing parts (esp: email From criteria, correction winning rule, correction tie-breaker). 2) Update parser/meetings.js to also parse 'effective:' date and normalize signed case-insensitively (already lowercased true). 3) Rewrite normalize/reconcile.js to implement:\n   - base rows from ledger\n   - meeting owner amendments only if signed true and (if effective provided) effective >= ledger date\n   - email-driven status merges only if From matches binding criteria and precedence rules; apply sent-date gating per Brief03\n   - compute pre-correction date snapshot for compliance_hold per Brief09\n   - select winning correction per (txn, field) per Brief04 and apply; record previous_value; build report lines and sort by notice_id\n   - compute effective_date per Brief06\n   - compute exception flags and exception_reason per Brief07/08 and policyExceptions set.\n4) Rewrite normalize/exceptions.js to filter rows with exception_reason.\n5) Fix output/reportWriter.js to sort by notice_id before writing.\n6) Run extractor to /app/output and validate. Then run again and diff transactions.json for determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/binding-brief02.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/binding-brief03.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/binding-brief04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/binding-brief06.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/binding-brief07.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/binding-brief08.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}
