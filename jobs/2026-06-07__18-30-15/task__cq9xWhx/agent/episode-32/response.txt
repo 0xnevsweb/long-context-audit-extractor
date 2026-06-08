@@ -1,0 +1,23 @@
+{
+  "analysis": "We got Brief 09 binding text. The sed outputs for Brief 04/07/08 didn’t appear (likely scrolled/truncated). We'll run them individually and redirect to /tmp, then cat. That should reliably show the short binding blocks. After we have those, we can implement correction winning logic and exception flags (including compliance_hold) per briefs.",
+  "plan": "1) Capture Brief 04/07/08 binding blocks to /tmp files with very tight ranges and display them. 2) Implement rules: correction notice precedence (winning correction selection) and exception flags list & logic. 3) Update reconcile.js and rerun extractor.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '685,695p' /app/data/audit_archive.md > /tmp/brief04_binding.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1218p' /app/data/audit_archive.md > /tmp/brief07_binding.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1439p' /app/data/audit_archive.md > /tmp/brief08_binding.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '=== Brief04 ==='; cat /tmp/brief04_binding.txt; echo '=== Brief07 ==='; cat /tmp/brief07_binding.txt; echo '=== Brief08 ==='; cat /tmp/brief08_binding.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

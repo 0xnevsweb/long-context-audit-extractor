@@ -338,7 +338,7 @@ def test_archive_policy_is_distributed(archive_text: str) -> None:
 
 
 def test_cli_requires_arguments() -> None:
-    """Verify that missing --input or --outdir yields exit code 1."""
+    """Verify that missing --input or --outdir prints to stderr and exits 1."""
     proc = subprocess.run(
         ["node", str(APP_DIR / "src" / "cli.js"), "extract"],
         cwd=str(APP_DIR),
@@ -346,6 +346,8 @@ def test_cli_requires_arguments() -> None:
         text=True,
     )
     assert proc.returncode == 1
+    assert proc.stderr.strip()
+    assert "missing" in proc.stderr.lower()
 
 
 def test_output_files_exist(pipeline_output: Path) -> None:

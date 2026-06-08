@@ -1,0 +1,31 @@
+{
+  "analysis": "Outputs are still not showing what we intended (parser file list, committee ruling excerpts). It appears we’re only seeing a continuation of prior brief grep output; likely the terminal truncated earlier outputs and only shows the last part. We should write the needed outputs to files and then cat them in small chunks to reliably view. We'll also re-run the parser file list into a file and view it.",
+  "plan": "1) Dump parser file list to /tmp/parser_files.txt and view. 2) Run the Python excerpt scripts but redirect to /tmp/brief_rules.txt and /tmp/brief09_keys.txt, then view with sed/head. This avoids scrollback truncation. 3) With rules captured, proceed to implement fixes.",
+  "commands": [
+    {
+      "keystrokes": "find /app/audit-extractor/src/parser -maxdepth 2 -type f -print | sort > /tmp/parser_files.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /tmp/parser_files.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY' > /tmp/brief_rules.txt\nimport re\nfrom pathlib import Path\nfor b in ['01','02','03','04','05','06','07','08','09']:\n    p=Path(f'/tmp/brief{b}.txt')\n    if not p.exists():\n        continue\n    s=p.read_text(errors='ignore').splitlines()\n    idx=[i for i,l in enumerate(s) if 'Committee ruling' in l]\n    print(f'=== BRIEF {b}: committee ruling blocks ===')\n    if not idx:\n        print('(none found)')\n        continue\n    for i in idx[:5]:\n        start=max(0,i-2); end=min(len(s), i+70)\n        for j in range(start,end):\n            print(f'{j+1:4d}: {s[j]}')\n        print('---')\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY' > /tmp/brief09_keys.txt\nfrom pathlib import Path\np=Path('/tmp/brief09.txt')\ns=p.read_text(errors='ignore').splitlines()\nkeys=['supersed','override','compliance_hold','mail','timing','comparison','effective']\nprint('=== BRIEF 09 key excerpts ===')\nfor i,l in enumerate(s):\n    lo=l.lower()\n    if any(k in lo for k in keys):\n        print(f'{i+1:4d}: {l}')\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /tmp/brief09_keys.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

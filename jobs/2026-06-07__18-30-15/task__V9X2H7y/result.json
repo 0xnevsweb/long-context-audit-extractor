@@ -1,0 +1,126 @@
+{
+    "id": "37a5553b-0184-4f29-b765-399029dba3cb",
+    "task_name": "task",
+    "trial_name": "task__V9X2H7y",
+    "trial_uri": "file:///Users/admin/Documents/Snorkel/long-context-audit-extractor/jobs/2026-06-07__18-30-15/task__V9X2H7y",
+    "task_id": {
+        "path": "task"
+    },
+    "source": null,
+    "task_checksum": "6c0a0f87a5d49fb5c0ecda088ca63c486847b4ab9f1b01a1fc68181b6047af31",
+    "config": {
+        "task": {
+            "path": "task",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "task__V9X2H7y",
+        "trials_dir": "jobs/2026-06-07__18-30-15",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "openai/@openai/gpt-5.2",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "28d1462c-fe24-4f7c-bac7-be436fe5eed8"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@openai/gpt-5.2",
+            "provider": "openai"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 346232,
+        "n_cache_tokens": 287744,
+        "n_output_tokens": 16642,
+        "cost_usd": 0.3856972,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 18,
+            "api_request_times_msec": [
+                12098.641157150269,
+                10946.952819824219,
+                14307.725191116333,
+                6289.862871170044,
+                13076.081275939941,
+                10737.628936767578,
+                20745.633125305176,
+                22634.34386253357,
+                9792.741775512695,
+                11968.425035476685,
+                20977.948904037476,
+                16046.456813812256,
+                10174.05915260315,
+                9417.147159576416,
+                9378.29303741455,
+                8296.820878982544,
+                4540.16375541687,
+                2716.6290283203125
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-06-08T01:30:16.291565Z",
+    "finished_at": "2026-06-08T01:37:13.407309Z",
+    "environment_setup": {
+        "started_at": "2026-06-08T01:30:16.343575Z",
+        "finished_at": "2026-06-08T01:30:22.100975Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-06-08T01:30:22.101094Z",
+        "finished_at": "2026-06-08T01:30:28.428762Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-06-08T01:30:28.429019Z",
+        "finished_at": "2026-06-08T01:36:55.881980Z"
+    },
+    "verifier": {
+        "started_at": "2026-06-08T01:36:57.217703Z",
+        "finished_at": "2026-06-08T01:36:59.556494Z"
+    },
+    "step_results": null
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Follow-up #369 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+During April settlement, M. Chen circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient cac
+he state; QA reproduced the drift on a cold run the next morning.
+
+The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agains
+t amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-7491 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever override le
+dger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #547 to corporate accounting captured mailbox exports showing how intercompany netting dispute correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Follow-up #258 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+Follow-up #560 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+Follow-up #161 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+Follow-up #547 confirmed that corporate accounting had been using an informal spreadsheet for intercompany netting dispute. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+
+Working paper WP-4869 documents a three-way match failure tied to intercompany netting dispute. The team escalated when repeated extractor runs produced differe
+nt status columns for the same transaction id.
+
+During April settlement, J. Huang circulated a draft finding on intercompany netting dispute. Finance operations pushed back, arguing the issue was transient ca
+che state; QA reproduced the drift on a cold run the next morning.
+root@fca90c221e79:/app#

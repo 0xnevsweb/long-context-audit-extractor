@@ -1,0 +1,57 @@
+New Terminal Output:
+
+root@41841493f205:/app# sed -n '1,240p' /app/audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@41841493f205:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@41841493f205:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+> function buildExceptions(items) {
+>   return items.filter((row) => row.exception_reason);
+> }
+>
+> // Helper: add a flag code to a row's exception_reason (semicolon-joined, lexical).
+> function addExceptionFlag(row, code) {
+>   const cur = row.exception_reason;
+>   const set = new Set(cur ? String(cur).split(";").filter(Boolean) : []);
+>   set.add(code);
+>   const next = [...set].sort().join(";");
+>   row.exception_reason = next || null;
+> }
+>
+> module.exports = { buildExceptions, addExceptionFlag };
+> EOF
+root@41841493f205:/app# node -c /app/audit-extractor/src/output/jsonWriter.js && node -c /app/audit-extractor/src/normalize/exceptions.js
+root@41841493f205:/app# rm -rf /tmp/out5 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out5
+root@41841493f205:/app# head -n 5 /tmp/out5/transactions.json
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@41841493f205:/app# cat /tmp/out5/exceptions.json
+{
+  "items": []
+}root@41841493f205:/app#

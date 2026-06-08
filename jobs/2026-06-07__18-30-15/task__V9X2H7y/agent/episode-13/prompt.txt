@@ -1,0 +1,41 @@
+Current Terminal Screen:
+#### Amendment for TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+owner: earlybird
+signed: true
+effective: 2020-01-01
+
+## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing con
+text.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 0
+
+Internal coordination on vendor onboarding backlog. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 1
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 2
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 3
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+root@41841493f205:/app#

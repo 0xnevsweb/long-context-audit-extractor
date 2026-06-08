@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@41841493f205:/app# sed -n '1,120p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@41841493f205:/app# grep -n "^## Email Excerpts" /app/data/audit_archive.md
+238:## Email Excerpts (archived thread)
+1857:## Email Excerpts
+root@41841493f205:/app# grep -n "^## Policy Exceptions" /app/data/audit_archive.md
+970:## Policy Exceptions (draft)
+3849:## Policy Exceptions
+root@41841493f205:/app# grep -n "^## Correction Notices" /app/data/audit_archive.md
+3866:## Correction Notices
+root@41841493f205:/app# grep -n "^## Transaction Ledger" /app/data/audit_archive.md
+3904:## Transaction Ledger (working copy)
+3912:## Transaction Ledger
+root@41841493f205:/app#

@@ -1,0 +1,39 @@
+{
+  "analysis": "We’re currently viewing a mid-file narrative/case study area (non-binding). We still need the exact binding Investigation Brief 01–09 text and to inspect parser/corrections.js and sections.js (not yet shown in output). Next step is to locate the brief headings by line number and then print those ranges directly, plus inspect correction/sections parsers to understand why corrections report is empty.",
+  "plan": "1) Re-run grep for the Investigation Brief headings to get precise line numbers. 2) Print each brief section by line range using sed to capture the authoritative rules, especially Brief 03 (mail timing), Brief 07/09 (hold rules), and correction precedence. 3) Inspect parser/corrections.js and parser/sections.js to confirm section slicing and parsing expectations. Then we can implement code changes.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Policy Exceptions\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Correction Notices\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Transaction Ledger\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,15 @@
+{
+  "analysis": "Our grep over the brief head files is still mostly hitting filler; however we did catch a key line: Brief 09 includes 'mail-driven status changes; this amendment governs only the hold flag.' We still do not have the actual binding rule lines for Briefs 03/04/06/07/08/09. We need a better extraction approach: search within the full archive for the binding directive markers ('Auditor directive', 'Committee ruling', 'Extractor directive') near each brief and print a small window around those matches. We'll use grep -n to find those phrases after each brief heading and then sed around those line numbers.",
+  "plan": "1) For each brief number, locate the line numbers of 'Auditor directive'/'Committee ruling' within that brief segment using grep with -n and restricting range via awk. 2) Print ~40 lines around those directive lines to capture the rules. 3) Implement the remaining logic once we have the text.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nlines=open(path,'r',errors='ignore').read().splitlines()\nbrief_starts={}\nfor i,l in enumerate(lines,1):\n    m=re.match(r'^## Investigation Brief (\\d\\d)\\b',l)\n    if m and 'field notes' not in l.lower():\n        brief_starts[m.group(1)]=i\n# Add end as next start\nkeys=sorted(brief_starts)\nbrief_ranges={}\nfor idx,k in enumerate(keys):\n    start=brief_starts[k]\n    end=(brief_starts[keys[idx+1]]-1) if idx+1<len(keys) else len(lines)\n    brief_ranges[k]=(start,end)\nmarkers=re.compile(r'(Auditor directive|Committee ruling|mandatory for extract|binding for extract)',re.I)\nfor k in ['03','04','06','07','08','09']:\n    start,end=brief_ranges[k]\n    hits=[i for i in range(start,end+1) if markers.search(lines[i-1] or '')]\n    print(k, start, end, 'hits', hits[:5])\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nlines=open(path,'r',errors='ignore').read().splitlines()\n# hard-print directive excerpts for briefs 03,04,06,07,08,09\nbriefs={'03':(468,684),'04':(685,827),'06':(1058,1200),'07':(1201,1418),'08':(1419,1669),'09':(1670,2000)}\nmarkers=re.compile(r'(Auditor directive|Committee ruling|mandatory for extract|binding for extract)',re.I)\nfor b,(s,e) in briefs.items():\n    # find first marker line\n    idx=None\n    for i in range(s,e+1):\n        if markers.search(lines[i-1] or ''):\n            idx=i; break\n    print(f'=== Brief {b} directive excerpt (around line {idx}) ===')\n    if idx is None:\n        print('(no marker found)')\n        continue\n    for j in range(max(s,idx-2), min(e, idx+45)+1):\n        print(f'{j}: {lines[j-1]}')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

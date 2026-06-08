@@ -1,0 +1,35 @@
+{
+  "analysis": "Corrections now parse and reconciliation_report.jsonl is populated and sorted by notice_id. previous_value tracking works. Ledger parsing ignores provisional and chooses later final. Policy exceptions are flagged and written to exceptions.json. Remaining big requirement: implement the actual reconciliation semantics from Briefs 01–09 (status precedence, compliance holds with mail timing and Brief 09 override, correction notice precedence/effective handling, effective_date rules) to stop drift and mis-mapping. Currently email statuses just choose max STATUS_ORDER, which is not per Brief 02. Also compliance_hold and other exception flags (Briefs 07–08) are not implemented; exceptions are only policy_exception. We also need to ensure reconciliation_report.jsonl includes only winning correction notices per contract (currently we emit all corrections, not only winning ones), and previous_value should be value immediately before that correction applies in precedence/effective order. To proceed we must read Brief 02/03/04/06/07/08/09 rule text and implement accordingly. We'll now extract just those brief rule sections from the archive directly using sed around their line numbers, focusing on the initial binding parts, to avoid massive filler.",
+  "plan": "1) Display the key rule paragraphs from Investigation Briefs 02, 03, 04, 06, 07, 08, 09 from /app/data/audit_archive.md using targeted sed ranges at the start of each brief (first ~60 lines). 2) Based on those rules, update reconcile.js: status precedence, compliance_hold calculation, correction precedence & 'winning' definition and report emission. 3) Rerun extractor and verify: exception_reason populated and sorted; reconciliation_report contains only winning notices; byte-identical reruns.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '252,340p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,780p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1125p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1305p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1525p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

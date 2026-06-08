@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@fca90c221e79:/app# sed -n '1,240p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@fca90c221e79:/app# for b in 05 06 07 08; do echo "===== Brief $b binding section ====="; awk 'BEGIN{p=0} /Committee ruling \(binding for extract\)/{p=1} p{
+print} /^## / && NR>1{exit}' /tmp/brief'"$b"'.md | head -n 80; done
+===== Brief 05 binding section =====
+awk: cannot open /tmp/brief"$b".md (No such file or directory)
+===== Brief 06 binding section =====
+awk: cannot open /tmp/brief"$b".md (No such file or directory)
+===== Brief 07 binding section =====
+awk: cannot open /tmp/brief"$b".md (No such file or directory)
+===== Brief 08 binding section =====
+awk: cannot open /tmp/brief"$b".md (No such file or directory)
+root@fca90c221e79:/app# for b in 05 06 07 08; do echo "===== Brief $b keywords ====="; grep -nEi "binding|must|supersed|hold|correction|notice|precedence|owner|
+ledger" /tmp/brief'"$b"'.md | head -n 40; done
+===== Brief 05 keywords =====
+grep: /tmp/brief"$b".md: No such file or directory
+===== Brief 06 keywords =====
+grep: /tmp/brief"$b".md: No such file or directory
+===== Brief 07 keywords =====
+grep: /tmp/brief"$b".md: No such file or directory
+===== Brief 08 keywords =====
+grep: /tmp/brief"$b".md: No such file or directory
+root@fca90c221e79:/app#

@@ -1,0 +1,43 @@
+{
+  "analysis": "The display is still stuck; likely the system is not updating the visible terminal output with latest command results (maybe output buffer/capture bug). However, we already have enough to proceed with key fixes that are clearly wrong irrespective of the detailed brief rules: output contract mismatches (JSON envelopes, CSV header/order, exception_reason column), deterministic ordering (sort corrections by notice_id), and previous_value computation. Also Brief 01 rule we saw: only '## Transaction Ledger' and ignore provisional:true. We can inspect parser and implement ledger filtering and determinism directly in code without needing to view more brief text right now. Next: patch parseLedger to enforce Brief 01, patch reconcile to apply corrections sorted, compute previous_value, and plumb exception_reason (at least from parsed policy exceptions if present). Then fix writers to contract. Finally run extractor to /app/output.",
+  "plan": "1) Open parseLedger and parser/sections to understand shapes (we saw end of parseLedger earlier). 2) Patch parseLedger to select only canonical ledger section and drop provisional entries and duplicates deterministically. 3) Patch reconcile.js to: start from ledger rows, apply meeting owner amendments (likely), apply email status with precedence (at minimum deterministic), apply corrections sorted by notice_id and track previous_value, and compute exception_reason based on parsed policy exceptions and compliance holds (if parsers provide mail timestamps). 4) Patch writers: jsonWriter envelopes {items:[...]}, exceptions {items:[...]}; csvWriter header includes exception_reason and prints it; ensure amount has two decimals. 5) Run CLI extract to /app/output and verify files exist and schema keys match contract; rerun to confirm byte-identical transactions.json.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/output/jsonWriter.js\n@@\n const fs = require(\"node:fs\");\n \n function writeTransactionsJson(filePath, items) {\n-  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));\n+  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));\n }\n \n function writeExceptionsJson(filePath, items) {\n-  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));\n+  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/output/csvWriter.js\n@@\n function writeTransactionsCsv(filePath, items) {\n-  const header = \"transaction_id,owner,status,effective_date,amount_usd\";\n+  const header =\n+    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n   const lines = items.map(\n     (row) =>\n-      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,\n+      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${Number(row.amount_usd).toFixed(2)},${row.exception_reason ?? \"\"}`,\n   );\n   fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\"));\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/normalize/reconcile.js\n@@\n const { sortByTransactionId } = require(\"../utils/sort\");\n@@\n function reconcileTransactions(parsed) {\n   const byId = new Map();\n   for (const row of parsed.ledger) {\n     byId.set(row.transaction_id, { ...row });\n   }\n@@\n-  const report = [];\n-  for (const notice of parsed.corrections) {\n+  // Apply corrections deterministically.\n+  const report = [];\n+  const notices = [...(parsed.corrections || [])].sort((a, b) =>\n+    String(a.notice_id).localeCompare(String(b.notice_id)),\n+  );\n+  for (const notice of notices) {\n     const target = byId.get(notice.transaction_id);\n     if (!target) {\n       continue;\n     }\n+\n+    const fieldMap = { owner: \"owner\", status: \"status\", date: \"date\" };\n+    const k = fieldMap[notice.field];\n+    if (!k) continue;\n+\n+    const prev = target[k] == null ? \"\" : String(target[k]);\n+    target[k] = notice.value;\n+\n-    if (notice.field === \"owner\") {\n-      target.owner = notice.value;\n-    } else if (notice.field === \"status\") {\n-      target.status = notice.value;\n-    } else if (notice.field === \"date\") {\n-      target.date = notice.value;\n-    }\n     report.push({\n       notice_id: notice.notice_id,\n       transaction_id: notice.transaction_id,\n       field: notice.field,\n-      previous_value: \"\",\n+      previous_value: prev,\n       new_value: notice.value,\n       effective: notice.effective,\n     });\n   }\n@@\n-  const items = sortByTransactionId(\n-    [...byId.values()].map((row) => ({\n-      transaction_id: row.transaction_id,\n-      owner: row.owner,\n-      status: String(row.status).toLowerCase(),\n-      effective_date: row.date,\n-      amount_usd: Number(row.amount),\n-      exception_reason: null,\n-    })),\n-  );\n+  const items = sortByTransactionId(\n+    [...byId.values()].map((row) => {\n+      const amount = Number(row.amount);\n+      return {\n+        transaction_id: row.transaction_id,\n+        owner: row.owner,\n+        status: String(row.status).toLowerCase(),\n+        effective_date: row.date,\n+        amount_usd: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,\n+        // TODO: full exception flagging per Briefs 07–09; keep null unless set.\n+        exception_reason: row.exception_reason ?? null,\n+      };\n+    }),\n+  );\n@@\n   return { items, report };\n }\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "mkdir -p /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /app/output && head -n 2 /app/output/transactions.csv && head -n 5 /app/output/transactions.json && wc -l /app/output/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

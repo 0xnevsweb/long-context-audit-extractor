@@ -1,0 +1,79 @@
+{
+  "analysis": "We confirmed the output contract and that the CLI already enforces missing --input/--outdir to stderr with exit 1. The archive has clear headings for Investigation Briefs 01–09, and the tail shows the canonical Transaction Ledger entries (including a duplicated TXN with provisional and final rows, likely relevant to drift). We still need to inspect the extractor implementation (handbook parser, reconciliation logic, sorting/determinism) and read the authoritative rules in Briefs 01–09 (especially Brief 03/07/09 about compliance hold timing and amendment). Then we can fix the logic that causes nondeterministic status drift, missed holds due to later mail, and incorrect correction-notice mapping.",
+  "plan": "1) Inspect /app/audit-extractor/src/index.js and library modules to find where parsing and reconciliation occurs. 2) Read handbook parsing code to see how it locates ledger/email/exceptions/corrections sections and if it mistakenly uses decoy headings. 3) Read Investigation Briefs 01–09 sections from the archive to implement the exact precedence/overlay rules (with Brief 09 override). 4) Run the extractor once to capture current outputs for comparison and to reproduce drift; then apply fixes and verify byte-identical reruns and correct artifacts.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/data/audit_archive.md | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,940p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '828,1120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1325p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1515p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "mkdir -p /tmp/audit_out1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_out1 && head -n 3 /tmp/audit_out1/reconciliation_report.jsonl && head -n 5 /tmp/audit_out1/transactions.csv\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

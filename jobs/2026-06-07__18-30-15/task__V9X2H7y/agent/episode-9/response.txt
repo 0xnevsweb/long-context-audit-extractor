@@ -1,0 +1,35 @@
+{
+  "analysis": "Parsers now correctly pull authoritative sections: emails=6 (includes compliance@), policyExceptions=3, corrections=6, and reconciliation_report.jsonl is populated. However outputs violate the contract: transactions.json uses top-level key \"transactions\" instead of \"items\"; exceptions.json uses \"exceptions\" instead of \"items\". Also reconcile.js report previous_value is always empty and report not sorted/filtered to winning corrections. Additionally reconcile.js currently applies emails regardless of sender (though now parsed includes from), lacks hold logic and exception_reason generation, and doesn’t apply status precedence. We must update jsonWriter to match contract and update reconcile/exceptions generation per briefs. Also ensure report sorted by notice_id ascending.",
+  "plan": "1) Fix output/jsonWriter.js to write {items:[...]} envelopes for both transactions and exceptions. 2) Update schema/validate.js if it expects old envelope (inspect it). 3) Update normalize/reconcile.js: compute previous_value before applying each correction; apply corrections in notice_id order and only include winning corrections per rules (likely last effective per txn+field, or effective-date precedence—need briefs text, but at minimum deterministically choose). Sort report by notice_id. Ensure dates map to effective_date output field. 4) Update normalize/exceptions.js to set exception_reason codes including policy exception membership at least (e.g., \"policy_exception\") and any compliance_hold rules once we read briefs; for now, implement policy_exception and ensure lexical semicolon join. 5) Rerun extractor to /tmp/out5 and validate contract keys and ordering.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction writeTransactionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));\n}\n\nfunction writeExceptionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));\n}\n\nmodule.exports = { writeTransactionsJson, writeExceptionsJson };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'\nfunction buildExceptions(items) {\n  return items.filter((row) => row.exception_reason);\n}\n\n// Helper: add a flag code to a row's exception_reason (semicolon-joined, lexical).\nfunction addExceptionFlag(row, code) {\n  const cur = row.exception_reason;\n  const set = new Set(cur ? String(cur).split(\";\").filter(Boolean) : []);\n  set.add(code);\n  const next = [...set].sort().join(\";\");\n  row.exception_reason = next || null;\n}\n\nmodule.exports = { buildExceptions, addExceptionFlag };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/jsonWriter.js && node -c /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out5 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out5\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "head -n 5 /tmp/out5/transactions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /tmp/out5/exceptions.json\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

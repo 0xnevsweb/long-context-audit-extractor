@@ -1,0 +1,39 @@
+{
+  "analysis": "We’ve identified major issues: parseLedger starts at the first occurrence of \"## Transaction Ledger\" and then parses everything after it, which includes a decoy \"## Transaction Ledger (working copy)\" section earlier in the tail; this can pollute rows. It also dedupes by first-seen transaction_id, which can incorrectly keep stale/provisional duplicates (the archive includes TXN-ba9e6ade twice, with a provisional stale row and a final row). Corrections parsing wasn’t displayed (sed command was truncated), and reconciliation_report.jsonl is empty, implying corrections aren’t being parsed/applied or report isn’t generated. Emails parser ignores sent date and doesn’t filter for compliance@ as required by Brief 02. We still need to read Investigation Briefs 01–09 (especially 09 amendment on hold timing), inspect normalize/reconcile.js and reportWriter, and fix ledger selection (canonical only), duplicate resolution, corrections application and report generation, and email filtering/timing for holds.",
+  "plan": "1) View parser/corrections.js (and any truncated files) plus normalize/reconcile.js and output/reportWriter.js to see why report is empty. 2) Inspect normalize/exceptions.js to see current exception flags and why exceptions.json is empty. 3) Extract and read Investigation Briefs 01–09 from audit_archive.md to implement authoritative rules (including Brief 09 override). 4) Implement fixes:\n- Ledger: parse only canonical \"## Transaction Ledger\" section (not working copy), stop at end of ledger section; handle duplicates by preferring non-provisional or last canonical occurrence per policy.\n- Emails: parse sent date; only allow status changes from addresses containing \"compliance@\"; apply per timing rules (likely latest by sent date and precedence).\n- Corrections: parse all correction blocks; apply deterministically by effective date then notice_id; for same target+field choose winning correction per policy; emit reconciliation_report.jsonl lines with previous/new values.\n- Exceptions: implement policy exceptions and compliance hold flags per briefs.\n5) Re-run extractor and ensure report is non-empty and transactions reflect corrected owner/date/status; then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md | head -n 30\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '260,520p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '520,820p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

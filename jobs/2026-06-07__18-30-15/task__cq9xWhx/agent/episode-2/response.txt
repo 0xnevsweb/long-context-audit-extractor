@@ -1,0 +1,47 @@
+{
+  "analysis": "Extractor runs and produces the four files, but reconciliation_report.jsonl is empty and exceptions.json is only 22 bytes (likely empty items). transactions.csv header is missing the exception_reason column required by the contract, and rows show amount_usd not forced to two decimals. Also, the earlier code inspections didn't run due to terminal output truncation; we still need to read src/index.js and handbook parsing/reconciliation logic. The current behavior suggests exceptions/corrections aren’t being parsed or applied at all, and output formatting doesn’t match the contract (CSV header/order and exception_reason handling).",
+  "plan": "1) Inspect the actual generated JSON/CSV to confirm missing fields and shapes. 2) Read the extractor source (index.js, lib/handbook.js, writers) to locate where exception_reason is supposed to be computed and why it’s omitted from CSV. 3) Identify why corrections are not emitted (empty report) and why exceptions are empty (likely section parsing failing or rules not implemented). 4) After locating the bug(s), implement fixes and rerun to confirm artifacts match contract.",
+  "commands": [
+    {
+      "keystrokes": "cat /tmp/audit_out1/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 40 /tmp/audit_out1/transactions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -e 'const fs=require(\"fs\");const j=JSON.parse(fs.readFileSync(\"/tmp/audit_out1/transactions.json\",\"utf8\")); console.log(Object.keys(j)); console.log(j.items[0]); console.log(j.items.length);'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -RIn \"exception_reason\" /app/audit-extractor/src | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"Correction\" /app/audit-extractor/src/lib /app/audit-extractor/src | head -n 80\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

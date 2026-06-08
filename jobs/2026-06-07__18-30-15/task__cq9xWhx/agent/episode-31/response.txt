@@ -1,0 +1,23 @@
+{
+  "analysis": "Our grep for compliance_hold hit lots of filler and broke the pipe; we didn’t get Brief 04/07/08 content yet. We need to view the binding paragraphs directly with sed around their heading lines (685 for Brief 04, 1201 for Brief 07, 1419 for Brief 08). We'll print small ranges that include only the directive blocks before field notes. Then implement compliance_hold and winning correction rules accordingly.",
+  "plan": "1) Display Brief 04 binding block (685-695). 2) Display Brief 07 binding block (1201-1212 plus maybe a bit more). 3) Display Brief 08 binding block (1419-1439). 4) Based on these, implement: correction winning semantics, exception flags including compliance_hold, and artifact requirements. Then rerun extractor and validate outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '685,705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1225p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1455p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1695p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

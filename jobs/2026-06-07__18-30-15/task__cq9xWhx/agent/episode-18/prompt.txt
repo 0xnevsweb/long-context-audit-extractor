@@ -1,0 +1,138 @@
+New Terminal Output:
+
+}root@88ef4771bc8a:/app# sed -n '1,220p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) =>
+>     String(a.transaction_id).localeCompare(String(b.transaction_id)),
+>   );
+> }
+>
+> module.exports = { sortByTransactionId };
+> EOF
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   const start = markdown.indexOf("## Transaction Ledger");
+>   if (start < 0) return [];
+>
+>   // Only the section headed exactly '## Transaction Ledger' is authoritative.
+>   const slice = markdown.slice(start);
+>
+>   const rowsById = new Map();
+>   const blocks = slice.split(/^### /m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = lines[0].trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     // Brief 01: ignore any ledger block containing 'provisional: true' (case-insensitive).
+>     const isProvisional = lines.some((l) => /provisional\s*:\s*true/i.test(l));
+>     if (isProvisional) continue;
+>
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     // If duplicates appear, prefer the later non-provisional block (deterministic, file-order).
+>     rowsById.set(transactionId, row);
+>   }
+>
+>   return [...rowsById.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@88ef4771bc8a:/app# perl -0777 -i -pe 's/Number\(amount\.toFixed\(2\)\)/Math.round(amount*100)\/100/g' /app/audit-extractor/src/normalize/reconcile.js
+root@88ef4771bc8a:/app# sed -n '1,220p' /app/audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@88ef4771bc8a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@88ef4771bc8a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app# sha256sum /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconciliation_report.jsonl
+6bd623104f86f352ba1fde9c4d73bcb5402cb96136b191baed679f35d78368c4  /app/output/transactions.json
+979e9d1286ec980508bf4e2537d6d7f428cdb5c7250bef6b314fea59341ccb34  /app/output/transactions.csv
+3a42d346c00ddcf61ff8b82dfe2cd58419f7fdddc203eaec775dd5582468d937  /app/output/exceptions.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /app/output/reconciliation_report.jsonl
+root@88ef4771bc8a:/app# head -n 2 /app/output/transactions.csv && head -n 5 /app/output/transactions.json && tail -n 2 /app/output/transactions.json
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+  ]
+}root@88ef4771bc8a:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+94:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+96:Follow-up #416 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows
+ only from the canonical ledger and structured sections at file end.
+root@88ef4771bc8a:/app# grep -n "^## Email Excerpts" -n /app/data/audit_archive.md
+238:## Email Excerpts (archived thread)
+1857:## Email Excerpts
+root@88ef4771bc8a:/app# sed -n '1,120p' /app/audit-extractor/src/parser/emails.js
+function findHeadingIndex(markdown, headingLine) {
+  const re = new RegExp(`^${headingLine.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*$`, "m");
+  const m = markdown.match(re);
+  return m ? m.index : -1;
+}
+
+function parseEmails(markdown) {
+  const start = findHeadingIndex(markdown, "## Email Excerpts");
+  if (start < 0) return [];
+
+  const end = findHeadingIndex(markdown, "## Policy Exceptions");
+  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);
+
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) continue;
+
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@88ef4771bc8a:/app#

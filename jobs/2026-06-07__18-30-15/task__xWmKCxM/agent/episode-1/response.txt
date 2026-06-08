@@ -1,0 +1,59 @@
+{
+  "analysis": "Repo and contract inspected. CLI already enforces missing args with stderr and exit 1. Current extractor produces deterministic outputs across two runs (no diffs), but reconciliation_report.jsonl is empty and exceptions.json is basically empty, suggesting corrections/exception logic isn’t being applied or parsed. Also the earlier ripgrep attempt failed because `rg` isn’t installed, and the weird output shown came from the markdown (not code). Next we need to inspect the source modules (parser/policy/emails/corrections/ledger + normalize/reconcile + normalize/exceptions), then read authoritative policy in Investigation Briefs 01–09 and the structured ledger/corrections sections near the end of the archive. Then we implement reconciliation semantics (status precedence, compliance@ mail rules, Brief 09 override for hold timing, correction application and report generation, and proper exception flagging) and finally run extractor into /app/output.",
+  "plan": "1) Use grep/sed instead of rg to locate reconciliation logic in code. 2) Open key source files: normalize/reconcile.js, normalize/exceptions.js, parser/policy.js, parser/emails.js, parser/corrections.js, parser/ledger.js, lib/handbook.js. 3) Inspect audit_archive.md for Investigation Briefs 01–09 (especially Brief 09 amendment) and find the structured data near the end (ledger rows, correction notices). 4) Based on policy, adjust parsing and reconciliation ordering: base from canonical ledger only, apply compliance email updates per timing rules, apply correction notices deterministically with precedence, generate reconciliation_report.jsonl for winning corrections, and compute exception_reason flags in lexical order. 5) Run extractor into /app/output and validate required files exist and are non-empty as expected (report should contain applied corrections if any exist).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -RIn \"Investigation Brief 0\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /Investigation Brief 09/{p=1} p{print} /Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 260 /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

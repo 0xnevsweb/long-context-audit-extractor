@@ -1,0 +1,51 @@
+{
+  "analysis": "Terminal output is visible again after clear; shell is responsive. Need to re-run the earlier inspection steps to capture reconcile.js and Investigation Brief texts into temp files and view them. Then implement code fixes to match output contract and reconciliation rules.",
+  "plan": "1) Confirm working directory. 2) Dump reconcile.js with line numbers for full review. 3) Extract Investigation Brief sections 01–04, 07–09 into /tmp files and view key rule paragraphs. 4) Inspect parser modules next if needed. Then proceed to patch reconcile + writers.",
+  "commands": [
+    {
+      "keystrokes": "pwd\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=11 && NR<252 {print}' /app/data/audit_archive.md > /tmp/brief01.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=252 && NR<468 {print}' /app/data/audit_archive.md > /tmp/brief02.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=468 && NR<685 {print}' /app/data/audit_archive.md > /tmp/brief03.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=685 && NR<828 {print}' /app/data/audit_archive.md > /tmp/brief04.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=1201 && NR<1419 {print}' /app/data/audit_archive.md > /tmp/brief07.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=1419 && NR<1670 {print}' /app/data/audit_archive.md > /tmp/brief08.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'NR>=1670 && NR<1750 {print}' /app/data/audit_archive.md > /tmp/brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief01.txt /tmp/brief02.txt /tmp/brief03.txt /tmp/brief04.txt /tmp/brief07.txt /tmp/brief08.txt /tmp/brief09.txt; do echo \"===== ${f}\"; sed -n '1,120p' $f; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

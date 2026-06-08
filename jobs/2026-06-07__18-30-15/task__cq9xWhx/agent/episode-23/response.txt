@@ -1,0 +1,15 @@
+{
+  "analysis": "The combined cat of multiple brief head files still produced lots of filler and didn’t show the binding directives clearly on screen (likely truncation/scroll issues). We should inspect each /tmp/briefXX_head.txt individually with head -n 30 to reliably capture the key paragraphs, and use grep to highlight the directive lines (Auditor directive / Committee ruling / mandatory).",
+  "plan": "1) For each brief head temp file, show only first 30–40 lines. 2) Grep within each for 'directive', 'mandatory', 'binding', and key flag names like compliance_hold. 3) Once rules are visible, implement them in code.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief03_head.txt /tmp/brief04_head.txt /tmp/brief06_head.txt /tmp/brief07_head.txt /tmp/brief08_head.txt /tmp/brief09_head.txt; do echo \"===== $f (head)\"; head -n 60 $f; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief03_head.txt /tmp/brief04_head.txt /tmp/brief06_head.txt /tmp/brief07_head.txt /tmp/brief08_head.txt /tmp/brief09_head.txt; do echo \"===== $f (key lines)\"; grep -nE \"directive|mandatory|binding|must|compliance_hold|effective_date|correction|notice|exception|flag|supersed|override\" $f; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

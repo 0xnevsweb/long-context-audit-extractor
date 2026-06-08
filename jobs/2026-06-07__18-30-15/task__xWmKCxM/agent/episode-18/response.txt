@@ -1,0 +1,27 @@
+{
+  "analysis": "We only saw the tail end of reconcile.js with line numbers 24–62, meaning our nl/sed command likely got truncated by earlier output; we still need the beginning of reconcile.js and all of corrections.js, plus the brief directive extracts (which didn’t show here). To proceed, we’ll print reconcile.js from line 1, and corrections.js entirely with nl. We’ll also rerun the brief directive extraction but redirect each to /tmp and then head them, to ensure visibility.",
+  "plan": "1) Show reconcile.js lines 1–120 and 120–260 to capture full logic. 2) Show corrections.js lines 1–200. 3) Extract directive sections for briefs 05–08 into /tmp/brief05.dir etc and display them with head to confirm. Then implement code fixes accordingly.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,140p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '140,320p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do ln=$(grep -n \"Committee ruling\" /tmp/brief${b}.md | head -n 1 | cut -d: -f1); if [ -n \"$ln\" ]; then sed -n \"${ln},$((ln+90))p\" /tmp/brief${b}.md > /tmp/brief${b}.dir; else echo \"NO COMMITTEE RULING\" > /tmp/brief${b}.dir; fi; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== brief${b}.dir =====\"; cat /tmp/brief${b}.dir | head -n 120; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,177 @@
+New Terminal Output:
+
+root@88ef4771bc8a:/app# pwd
+/app
+root@88ef4771bc8a:/app# nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,220p'
+     1  const { sortByTransactionId } = require("../utils/sort");
+     2
+     3  const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+     4
+     5  function reconcileTransactions(parsed) {
+     6    const byId = new Map();
+     7    for (const row of parsed.ledger) {
+     8      byId.set(row.transaction_id, { ...row });
+     9    }
+    10
+    11    for (const meeting of parsed.meetings) {
+    12      const target = byId.get(meeting.transaction_id);
+    13      if (target) {
+    14        target.owner = meeting.owner;
+    15      }
+    16    }
+    17
+    18    for (const email of parsed.emails) {
+    19      const target = byId.get(email.transaction_id);
+    20      if (target) {
+    21        target.status = email.status;
+    22      }
+    23    }
+    24
+    25    const report = [];
+    26    for (const notice of parsed.corrections) {
+    27      const target = byId.get(notice.transaction_id);
+    28      if (!target) {
+    29        continue;
+    30      }
+    31      if (notice.field === "owner") {
+    32        target.owner = notice.value;
+    33      } else if (notice.field === "status") {
+    34        target.status = notice.value;
+    35      } else if (notice.field === "date") {
+    36        target.date = notice.value;
+    37      }
+    38      report.push({
+    39        notice_id: notice.notice_id,
+    40        transaction_id: notice.transaction_id,
+    41        field: notice.field,
+    42        previous_value: "",
+    43        new_value: notice.value,
+    44        effective: notice.effective,
+    45      });
+    46    }
+    47
+    48    const items = sortByTransactionId(
+    49      [...byId.values()].map((row) => ({
+    50        transaction_id: row.transaction_id,
+    51        owner: row.owner,
+    52        status: String(row.status).toLowerCase(),
+    53        effective_date: row.date,
+    54        amount_usd: Number(row.amount),
+    55        exception_reason: null,
+    56      })),
+    57    );
+    58
+    59    return { items, report };
+    60  }
+    61
+    62  module.exports = { reconcileTransactions, STATUS_ORDER };
+root@88ef4771bc8a:/app# grep -n "^## Investigation Brief" /app/data/audit_archive.md
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+828:## Investigation Brief 05 — Meeting Amendments and Owners
+838:## Investigation Brief 05 — Meeting Amendments and Owners — field notes
+1058:## Investigation Brief 06 — Effective Dates on Output
+1069:## Investigation Brief 06 — Effective Dates on Output — field notes
+1201:## Investigation Brief 07 — Exception Flags (Part I)
+1213:## Investigation Brief 07 — Exception Flags (Part I) — field notes
+1419:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts
+1440:## Investigation Brief 08 — Exception Flags (Part II) and Artifacts — field notes
+1670:## Investigation Brief 09 — Mid-Year Amendment
+1682:## Investigation Brief 09 — Mid-Year Amendment — field notes
+root@88ef4771bc8a:/app# awk 'NR>=11 && NR<252 {print}' /app/data/audit_archive.md > /tmp/brief01.txt
+root@88ef4771bc8a:/app# awk 'NR>=252 && NR<468 {print}' /app/data/audit_archive.md > /tmp/brief02.txt
+root@88ef4771bc8a:/app# awk 'NR>=468 && NR<685 {print}' /app/data/audit_archive.md > /tmp/brief03.txt
+root@88ef4771bc8a:/app# awk 'NR>=685 && NR<828 {print}' /app/data/audit_archive.md > /tmp/brief04.txt
+root@88ef4771bc8a:/app# awk 'NR>=1201 && NR<1419 {print}' /app/data/audit_archive.md > /tmp/brief07.txt
+root@88ef4771bc8a:/app# awk 'NR>=1419 && NR<1670 {print}' /app/data/audit_archive.md > /tmp/brief08.txt
+root@88ef4771bc8a:/app# awk 'NR>=1670 && NR<1750 {print}' /app/data/audit_archive.md > /tmp/brief09.txt
+root@88ef4771bc8a:/app# for f in /tmp/brief01.txt /tmp/brief02.txt /tmp/brief03.txt /tmp/brief04.txt /tmp/brief07.txt /tmp/brief08.txt /tmp/brief09.txt; do echo
+ "===== ${f}"; sed -n '1,120p' $f; done
+===== /tmp/brief01.txt
+## Investigation Brief 01 — Ledger Sourcing
+
+Committee ruling (binding for extract):
+
+Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+slice. For extractor output, treat only the markdown section whose heading
+line is exactly `## Transaction Ledger` as authoritative. The archive also
+contains a working-copy ledger and prose that mentions ledger headings; those
+are investigative context only.
+
+Ignore any ledger block that includes a line `provisional: true` (case
+insensi
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+am exception coding depends on mail timestamps.
+
+Site visit #975 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Risk assessment WP-4185 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Memo WP-2693 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed too
+ling, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrative
+ context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+Follow-up #775 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead derive r
+ows only from the canonical ledger and structured sections at file end.
+
+Interview #913 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised prese
+rving the full thread because downstream exception coding depends on mail timestamps.
+
+Risk assessment WP-6250 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Working paper WP-1770 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed tooling,
+ but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Site visit #134 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-1725 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Site visit #521 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+During July review, S. Patel circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cache
+ state; QA reproduced the drift on a cold run the next morning.
+
+Site visit #638 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Revie
+wers flagged the gap because effective-date logic must honor notice precedence.
+
+During July review, A. Ndiaye circulated a draft finding on capital project capitalization. Finance operations pushed back, arguing the issue was transient cach
+e state; QA reproduced the drift on a cold run the next morning.
+
+## Case Study 07 — Capital Project Capitalization
+
+root@88ef4771bc8a:/app#

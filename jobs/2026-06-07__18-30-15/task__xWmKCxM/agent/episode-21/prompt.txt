@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> +  );
+> +
+> +  items = applyExceptionReasons(items, {
+> +    policyExceptions: parsed.policyExceptions,
+> +    complianceHoldByTxn,
+> +    winningStatusCorrectionByTxn,
+> +  });
+> @@
+>    return { items, report };
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_fixed1
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_fixed2
+root@fca90c221e79:/app# cmp -s /tmp/audit_fixed1/transactions.json /tmp/audit_fixed2/transactions.json; echo "transactions.json identical? $?"
+transactions.json identical? 0
+root@fca90c221e79:/app# ls -la /tmp/audit_fixed1
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 01:37 .
+drwxrwxrwt 1 root root 4096 Jun  8 01:37 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:37 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 01:37 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 01:37 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 01:37 transactions.json
+root@fca90c221e79:/app# head -n 5 /tmp/audit_fixed1/reconciliation_report.jsonl; echo "---"; cat /tmp/audit_fixed1/exceptions.json
+---
+{
+  "exceptions": []
+}root@fca90c221e79:/app# rm -rf /app/output/*
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@fca90c221e79:/app# ls -la /app/output
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 01:37 .
+drwxr-xr-x 1 root root 4096 Jun  8 01:30 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:37 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 01:37 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 01:37 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 01:37 transactions.json
+root@fca90c221e79:/app#

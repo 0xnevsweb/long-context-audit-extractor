@@ -1,0 +1,47 @@
+{
+  "analysis": "Terminal output is working again after Ctrl+C. We need to proceed with inspecting current reconcile/corrections/exceptions/report code and extract Investigation Briefs 05–09 and 09 amendment. Earlier we saw ledger parsing is flawed (decoy ledger section + duplicate transaction IDs with provisional/final). Corrections exist in the archive but reconciliation_report.jsonl was empty, indicating corrections are not parsed/applied or report not emitted. Next: inspect parser/corrections.js, normalize/reconcile.js, normalize/exceptions.js, output/reportWriter.js; then read Brief 05–09 text; then implement fixes and rerun extractor to /app/output.",
+  "plan": "1) Inspect the missing source files (corrections parser, reconcile, exceptions, report writer). 2) Extract and view Investigation Briefs 05–09 (and also 01–04 if needed) to capture binding rules, especially Brief 09 hold-timing amendment. 3) Patch ledger parser to select only canonical ledger section and handle duplicates correctly. 4) Patch email parser to include sent date and enforce compliance@ sender rule and timing. 5) Patch corrections parsing and apply them deterministically; emit reconciliation_report.jsonl. 6) Ensure exception_reason generation follows contract (semicolon joined, lexical order) and includes policy exceptions/holds per briefs. 7) Run extractor into /tmp for verification, then into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,420p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## Investigation Brief 06/{exit}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## Investigation Brief 07/{exit}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## Investigation Brief 08/{exit}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## Investigation Brief 09/{exit}' /app/data/audit_archive.md | sed -n '1,220p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

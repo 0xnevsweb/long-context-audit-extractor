@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    58
+    59    return { items, report };
+    60  }
+    61
+    62  module.exports = { reconcileTransactions, STATUS_ORDER };
+root@fca90c221e79:/app# nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '120,240p'
+root@fca90c221e79:/app# nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,220p'
+     1  function parseCorrections(markdown) {
+     2    const start = markdown.indexOf("## Correction Notices");
+     3    const end = markdown.indexOf("## Transaction Ledger");
+     4    const slice =
+     5      start >= 0 && end > start ? markdown.slice(start, end) : "";
+     6    const notices = [];
+     7    const blocks = slice.split(/^### /m).slice(1);
+     8    for (const block of blocks) {
+     9      const lines = block.split("\n");
+    10      const noticeId = lines[0].trim();
+    11      if (!noticeId.startsWith("CORR-")) {
+    12        continue;
+    13      }
+    14      const entry = { notice_id: noticeId };
+    15      for (const line of lines) {
+    16        const trimmed = line.trim();
+    17        if (trimmed.startsWith("targets:")) {
+    18          entry.transaction_id = trimmed.split(":")[1].trim();
+    19        } else if (trimmed.startsWith("field:")) {
+    20          entry.field = trimmed.split(":")[1].trim();
+    21        } else if (trimmed.startsWith("value:")) {
+    22          entry.value = trimmed.split(":")[1].trim();
+    23        } else if (trimmed.startsWith("effective:")) {
+    24          entry.effective = trimmed.split(":")[1].trim();
+    25        }
+    26      }
+    27      notices.push(entry);
+    28    }
+    29    return notices;
+    30  }
+    31
+    32  module.exports = { parseCorrections };
+root@fca90c221e79:/app#

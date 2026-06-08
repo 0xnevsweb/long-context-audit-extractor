@@ -1,0 +1,71 @@
+New Terminal Output:
+
+root@41841493f205:/app# node /app/audit-extractor/src/cli.js extract --outdir /tmp/x 1>/tmp/stdout1 2>/tmp/stderr1; echo "exit=$?"; echo "stderr:"; cat /tmp/std
+err1; echo "stdout:"; cat /tmp/stdout1
+exit=1
+stderr:
+missing --input or --outdir
+stdout:
+root@41841493f205:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md 1>/tmp/stdout2 2>/tmp/stderr2; echo "exit=$?"; echo "std
+err:"; cat /tmp/stderr2; echo "stdout:"; cat /tmp/stdout2
+exit=1
+stderr:
+missing --input or --outdir
+stdout:
+root@41841493f205:/app# sed -n '1,240p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@41841493f205:/app# ls -la /app/output
+total 32
+drwxr-xr-x 2 root root 4096 Jun  8 01:36 .
+drwxr-xr-x 1 root root 4096 Jun  8 01:36 ..
+-rw-r--r-- 1 root root  754 Jun  8 01:36 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 01:36 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2439 Jun  8 01:36 transactions.csv
+-rw-r--r-- 1 root root 7439 Jun  8 01:36 transactions.json
+root@41841493f205:/app# node - <<'NODE'
+> const fs=require('node:fs');
+> const p='/app/output/transactions.json';
+> const obj=JSON.parse(fs.readFileSync(p,'utf8'));
+> if(!obj.items||!Array.isArray(obj.items)) { console.error('missing items'); process.exit(2); }
+> let ok=true;
+> for(let i=1;i<obj.items.length;i++){
+>   if(String(obj.items[i-1].transaction_id) > String(obj.items[i].transaction_id)) { ok=false; break; }
+> }
+> console.log('items', obj.items.length, 'sorted', ok, 'first', obj.items[0].transaction_id, 'last', obj.items[obj.items.length-1].transaction_id);
+> NODE
+items 32 sorted true first TXN-08b4472a-f4b7-5455-9f43-e97005d4a594 last TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+root@41841493f205:/app#

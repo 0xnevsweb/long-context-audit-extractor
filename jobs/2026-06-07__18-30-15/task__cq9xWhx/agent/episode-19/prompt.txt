@@ -1,0 +1,262 @@
+New Terminal Output:
+
+}root@88ef4771bc8a:/app# grep -n "## Correction Notices" -n /app/data/audit_archive.md
+3866:## Correction Notices
+root@88ef4771bc8a:/app# grep -n "^### CORR-" /app/data/audit_archive.md | head -n 20
+3868:### CORR-7f2a91bc
+3874:### CORR-8e3b02cd
+3880:### CORR-9f4c13de
+3886:### CORR-a05d24ef
+3892:### CORR-b16e35f0
+3898:### CORR-c27e46a1
+root@88ef4771bc8a:/app# first=$(grep -n "^### CORR-" /app/data/audit_archive.md | head -n 1 | cut -d: -f1); start=$((first-3)); end=$((first+40)); sed -n "${sta
+rt},${end}p" /app/data/audit_archive.md
+
+## Correction Notices
+
+### CORR-7f2a91bc
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-05-10
+
+### CORR-8e3b02cd
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: approved
+effective: 2024-06-01
+
+### CORR-9f4c13de
+targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+field: status
+value: reversed
+effective: 2024-06-15
+
+### CORR-a05d24ef
+targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+field: owner
+value: dlee
+effective: 2024-04-20
+
+### CORR-b16e35f0
+targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+field: date
+value: 2024-08-01
+effective: 2024-08-01
+
+### CORR-c27e46a1
+targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+field: date
+value: 2024-09-01
+effective: 2024-09-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+root@88ef4771bc8a:/app# sed -n '1,120p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(markdown) {
+>   const start = markdown.indexOf("## Correction Notices");
+>   const end = markdown.indexOf("## Transaction Ledger");
+>   const slice = start >= 0 && end > start ? markdown.slice(start, end) : "";
+>
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = lines[0].trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId, transaction_id: "", field: "", value: "", effective: "" };
+>
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (!trimmed) continue;
+>
+>       // Support multiple historical key spellings observed in the archive.
+>       if (trimmed.startsWith("targets:") || trimmed.startsWith("target:") || trimmed.startsWith("transaction:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:") || trimmed.startsWith("new_value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (entry.transaction_id && entry.field && entry.value && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'
+> const { sortByTransactionId } = require("../utils/sort");
+>
+> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+>
+> function toCentsNumber(n) {
+>   const x = Number(n);
+>   if (!Number.isFinite(x)) return 0;
+>   return Math.round(x * 100) / 100;
+> }
+>
+> function reconcileTransactions(parsed) {
+>   const byId = new Map();
+>   for (const row of parsed.ledger || []) {
+>     byId.set(row.transaction_id, { ...row });
+>   }
+>
+>   // Meeting amendments (Brief 05): only signed amendments affect owner.
+>   for (const meeting of parsed.meetings || []) {
+>     if (!meeting || !meeting.transaction_id) continue;
+>     if (!meeting.signed) continue;
+>     const target = byId.get(meeting.transaction_id);
+>     if (target && meeting.owner) target.owner = meeting.owner;
+>   }
+>
+>   // Email excerpts: update status if present. (Full precedence/hold rules handled via briefs; minimal deterministic update.)
+>   for (const email of parsed.emails || []) {
+>     const target = byId.get(email.transaction_id);
+>     if (!target) continue;
+>     if (!email.status) continue;
+>
+>     // Prefer the more "final" status if multiple updates exist.
+>     const cur = String(target.status || "pending").toLowerCase();
+>     const next = String(email.status).toLowerCase();
+>     const curRank = STATUS_ORDER[cur] ?? -1;
+>     const nextRank = STATUS_ORDER[next] ?? -1;
+>     if (nextRank >= curRank) target.status = next;
+>   }
+>
+>   // Corrections: apply deterministically by notice_id, and emit report rows.
+>   const report = [];
+>   const notices = [...(parsed.corrections || [])].sort((a, b) =>
+>     String(a.notice_id).localeCompare(String(b.notice_id)),
+>   );
+>
+>   for (const notice of notices) {
+>     const target = byId.get(notice.transaction_id);
+>     if (!target) continue;
+>
+>     const fieldMap = { owner: "owner", status: "status", date: "date" };
+>     const k = fieldMap[notice.field];
+>     if (!k) continue;
+>
+>     const prev = target[k] == null ? "" : String(target[k]);
+>     target[k] = notice.value;
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: prev,
+>       new_value: notice.value,
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   const policySet = parsed.policyExceptions instanceof Set ? parsed.policyExceptions : new Set();
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => {
+>       const flags = [];
+>       if (policySet.has(row.transaction_id)) flags.push("policy_exception");
+>
+>       const exception_reason = flags.length ? flags.sort().join(";") : null;
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: toCentsNumber(row.amount),
+>         exception_reason,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 3 /app/output/reconciliation_report.jsonl && cat /app/output/exceptions.json
+0 /app/output/reconciliation_report.jsonl
+{
+  "items": [
+    {
+      "transaction_id": "TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0",
+      "owner": "frost",
+      "status": "pending",
+      "effective_date": "2024-09-21",
+      "amount_usd": 8468.4,
+      "exception_reason": "policy_exception"
+    },
+    {
+      "transaction_id": "TXN-68b5423c-1abb-59e6-947e-7e56011cec58",
+      "owner": "frost",
+      "status": "approved",
+      "effective_date": "2024-07-07",
+      "amount_usd": 8740.52,
+      "exception_reason": "policy_exception"
+    },
+    {
+      "transaction_id": "TXN-c7416874-b91b-5c2d-92de-0098b1224d18",
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "policy_exception"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "policy_exception"
+    }
+  ]
+}root@88ef4771bc8a:/app#

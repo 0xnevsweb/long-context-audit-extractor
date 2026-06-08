@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1713:
+1714: Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds.
+The mid-year amendment later in this archive supersedes that draft practice.
+1715:
+1716: Lead reviewer L. Bergstrom noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blam
+ed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.
+1717:
+1718: In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves nar
+rative context so auditors can explain why a given transaction received compliance_hold.
+1719:
+1720: The committee packet references capital project capitalization as a contributing factor to late compliance holds. Investigators cross-checked mail excerpt
+s against amendment minutes before accepting any owner change.
+1721:
+1722: Follow-up #775 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead de
+rive rows only from the canonical ledger and structured sections at file end.
+1723:
+1724: Interview #913 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised
+ preserving the full thread because downstream exception coding depends on mail timestamps.
+1725:
+1726: Risk assessment WP-6250 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or a
+ppendix commentary as authoritative transaction sources.
+1727:
+1728: Working paper WP-1770 documents a three-way match failure tied to capital project capitalization. The team escalated when repeated extractor runs produced
+ different status columns for the same transaction id.
+1729:
+1730: Lead reviewer M. Chen noted that capital project capitalization created reconciliation noise in fixed assets during July review. Staff initially blamed to
+oling, but timeline reconstruction showed manual overrides arriving after batch lock.
+1731:
+1732: Site visit #134 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches.
+ Reviewers flagged the gap because effective-date logic must honor notice precedence.
+
+root@88ef4771bc8a:/app# grep -n "^=== Brief" -n /tmp/brief_directives.txt
+1:=== Brief 03 directive excerpt (around line None) ===
+4:=== Brief 04 directive excerpt (around line None) ===
+7:=== Brief 06 directive excerpt (around line 1060) ===
+72:=== Brief 07 directive excerpt (around line None) ===
+75:=== Brief 08 directive excerpt (around line None) ===
+78:=== Brief 09 directive excerpt (around line 1672) ===
+root@88ef4771bc8a:/app# sed -n '240,520p' /tmp/brief_directives.txt
+root@88ef4771bc8a:/app#

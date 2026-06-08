@@ -1,0 +1,35 @@
+{
+  "analysis": "The directive extraction shows markers not found for Briefs 03, 04, 07, 08 (returned None), but found for Brief 06 at line 1060 and Brief 09 at 1672. That implies those briefs may use different marker wording (e.g., 'Committee directive', 'Extractor directive', etc.) or our ranges are wrong. We should instead extract the first ~40 lines of each brief section directly (from its heading line) which will contain the binding rules, regardless of marker phrases. For Brief 03 start=468, Brief 04 start=685, Brief 07 start=1201, Brief 08 start=1419. We'll dump 60 lines from each start into files and inspect. Then implement compliance_hold and exception flags and correction winning logic.",
+  "plan": "1) Dump first 80 lines from each relevant brief section into /tmp and view heads. 2) Also dump Brief 06 and 09 excerpts already located. 3) Use that to implement rules. 4) Update reconcile and parsers accordingly.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,548p' /app/data/audit_archive.md > /tmp/brief03_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,765p' /app/data/audit_archive.md > /tmp/brief04_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1125p' /app/data/audit_archive.md > /tmp/brief06_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1290p' /app/data/audit_archive.md > /tmp/brief07_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1515p' /app/data/audit_archive.md > /tmp/brief08_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1715p' /app/data/audit_archive.md > /tmp/brief09_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief03_rules.txt /tmp/brief04_rules.txt /tmp/brief06_rules.txt /tmp/brief07_rules.txt /tmp/brief08_rules.txt /tmp/brief09_rules.txt; do echo \"===== $f\"; cat $f; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

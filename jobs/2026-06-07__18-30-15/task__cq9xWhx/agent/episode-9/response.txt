@@ -1,0 +1,51 @@
+{
+  "analysis": "We now see reconcile.js: it’s extremely incomplete relative to the Brief rules—just overwrites owner from meetings, status from emails, then applies corrections in input order with blank previous_value, no precedence, no sorting, no effective timing, and no exception flags. Brief 01 output we saw confirms key rule: only exact heading '## Transaction Ledger' is authoritative, and ignore any ledger block containing 'provisional: true' (case-insensitive). However, our brief output got truncated due to large file content; we need to extract only the binding rule paragraphs (likely near the start of each Brief) without pulling in filler/case studies. We'll view specific portions of the brief files with grep/sed, focusing on bullet lists/Committee ruling lines.",
+  "plan": "1) For each brief file, extract only the initial binding rule section (e.g., first ~80 lines) and also grep for key phrases like 'binding', 'Committee ruling', 'Extractor must', 'Effective', 'compliance_hold', 'correction', 'notice_id', etc. 2) Inspect parser modules to ensure they correctly parse the canonical structured sections at end (Emails, Policy Exceptions, Correction Notices, Transaction Ledger). 3) Then implement reconciliation accordingly: ledger sourcing (ignore provisional duplicates), meeting owner amendments, status precedence per Brief 02, compliance hold timing per Brief 03 overridden by Brief 09, correction notice precedence/overlay order per Brief 04, effective_date output per Brief 06, exception flags per Brief 07/08, deterministic sorting everywhere, and proper report previous_value tracking. 4) Fix writers to match contract envelopes and CSV header/order including exception_reason and two-decimal amounts.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief01.txt /tmp/brief02.txt /tmp/brief03.txt /tmp/brief04.txt /tmp/brief05.txt /tmp/brief06.txt /tmp/brief07.txt /tmp/brief08.txt /tmp/brief09.txt; do [ -f $f ] && echo \"== $f ==\" && sed -n '1,90p' $f; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Committee ruling|binding|Extractor|must|Ignore|exactly `## Transaction Ledger`|provisional|precedence|overlay|effective|compliance_hold|mail|timestamp|Correction Notice|notice_id\" /tmp/brief0{1,2,3,4,7,8,9}.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"## Transaction Ledger\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"## Email Excerpts\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"## Policy Exceptions\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -RIn \"## Correction Notices\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/mail.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/exceptions.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

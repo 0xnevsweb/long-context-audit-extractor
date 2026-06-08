@@ -1,0 +1,87 @@
+{
+  "analysis": "No commands have been run yet. We need to inspect the audit-extractor project, read the output contract, understand current extraction/reconciliation logic, then compare against authoritative reconciliation policy inside /app/data/audit_archive.md (Investigation Briefs 01–09 with amendment in Brief 09). Then patch Node sources so reruns are stable and mapping of holds/corrections/ledger rows is correct. Finally run the CLI with required args and ensure it writes the four required output files into the provided outdir, and validate missing args behavior (stderr + exit 1).",
+  "plan": "1) Inspect repository structure and relevant source files (CLI, parser, reconciliation). 2) Read docs/extractor-output-contract.md to understand required shapes. 3) Examine audit_archive.md, focusing on Investigation Briefs 01–09 and any structured ledger data near the end. 4) Run current extractor to reproduce issues and inspect output. 5) Implement fixes ensuring deterministic status resolution, proper application of Brief 09 amendment, correct association of compliance holds and later mail, and correct correction notice mapping to ledger rows. 6) Ensure CLI enforces --input and --outdir with stderr + exit 1. 7) Re-run extractor into /app/output and verify required files exist and look correct.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -print\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --help\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"recon|reconc|hold|status|correction|notice|ledger|mail\" /app/audit-extractor/src\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -lah /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md | head\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Brief 0[1-9]\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "mkdir -p /tmp/audit_run1 /tmp/audit_run2 /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_run1\n",
+      "duration": 5.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_run2\n",
+      "duration": 5.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_run1 && ls -la /tmp/audit_run2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "diff -u /tmp/audit_run1/reconciliation_report.jsonl /tmp/audit_run2/reconciliation_report.jsonl | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/audit_run1/transactions.json /tmp/audit_run2/transactions.json | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/audit_run1/exceptions.json /tmp/audit_run2/exceptions.json | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract 2> /tmp/extractor_noargs.err; echo $?\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat /tmp/extractor_noargs.err\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

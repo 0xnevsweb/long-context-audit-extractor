@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    24
+    25    const report = [];
+    26    for (const notice of parsed.corrections) {
+    27      const target = byId.get(notice.transaction_id);
+    28      if (!target) {
+    29        continue;
+    30      }
+    31      if (notice.field === "owner") {
+    32        target.owner = notice.value;
+    33      } else if (notice.field === "status") {
+    34        target.status = notice.value;
+    35      } else if (notice.field === "date") {
+    36        target.date = notice.value;
+    37      }
+    38      report.push({
+    39        notice_id: notice.notice_id,
+    40        transaction_id: notice.transaction_id,
+    41        field: notice.field,
+    42        previous_value: "",
+    43        new_value: notice.value,
+    44        effective: notice.effective,
+    45      });
+    46    }
+    47
+    48    const items = sortByTransactionId(
+    49      [...byId.values()].map((row) => ({
+    50        transaction_id: row.transaction_id,
+    51        owner: row.owner,
+    52        status: String(row.status).toLowerCase(),
+    53        effective_date: row.date,
+    54        amount_usd: Number(row.amount),
+    55        exception_reason: null,
+    56      })),
+    57    );
+    58
+    59    return { items, report };
+    60  }
+    61
+    62  module.exports = { reconcileTransactions, STATUS_ORDER };
+root@fca90c221e79:/app#

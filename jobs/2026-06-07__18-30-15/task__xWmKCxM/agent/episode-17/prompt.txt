@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ mid-year amendment later in this archive supersedes that draft practice.
+58:Interview #780 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised pr
+eserving the full thread because downstream exception coding depends on mail timestamps.
+60:Interview #767 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised pr
+eserving the full thread because downstream exception coding depends on mail timestamps.
+64:Memo WP-9453 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+66:Follow-up #800 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+68:Site visit #428 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+70:Risk assessment WP-8147 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+72:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+74:Follow-up #668 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+76:Memo WP-4884 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+78:In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narrat
+ive context so auditors can explain why a given transaction received compliance_hold.
+84:Site visit #909 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewer
+s flagged the gap because effective-date logic must honor notice precedence.
+86:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+88:Interview #458 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preservi
+ng the full thread because downstream exception coding depends on mail timestamps.
+92:Follow-up #460 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows
+ only from the canonical ledger and structured sections at file end.
+94:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+96:Follow-up #416 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows
+ only from the canonical ledger and structured sections at file end.
+98:Memo WP-1760 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override le
+dger owners; Brief 05 resolves that question for the extractor.
+100:Memo WP-8361 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+104:Interview #966 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preserv
+ing the full thread because downstream exception coding depends on mail timestamps.
+root@fca90c221e79:/app#

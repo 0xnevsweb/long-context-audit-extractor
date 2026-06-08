@@ -1,0 +1,23 @@
+{
+  "analysis": "The python output shown is only a slice of filler lines around 1692+, not the directive excerpts; likely the second python script printed a lot and we only see the tail. We need to redirect the python output to a file and then view it with sed/head to reliably capture the directive excerpts for briefs 03/04/06/07/08/09.",
+  "plan": "1) Re-run the directive-extraction python script but redirect to /tmp/brief_directives.txt. 2) View the beginning of that file and search within it for 'Brief 03', 'Brief 04', etc. 3) Once we have the exact rules, implement them in code.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY' > /tmp/brief_directives.txt\nimport re\npath='/app/data/audit_archive.md'\nlines=open(path,'r',errors='ignore').read().splitlines()\nbriefs={'03':(468,684),'04':(685,827),'06':(1058,1200),'07':(1201,1418),'08':(1419,1669),'09':(1670,2000)}\nmarkers=re.compile(r'(Auditor directive|Committee ruling|mandatory for extract|binding for extract)',re.I)\nfor b,(s,e) in briefs.items():\n    idx=None\n    for i in range(s,e+1):\n        if markers.search(lines[i-1] or ''):\n            idx=i; break\n    print(f'=== Brief {b} directive excerpt (around line {idx}) ===')\n    if idx is None:\n        print('(no marker found)')\n        print()\n        continue\n    for j in range(max(s,idx-3), min(e, idx+60)+1):\n        print(f'{j}: {lines[j-1]}')\n    print()\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/brief_directives.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^=== Brief\" -n /tmp/brief_directives.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '240,520p' /tmp/brief_directives.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

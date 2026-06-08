@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     const prev = target[k] == null ? "" : String(target[k]);
+>     target[k] = notice.value;
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: prev,
+>       new_value: notice.value,
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   const policySet = parsed.policyExceptions instanceof Set ? parsed.policyExceptions : new Set();
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => {
+>       const flags = [];
+>       if (policySet.has(row.transaction_id)) flags.push("policy_exception");
+>
+>       const exception_reason = flags.length ? flags.sort().join(";") : null;
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: toCentsNumber(row.amount),
+>         exception_reason,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app#

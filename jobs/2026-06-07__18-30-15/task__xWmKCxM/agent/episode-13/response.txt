@@ -1,0 +1,27 @@
+{
+  "analysis": "We saw the tail of normalize/reconcile.js: it always sets previous_value to empty string in report, and sets exception_reason null for all items. buildExceptions just filters on exception_reason, so exceptions.json will always be empty. That explains missing exceptions. Report is created from notices but likely corrections parsing or reconcile logic is flawed; also previous_value must be value before correction applies, and report should include only winning corrections, sorted by notice_id. We still need full reconcile.js, corrections.js, meetings.js, and briefs 05–08 for overlay order and rules. Then implement exception_reason computation (compliance_hold, high_value_exception, retroactive_review) and fix correction application and report fields.",
+  "plan": "1) Display full reconcile.js from the top plus corrections.js and meetings.js (and emails.js if needed) to understand current behavior. 2) Display extracted briefs 05–08 from /tmp to capture overlay order and correction precedence. 3) Implement changes:\n- Compute exception_reason codes based on parsed emails/policy exceptions/corrections outcomes, joined in lexical order.\n- Track pre-correction date snapshot for compliance_hold per Brief 09.\n- Apply correction notices sorted by effective date then notice_id, with “winning” correction per field as last applied, and populate report previous_value/new_value/effective.\n- Ensure canonical ledger parsing ignores working copy and resolves duplicates properly.\n4) Run extractor and verify outputs and determinism, then output to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,560p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{5,6,7,8}.md; do echo \"===== $(basename $f) =====\"; head -n 200 \"$f\"; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

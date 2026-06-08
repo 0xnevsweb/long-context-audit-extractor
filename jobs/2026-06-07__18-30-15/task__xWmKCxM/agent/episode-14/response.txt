@@ -1,0 +1,35 @@
+{
+  "analysis": "We got flooded again by brief content printing; the current screen is narrative text. We still need reconcile.js top portion, corrections.js, meetings.js, and the binding parts of briefs 05–08. To avoid flooding, we should grep within /tmp/brief files for the key directive paragraphs (Committee ruling/binding) and print only those lines. Similarly, for source files, use sed but that should be safe; the flood likely came from printing head of long briefs that include lots of narrative. We'll instead extract only the 'Committee ruling' sections using awk/grep around those headers.",
+  "plan": "1) Re-open reconcile.js/corrections.js/meetings.js in smaller chunks. 2) For each brief 05–08, print only the binding directive section (from \"Committee ruling\" to next blank line or until \"field notes\"), or grep for keywords: \"binding\", \"must\", \"supersedes\", \"correction\", \"hold\", \"owner\". 3) Then implement code changes based on those rules.",
+  "commands": [
+    {
+      "keystrokes": "C-c\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== Brief $b binding section =====\"; awk 'BEGIN{p=0} /Committee ruling \\(binding for extract\\)/{p=1} p{print} /^## / && NR>1{exit}' /tmp/brief'\"$b\"'.md | head -n 80; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== Brief $b keywords =====\"; grep -nEi \"binding|must|supersed|hold|correction|notice|precedence|owner|ledger\" /tmp/brief'\"$b\"'.md | head -n 40; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

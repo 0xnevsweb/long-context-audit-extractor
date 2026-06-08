@@ -1,0 +1,175 @@
+New Terminal Output:
+
+root@41841493f205:/app# grep -nE "Investigation Brief (0[1-9])|Brief (0[1-9])" /app/data/audit_archive.md | head -n 60
+7:This index orients readers only. Binding reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative
+, decoy sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correcti
+on Notices, and the canonical Transaction Ledger heading.
+9:Brief 09 supersedes earlier hold-timing wording in narrative drafts and partially defers Brief 07 on compliance_hold date comparison.
+11:## Investigation Brief 01 — Ledger Sourcing
+28:## Investigation Brief 01 — Ledger Sourcing — field notes
+60:Memo WP-3763 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+62:Memo WP-5953 summarizes stakeholder interviews about inventory obsolescence reserve. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+102:Memo WP-3161 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+136:Memo WP-2697 summarizes stakeholder interviews about vendor onboarding backlog. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+196:Memo WP-4162 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+204:Memo WP-3682 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+206:Memo WP-1921 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+226:Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+234:Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever overri
+de ledger owners; Brief 05 resolves that question for the extractor.
+252:## Investigation Brief 02 — Status Precedence
+262:## Investigation Brief 02 — Status Precedence — field notes
+284:Memo WP-2881 summarizes stakeholder interviews about capital project capitalization. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+336:Memo WP-7928 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+346:Memo WP-4151 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+354:Memo WP-1395 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+370:Memo WP-7131 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+390:Memo WP-6022 summarizes stakeholder interviews about SOX sampling mismatch. Participants disagreed on whether unsigned amendments should ever override ledge
+r owners; Brief 05 resolves that question for the extractor.
+416:Memo WP-6978 summarizes stakeholder interviews about intercompany netting dispute. Participants disagreed on whether unsigned amendments should ever overrid
+e ledger owners; Brief 05 resolves that question for the extractor.
+468:## Investigation Brief 03 — Compliance Mail Timing
+479:## Investigation Brief 03 — Compliance Mail Timing — field notes
+485:Memo WP-3037 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever overr
+ide ledger owners; Brief 05 resolves that question for the extractor.
+501:Memo WP-3030 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@41841493f205:/app# sed -n '1,260p' /app/audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@41841493f205:/app# sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@41841493f205:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@41841493f205:/app# sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@41841493f205:/app# grep -RInE "hold|compliance|correction|notice|provisional|duplicate|status precedence" /app/audit-extractor/src | head -n 120
+/app/audit-extractor/src/normalize/reconcile.js:26:  for (const notice of parsed.corrections) {
+/app/audit-extractor/src/normalize/reconcile.js:27:    const target = byId.get(notice.transaction_id);
+/app/audit-extractor/src/normalize/reconcile.js:31:    if (notice.field === "owner") {
+/app/audit-extractor/src/normalize/reconcile.js:32:      target.owner = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:33:    } else if (notice.field === "status") {
+/app/audit-extractor/src/normalize/reconcile.js:34:      target.status = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:35:    } else if (notice.field === "date") {
+/app/audit-extractor/src/normalize/reconcile.js:36:      target.date = notice.value;
+/app/audit-extractor/src/normalize/reconcile.js:39:      notice_id: notice.notice_id,
+/app/audit-extractor/src/normalize/reconcile.js:40:      transaction_id: notice.transaction_id,
+/app/audit-extractor/src/normalize/reconcile.js:41:      field: notice.field,
+/app/audit-extractor/src/normalize/reconcile.js:43:      new_value: notice.value,
+/app/audit-extractor/src/normalize/reconcile.js:44:      effective: notice.effective,
+/app/audit-extractor/src/parser/sections.js:4:const { parseCorrections } = require("./corrections");
+/app/audit-extractor/src/parser/sections.js:12:    corrections: parseCorrections(markdown),
+/app/audit-extractor/src/parser/corrections.js:6:  const notices = [];
+/app/audit-extractor/src/parser/corrections.js:10:    const noticeId = lines[0].trim();
+/app/audit-extractor/src/parser/corrections.js:11:    if (!noticeId.startsWith("CORR-")) {
+/app/audit-extractor/src/parser/corrections.js:14:    const entry = { notice_id: noticeId };
+/app/audit-extractor/src/parser/corrections.js:27:    notices.push(entry);
+/app/audit-extractor/src/parser/corrections.js:29:  return notices;
+root@41841493f205:/app#

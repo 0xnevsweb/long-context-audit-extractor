@@ -1,0 +1,75 @@
+{
+  "analysis": "We found key issues in normalize/reconcile.js: it overwrites ledger rows by last-seen in ledger (duplicates/provisional not handled deterministically per policy), applies meetings and emails blindly (no compliance@ sender check, no timing/hold logic, no status precedence), applies corrections but sets previous_value to empty and uses row.date not effective_date, and does not sort/filter corrections nor generate report correctly (should be sorted by notice_id and only winning corrections; also previous_value should be value immediately before applying). exceptions.js is a stub and never sets exception_reason; policy exceptions are parsed but never used. corrections_report is empty likely because parsed.corrections parsing or section slicing isn’t correct or correction entries lack required fields; need to inspect parser/corrections.js and relevant archive sections (Brief 03/07/09) for hold timing and correction precedence rules. Also `grep` showed briefs exist; we must read Briefs 01-09 sections. `rg` unavailable, so use sed/awk/grep.",
+  "plan": "1) Inspect parser/corrections.js and parser/sections.js to see why corrections might be empty and how sections are sliced. 2) Extract and read Investigation Briefs 01–09 from the markdown (by line ranges) to implement correct binding semantics: ledger sourcing & duplicate handling, status precedence, compliance email rules, holds (and Brief 09 override), and correction precedence/winning logic. 3) Update reconciliation: build canonical ledger rows per Brief 01 (handle provisional/final), apply meetings/emails only as allowed, implement hold logic and status precedence, apply corrections in correct order and compute previous_value, and generate report sorted by notice_id including only winning corrections. 4) Implement exception_reason generation (policy exceptions + holds + other flags from briefs) and ensure semicolon-joined lexical order. 5) Ensure deterministic output ordering and correct CSV/JSON writing. Then run CLI to /app/output and verify outputs exist and are stable.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 01\" -n /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 02\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 04\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 05\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 06\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 08\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '240,560p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '560,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

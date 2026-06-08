@@ -1,0 +1,19 @@
+{
+  "analysis": "We found there are two Email Excerpts headings: an archived thread at line 238 and the canonical structured section at 1857. Our parseEmails currently finds the first exact heading '## Email Excerpts' and ignores the parenthetical archived thread, which is good if the canonical is exactly '## Email Excerpts' later; but findHeadingIndex returns the first match only, so it will incorrectly latch to the earlier archived thread if it is exactly '## Email Excerpts (archived thread)'—it won't match exact '## Email Excerpts'. However grep shows an exact '## Email Excerpts' at 1857, so start should be that, unless there is another exact earlier (there isn't). Good. Still, we need to parse sent dates for compliance_hold and maybe status timing. We'll inspect the email section sample around line 1857 to see format (sent:, from:, status: etc). Then extend parseEmails to extract sent date. Next implement compliance_hold per Brief 09 and Brief 03 qualifying email rules (need to view Brief 03 binding paragraph). We'll directly view lines 468-490 to capture Brief 03 rule statement.",
+  "plan": "1) View the canonical Email Excerpts section around line 1857 to determine email fields (Sent:, From:, Subject:, status:). 2) View Brief 03 binding paragraph lines 468-490. 3) Update parseEmails to capture sent date and to mark qualifying emails (from compliance@) and include sent date as YYYY-MM-DD. 4) Update reconcile.js to compute compliance_hold exception flag: if any qualifying email has sent date after (or >=?) the pre-correction ledger date per Brief 09; implement exactly once rule wording is known. 5) Rerun extractor and see exception_reason includes compliance_hold where appropriate.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1857,1935p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,490p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction findHeadingIndex(markdown, headingLine) {\n  const re = new RegExp(\n    `^${headingLine.replace(/[-/\\\\^$*+?.()|[\\]{}]/g, \"\\\\$&\")}\\\\s*$`,\n    \"m\",\n  );\n  const m = markdown.match(re);\n  return m ? m.index : -1;\n}\n\nfunction parseEmails(markdown) {\n  const start = findHeadingIndex(markdown, \"## Email Excerpts\");\n  if (start < 0) return [];\n\n  const end = findHeadingIndex(markdown, \"## Policy Exceptions\");\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n\n    if (!fromMatch || !subjectMatch) continue;\n\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      sent: sentMatch ? sentMatch[1] : null,\n      transaction_id: subjectMatch[1],\n      status: statusMatch ? statusMatch[1].trim().toLowerCase() : null,\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

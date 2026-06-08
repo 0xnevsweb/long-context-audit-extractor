@@ -1,0 +1,41 @@
+Current Terminal Screen:
+84:Site visit #909 to procurement captured mailbox exports showing how vendor onboarding backlog correspondence arrived between two correction batches. Reviewer
+s flagged the gap because effective-date logic must honor notice precedence.
+86:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+88:Interview #458 with procurement highlighted how vendor onboarding backlog statements were forwarded without the matching ledger row. Counsel advised preservi
+ng the full thread because downstream exception coding depends on mail timestamps.
+92:Follow-up #460 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows
+ only from the canonical ledger and structured sections at file end.
+94:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+96:Follow-up #416 confirmed that procurement had been using an informal spreadsheet for vendor onboarding backlog. The formal extractor must instead derive rows
+ only from the canonical ledger and structured sections at file end.
+===== /tmp/brief09_rules.txt key
+5:Mid-year QA found compliance holds disappearing after date corrections. This
+6:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+7:only, compare each qualifying email's `sent:` date against the transaction's
+8:ledger date immediately before correction notices are applied — that is, the date
+10:before any correction notice changes `date` or `status`. Brief 03 still governs
+11:mail-driven status changes; this amendment governs only the hold flag.
+19:Risk assessment WP-7766 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+21:Follow-up #977 confirmed that fixed assets had been using an informal spreadsheet for capital project capitalization. The formal extractor must instead deriv
+e rows only from the canonical ledger and structured sections at file end.
+25:Site visit #872 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+27:Risk assessment WP-9137 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+31:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+33:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+35:Interview #628 with fixed assets highlighted how capital project capitalization statements were forwarded without the matching ledger row. Counsel advised pr
+eserving the full thread because downstream exception coding depends on mail timestamps.
+37:Site visit #975 to fixed assets captured mailbox exports showing how capital project capitalization correspondence arrived between two correction batches. Re
+viewers flagged the gap because effective-date logic must honor notice precedence.
+39:Risk assessment WP-4185 ties capital project capitalization to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appe
+ndix commentary as authoritative transaction sources.
+45:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The
+ mid-year amendment later in this archive supersedes that draft practice.
+root@88ef4771bc8a:/app#

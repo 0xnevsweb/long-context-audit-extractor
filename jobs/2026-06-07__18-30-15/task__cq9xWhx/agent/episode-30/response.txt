@@ -1,0 +1,31 @@
+{
+  "analysis": "Brief 03 rules are now clear: if an email excerpt includes `sent: YYYY-MM-DD`, apply the status change only if sent >= ledger date for that transaction; if no sent line, apply status change if precedence allows. Also corrections apply after ledger, meeting, and mail merge. We updated parseEmails to capture sent date (but in the shown email excerpt portion, many blocks have no TXN subjects and no sent/status; later in the section likely includes actual compliance emails with sent/status). We must now implement Brief 03 timing check in reconcile status updates, and implement compliance_hold exception per Brief 09: for hold flag only, compare qualifying email sent date against pre-correction ledger date (immediately before corrections applied). Also need Brief 07/08 list of exception flag codes and logic for policy_exception etc; and Brief 04 winning correction semantics. We'll implement: status updates only from compliance@ emails, and if email.sent exists, require sent >= baseLedgerDate (pre-correction) to apply. For compliance_hold, set flag if exists qualifying compliance email with sent < baseLedgerDate? Actually 'missing holds' implies hold when sent < ledger date? likely late mail => sent > ledger date. Need to read Brief 07/08 for definition; but we can infer: compliance_hold triggered when qualifying compliance email sent date is after ledger date (late). We'll confirm by grepping brief07 for compliance_hold definition. Then implement flags and update exceptions output. We'll also ensure correction report includes only winning notices per Brief 04 after reading it.",
+  "plan": "1) Extract compliance_hold definition from Brief 07/08 by grepping those brief sections in the archive. 2) Extract Brief 04 binding rules for correction precedence/winning notices. 3) Update reconcile.js accordingly: compute baseLedgerDate from ledger before corrections; apply email status with sent check against current ledger date (before corrections) per Brief 03; set compliance_hold based on rule (likely sent > baseLedgerDate, or sent >= baseLedgerDate with some condition). 4) Apply corrections after merging and generate report only for winning ones. 5) Rerun extractor and inspect exceptions.json and reconciliation_report.jsonl.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '685,710p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1238p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1465p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"compliance_hold\" -n /app/data/audit_archive.md | head -n 30\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 04\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Correction notice\" -n /app/data/audit_archive.md | head -n 40\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

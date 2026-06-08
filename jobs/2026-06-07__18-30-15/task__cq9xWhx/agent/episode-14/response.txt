@@ -1,0 +1,31 @@
+{
+  "analysis": "The terminal capture is again not reflecting executed commands; it keeps showing the same prior text. Likely outputs are being truncated and we are only seeing old scrollback. To force a fresh visible output, we can clear the screen and then run very short commands. Also ensure commands include newlines. We'll clear and then run ls/head again.",
+  "plan": "1) Clear terminal to reset visible capture. 2) Run a short echo marker. 3) List the /tmp files and head them to confirm contents. If files missing, recreate them in subsequent steps.",
+  "commands": [
+    {
+      "keystrokes": "clear\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo CHECK_FILES\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /tmp/parser_files.txt /tmp/brief_rules.txt /tmp/brief09_keys.txt 2>&1 || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 20 /tmp/parser_files.txt 2>&1 || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 40 /tmp/brief_rules.txt 2>&1 || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 80 /tmp/brief09_keys.txt 2>&1 || true\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

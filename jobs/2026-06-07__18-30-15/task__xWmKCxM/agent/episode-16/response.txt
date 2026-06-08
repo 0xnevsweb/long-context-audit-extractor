@@ -1,0 +1,23 @@
+{
+  "analysis": "We have reconcile.js tail: it applies every correction notice in parsed.corrections sequentially, but doesn’t sort them, doesn’t compute previous_value, and doesn’t decide “winning” corrections (report should be only winning corrections). It also sets exception_reason null. We still haven’t seen corrections.js content and the brief extraction outputs are not visible here, but we likely created the brief files. Next step is to inspect corrections.js and the top of reconcile.js to see how ledger/emails/meetings are merged and how corrections are parsed. Then implement a full reconciliation pipeline per briefs including Brief 09 hold timing and exception flags.",
+  "plan": "1) Display parser/corrections.js and the top part of normalize/reconcile.js (not just tail) to see current logic. 2) Display /tmp brief keyword extracts (without flooding) and capture binding directives from briefs 05–08, but only via grep/head. 3) Apply code patches across parser/ledger.js, parser/emails.js, parser/corrections.js, normalize/reconcile.js, normalize/exceptions.js. 4) Run extractor to /tmp and verify:\n- transactions.json sorted and deterministic\n- corrections applied correctly (e.g., TXN-51... final status reversed per last correction effective 2024-06-15)\n- owner correction applied (TXN-caf3... owner dlee)\n- date corrections applied\n- compliance_hold uses pre-correction date snapshot\n- exceptions.json contains flagged rows and exception_reason codes.\n5) Run final command to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"=== Brief $b key lines ===\"; grep -nEi \"Committee ruling|binding for extract|must|supersed|hold|correction|notice|precedence|owner|ledger\" /tmp/brief${b}.md | head -n 40; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,38 @@
+Current terminal state:
+New Terminal Output:
+
+root@fca90c221e79:/app# head -n 2 /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5,
+root@fca90c221e79:/app# python3 - <<'PY'
+> import json
+> items=json.load(open('/app/output/transactions.json'))['items']
+> exc=json.load(open('/app/output/exceptions.json'))['items']
+> print('transactions:', len(items))
+> print('exceptions:', len(exc))
+> # show a few rows with corrections
+> for tid in ['TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f','TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f','TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f','TXN-1b083448-63e
+3-5527-a20a-edd71416341c','TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb']:
+>     r=next(x for x in items if x['transaction_id']==tid)
+>     print(tid, r)
+> # verify exceptions subset property
+> bad=[x for x in exc if not x.get('exception_reason')]
+> print('exceptions with null reason:', len(bad))
+> PY
+transactions: 32
+exceptions: 3
+TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f {'transaction_id': 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f', 'owner': 'asmith', 'status': 'reversed', 'effective_date
+': '2024-02-02', 'amount_usd': 7500, 'exception_reason': 'retroactive_review'}
+TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f {'transaction_id': 'TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f', 'owner': 'dlee', 'status': 'approved', 'effective_date':
+ '2024-09-09', 'amount_usd': 11487.36, 'exception_reason': None}
+TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f {'transaction_id': 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f', 'owner': 'asmith', 'status': 'pending', 'effective_date'
+: '2024-08-01', 'amount_usd': 1601.3, 'exception_reason': None}
+TXN-1b083448-63e3-5527-a20a-edd71416341c {'transaction_id': 'TXN-1b083448-63e3-5527-a20a-edd71416341c', 'owner': 'jdoe', 'status': 'rejected', 'effective_date':
+ '2024-09-01', 'amount_usd': 10113.94, 'exception_reason': None}
+TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb {'transaction_id': 'TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb', 'owner': 'earlybird', 'status': 'approved', 'effective_d
+ate': '2024-04-04', 'amount_usd': 4620.26, 'exception_reason': None}
+exceptions with null reason: 0
+root@fca90c221e79:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

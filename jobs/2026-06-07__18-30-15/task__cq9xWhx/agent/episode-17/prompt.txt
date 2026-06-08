@@ -1,0 +1,116 @@
+New Terminal Output:
+
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/output/jsonWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> function writeExceptionsJson(filePath, items) {
+>   fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+> }
+>
+> module.exports = { writeTransactionsJson, writeExceptionsJson };
+> EOF
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'
+> const fs = require("node:fs");
+>
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const amount = Number(row.amount_usd);
+>     const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : "0.00";
+>     const exc = row.exception_reason == null ? "" : String(row.exception_reason);
+>     return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${amountStr},${exc}`;
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'
+> const { sortByTransactionId } = require("../utils/sort");
+>
+> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+>
+> function reconcileTransactions(parsed) {
+>   const byId = new Map();
+>   for (const row of parsed.ledger || []) {
+>     byId.set(row.transaction_id, { ...row });
+>   }
+>
+>   // Brief 05 (meeting amendments) likely governs owner changes; keep deterministic order.
+>   for (const meeting of parsed.meetings || []) {
+>     const target = byId.get(meeting.transaction_id);
+>     if (target) target.owner = meeting.owner;
+>   }
+>
+>   // Brief 02/03 likely govern how emails impact status/holds; current implementation is minimal.
+>   for (const email of parsed.emails || []) {
+>     const target = byId.get(email.transaction_id);
+>     if (target) target.status = email.status;
+>   }
+>
+>   // Apply correction notices deterministically (sorted by notice_id).
+>   const report = [];
+>   const notices = [...(parsed.corrections || [])].sort((a, b) =>
+>     String(a.notice_id).localeCompare(String(b.notice_id)),
+>   );
+>
+>   for (const notice of notices) {
+>     const target = byId.get(notice.transaction_id);
+>     if (!target) continue;
+>
+>     const fieldMap = { owner: "owner", status: "status", date: "date" };
+>     const k = fieldMap[notice.field];
+>     if (!k) continue;
+>
+>     const prev = target[k] == null ? "" : String(target[k]);
+>     target[k] = notice.value;
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: prev,
+>       new_value: notice.value,
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => {
+>       const amount = Number(row.amount);
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date: row.date,
+>         amount_usd: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,
+>         exception_reason: null,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app# head -n 2 /app/output/transactions.csv && head -n 8 /app/output/transactions.json && cat /app/output/exceptions.json
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+{
+  "items": []
+}root@88ef4771bc8a:/app#

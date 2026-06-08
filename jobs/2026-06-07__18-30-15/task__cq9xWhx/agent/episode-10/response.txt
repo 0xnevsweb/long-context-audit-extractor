@@ -1,0 +1,35 @@
+{
+  "analysis": "Parser directory structure differs: mail.js and exceptions.js aren’t at those paths. We successfully viewed corrections.js; it slices between '## Correction Notices' and '## Transaction Ledger' and parses blocks. Need to list actual parser files and inspect correct ones for emails/meetings/exceptions/ledger. Also need to extract brief rule snippets; prior command output wasn’t shown due to truncation, so we should re-run more focused greps. Then implement missing functionality in reconcile.js and fix writers.",
+  "plan": "1) List /app/audit-extractor/src/parser and subdirs to find actual filenames. 2) Open sections.js again plus the email/meetings/policy exceptions parsers. 3) Grep within /tmp/brief0*.txt for key rule lines to capture the authoritative semantics without dumping whole sections. 4) Once we have rules and parser outputs shape, rewrite reconcile.js accordingly and update writers to match contract.",
+  "commands": [
+    {
+      "keystrokes": "find /app/audit-extractor/src/parser -maxdepth 2 -type f -print | sort\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policyExceptions.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/exceptions.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 01 02 03 04 07 08 09; do echo \"--- BRIEF $b key lines ---\"; grep -nE \"Committee ruling|binding|Extractor|must|Ignore|Sort|precedence|supersed|override|compliance_hold|mail|timestamp|Correction|notice|exception|flag|effective\" /tmp/brief${b}.txt | head -n 80; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

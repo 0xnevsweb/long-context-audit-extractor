@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   for (const row of items) {
+>     if (!row.exception_reason) row.exception_reason = null;
+>   }
+>
+>   // Contract: report sorted by notice_id ascending.
+>   report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@41841493f205:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@41841493f205:/app# rm -rf /tmp/out6 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out6
+root@41841493f205:/app# python3 - <<'PY'
+> import json
+> exc=json.load(open('/tmp/out6/exceptions.json'))['items']
+> print('exceptions', len(exc))
+> print([r['transaction_id'] for r in exc])
+> PY
+exceptions 3
+['TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0', 'TXN-68b5423c-1abb-59e6-947e-7e56011cec58', 'TXN-c7416874-b91b-5c2d-92de-0098b1224d18']
+root@41841493f205:/app# head -n 3 /tmp/out6/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+root@41841493f205:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@41841493f205:/app# ls -la /app/output
+total 32
+drwxr-xr-x 2 root root 4096 Jun  8 01:35 .
+drwxr-xr-x 1 root root 4096 Jun  8 01:35 ..
+-rw-r--r-- 1 root root  754 Jun  8 01:35 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 01:35 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2439 Jun  8 01:35 transactions.csv
+-rw-r--r-- 1 root root 7439 Jun  8 01:35 transactions.json
+root@41841493f205:/app#

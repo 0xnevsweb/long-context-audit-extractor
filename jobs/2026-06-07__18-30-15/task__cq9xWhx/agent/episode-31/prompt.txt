@@ -1,0 +1,41 @@
+Current Terminal Screen:
+tive context so auditors can explain why a given transaction received compliance_hold.
+296:In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+302:In July review, external advisors reviewed capital project capitalization and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+364:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+384:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+388:In March walkthrough, external advisors reviewed SOX sampling mismatch and asked for a machine-readable reconciliation trace. The archive preserves narrativ
+e context so auditors can explain why a given transaction received compliance_hold.
+487:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+495:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+497:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+509:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+525:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+593:In May journal, external advisors reviewed payroll accrual true-up and asked for a machine-readable reconciliation trace. The archive preserves narrative co
+ntext so auditors can explain why a given transaction received compliance_hold.
+645:In June rates, external advisors reviewed FX revaluation lag and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+so auditors can explain why a given transaction received compliance_hold.
+653:In June rates, external advisors reviewed FX revaluation lag and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+so auditors can explain why a given transaction received compliance_hold.
+657:In June rates, external advisors reviewed FX revaluation lag and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+so auditors can explain why a given transaction received compliance_hold.
+665:In June rates, external advisors reviewed FX revaluation lag and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+so auditors can explain why a given transaction received compliance_hold.
+677:In June rates, external advisors reviewed FX revaluation lag and asked for a machine-readable reconciliation trace. The archive preserves narrative context
+so auditors can explain why a given transaction received compliance_hold.
+grep: write error: Broken pipe
+root@88ef4771bc8a:/app# grep -n "## Investigation Brief 04" -n /app/data/audit_archive.md
+685:## Investigation Brief 04 — Correction Notice Precedence
+696:## Investigation Brief 04 — Correction Notice Precedence — field notes
+root@88ef4771bc8a:/app# grep -n "Correction notice" -n /app/data/audit_archive.md | head -n 40
+476:apply the status change if precedence allows. Correction notices always apply
+root@88ef4771bc8a:/app#

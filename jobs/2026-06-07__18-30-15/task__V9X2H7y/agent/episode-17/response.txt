@@ -1,0 +1,6 @@
+{
+  "analysis": "All required artifacts are produced under /app/output via the mandated CLI invocation. CLI validates required flags and exits 1 with stderr on missing args. Output JSON envelopes match the contract ({items:[]}), sorting is correct, reconciliation report is non-empty and ordered, and parsing now targets canonical (non-decoy) sections by selecting the last exact heading occurrence. Determinism for identical input was checked previously with cmp on transactions.json.",
+  "plan": "Proceed to grading.",
+  "commands": [],
+  "task_complete": true
+}

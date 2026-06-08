@@ -1,0 +1,41 @@
+Current Terminal Screen:
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts agai
+nst amendment minutes before accepting any owner change.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+Risk assessment WP-3264 ties year-end close checklist drift to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendi
+x commentary as authoritative transaction sources.
+
+Memo WP-4783 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+During December freeze, S. Patel circulated a draft finding on year-end close checklist drift. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Memo WP-2571 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Memo WP-1476 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #830 confirmed that controller had been using an informal spreadsheet for year-end close checklist drift. The formal extractor must instead derive row
+s only from the canonical ledger and structured sections at file end.
+
+During December freeze, J. Huang circulated a draft finding on year-end close checklist drift. Finance operations pushed back, arguing the issue was transient c
+ache state; QA reproduced the drift on a cold run the next morning.
+
+Interview #272 with controller highlighted how year-end close checklist drift statements were forwarded without the matching ledger row. Counsel advised preserv
+ing the full thread because downstream exception coding depends on mail timestamps.
+
+root@41841493f205:/app#

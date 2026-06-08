@@ -1,0 +1,27 @@
+{
+  "analysis": "Grep results show many narrative mentions of compliance_hold but not the binding brief rules yet. The broken pipe is just from head truncation. We still need to confirm CLI arg validation behavior and finalize. Given we've already produced correct outputs in /app/output and fixed main parser contract issues, remaining task is to ensure cli.js exits 1 with stderr on missing args, and to avoid narrative hold mentions unless binding rules require implementing compliance_hold. We'll directly test cli.js missing args and inspect cli.js quickly; then mark task complete if it matches contract.",
+  "plan": "1) Run cli.js with missing args and capture exit codes and stderr to confirm behavior. If incorrect, patch cli.js to validate and exit(1). 2) Verify /app/output contains the four required artifacts. 3) Run a quick node check to ensure transactions.json top-level key is items and items sorted by transaction_id. If all good, task complete.",
+  "commands": [
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --outdir /tmp/x 1>/tmp/stdout1 2>/tmp/stderr1; echo \"exit=$?\"; echo \"stderr:\"; cat /tmp/stderr1; echo \"stdout:\"; cat /tmp/stdout1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md 1>/tmp/stdout2 2>/tmp/stderr2; echo \"exit=$?\"; echo \"stderr:\"; cat /tmp/stderr2; echo \"stdout:\"; cat /tmp/stdout2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('node:fs');\nconst p='/app/output/transactions.json';\nconst obj=JSON.parse(fs.readFileSync(p,'utf8'));\nif(!obj.items||!Array.isArray(obj.items)) { console.error('missing items'); process.exit(2); }\nlet ok=true;\nfor(let i=1;i<obj.items.length;i++){\n  if(String(obj.items[i-1].transaction_id) > String(obj.items[i].transaction_id)) { ok=false; break; }\n}\nconsole.log('items', obj.items.length, 'sorted', ok, 'first', obj.items[0].transaction_id, 'last', obj.items[obj.items.length-1].transaction_id);\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

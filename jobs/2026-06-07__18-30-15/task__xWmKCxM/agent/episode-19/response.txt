@@ -1,0 +1,27 @@
+{
+  "analysis": "The directive extraction indicates briefs 06–08 don’t contain the exact string \"Committee ruling\" (or grep didn’t find it), while brief06.dir etc show NO COMMITTEE RULING. Brief 09 used \"Committee ruling (binding for extract):\". So the phrasing likely differs (e.g., \"Auditor directive\", \"Auditor directive (mandatory)\"). We should instead search for patterns like \"binding for extract\", \"mandatory for extract\", \"Auditor directive\", \"Committee ruling\". Also we still haven’t seen reconcile.js top or corrections.js due to output being pushed off; only the brief dir outputs appeared partially. Next: search within each brief for these markers and print around them.",
+  "plan": "1) For briefs 05–08, find the first occurrence of any of: \"binding for extract\", \"mandatory for extract\", \"Auditor directive\", \"Committee ruling\" and print ~80 lines from there into /tmp/briefXX.dir. 2) Display those directive snippets. 3) Re-display reconcile.js and corrections.js in smaller chunks again (they’re crucial).",
+  "commands": [
+    {
+      "keystrokes": "for b in 05 06 07 08; do \n  ln=$(grep -nE \"binding for extract|mandatory for extract|Auditor directive|Committee ruling\" /tmp/brief${b}.md | head -n 1 | cut -d: -f1);\n  echo \"brief$b first_marker_line=$ln\";\n  if [ -n \"$ln\" ]; then sed -n \"${ln},$((ln+120))p\" /tmp/brief${b}.md > /tmp/brief${b}.dir; else echo \"NO MARKER\" > /tmp/brief${b}.dir; fi;\ndone\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== brief${b}.dir =====\"; cat /tmp/brief${b}.dir | head -n 140; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '120,240p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

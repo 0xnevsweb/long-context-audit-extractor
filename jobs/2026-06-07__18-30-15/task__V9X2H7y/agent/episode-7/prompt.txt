@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> -  const start = markdown.indexOf("## Policy Exceptions");
+> -  const end = markdown.indexOf("## Correction Notices");
+> -  const slice =
+> -    start >= 0 && end > start ? markdown.slice(start, end) : "";
+> +  const slice = extractSection(markdown, "## Policy Exceptions");
+>    const ids = new Set();
+>    const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@41841493f205:/app# apply_patch<<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/corrections.js
+> @@
+> +const { extractSection } = require("../lib/handbook");
+> +
+>  function parseCorrections(markdown) {
+> -  const start = markdown.indexOf("## Correction Notices");
+> -  const end = markdown.indexOf("## Transaction Ledger");
+> -  const slice =
+> -    start >= 0 && end > start ? markdown.slice(start, end) : "";
+> +  const slice = extractSection(markdown, "## Correction Notices");
+>    const notices = [];
+>    const blocks = slice.split(/\n### /).slice(1);
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@41841493f205:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out3
+root@41841493f205:/app# python3 - <<'PY'
+> import json
+> p='/tmp/out3/transactions.json'
+> obj=json.load(open(p))
+> for row in obj['items']:
+>   if row['transaction_id']=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25':
+>     print(row)
+> PY
+Traceback (most recent call last):
+  File "<stdin>", line 4, in <module>
+KeyError: 'items'
+root@41841493f205:/app#

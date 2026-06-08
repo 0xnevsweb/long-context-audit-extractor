@@ -1,0 +1,47 @@
+{
+  "analysis": "We now see authoritative structured sections near the end: Correction Notices contain CORR entries with fields targets/field/value/effective, and Transaction Ledger has a decoy working copy followed by canonical ledger. This confirms current parsers that use indexOf(\"## Transaction Ledger\") will grab the working copy and therefore wrong base data. Similarly policy.js grabs the draft exceptions section. Need to refactor parsers to select the canonical (non-parenthetical) headings and slice until next top-level heading. Then reconciliation must apply corrections properly (including previous_value and report sorted by notice_id). We still need the Investigation Brief 01–09 authoritative rules text (not shown in this output), but we can proceed fixing the clearly broken section selection now.",
+  "plan": "1) Implement a shared helper in src/lib/handbook.js (or new src/parser/block.js) to extract the canonical section by exact heading line (e.g., /^## Transaction Ledger$/m) and return its body until next /^## /m. Prefer the last exact match to avoid decoys. 2) Update parser/ledger.js, parser/emails.js, parser/policy.js, parser/corrections.js (and meetings if needed) to use this helper with exact canonical headings: '## Email Excerpts', '## Policy Exceptions', '## Correction Notices', '## Transaction Ledger'. 3) Rerun extractor and verify ledger amount for TXN-885... is 500.00 not 99999.00; verify corrections are parsed (reconciliation_report non-empty after later reconcile fix). 4) Next iteration: implement rules from briefs for holds/mail/status precedence/correction winning, once we capture those texts.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/lib/handbook.js\n@@\n function readHandbook(inputPath) {\n   const fs = require(\"node:fs\");\n   return fs.readFileSync(inputPath, \"utf8\");\n }\n+\n+// Many headings in the archive appear multiple times with decoy/draft variants.\n+// Binding/structured data uses the canonical heading lines (no parenthetical).\n+//\n+// This helper extracts the section body for an exact heading line, selecting\n+// the last exact match to avoid earlier archived/draft threads.\n+function extractSection(markdown, headingLine) {\n+  const esc = headingLine.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n+  const re = new RegExp(`^${esc}\\\\s*$`, \"gmi\");\n+  let match;\n+  let lastIndex = -1;\n+  while ((match = re.exec(markdown)) !== null) {\n+    lastIndex = match.index;\n+  }\n+  if (lastIndex < 0) return \"\";\n+\n+  const afterHeading = markdown.indexOf(\"\\n\", lastIndex);\n+  const start = afterHeading >= 0 ? afterHeading + 1 : lastIndex;\n+  const rest = markdown.slice(start);\n+  const next = rest.search(/^##\\s+/m);\n+  return next >= 0 ? rest.slice(0, next) : rest;\n+}\n@@\n-module.exports = { readHandbook };\n+module.exports = { readHandbook, extractSection };\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/parser/ledger.js\n@@\n+const { extractSection } = require(\"../lib/handbook\");\n+\n function parseLedger(markdown) {\n-  const start = markdown.indexOf(\"## Transaction Ledger\");\n-  const slice = start >= 0 ? markdown.slice(start) : \"\";\n+  const slice = extractSection(markdown, \"## Transaction Ledger\");\n   const entries = [];\n   const blocks = slice.split(/\\n### /).slice(1);\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/parser/emails.js\n@@\n+const { extractSection } = require(\"../lib/handbook\");\n+\n function parseEmails(markdown) {\n-  const start = markdown.indexOf(\"## Email Excerpts\");\n-  const end = markdown.indexOf(\"## Policy Exceptions\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n+  const slice = extractSection(markdown, \"## Email Excerpts\");\n   const emails = [];\n   const blocks = slice.split(/\\nFrom:/).slice(1);\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/parser/policy.js\n@@\n+const { extractSection } = require(\"../lib/handbook\");\n+\n function parsePolicyExceptions(markdown) {\n-  const start = markdown.indexOf(\"## Policy Exceptions\");\n-  const end = markdown.indexOf(\"## Correction Notices\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n+  const slice = extractSection(markdown, \"## Policy Exceptions\");\n   const ids = new Set();\n   const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "apply_patch<<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/parser/corrections.js\n@@\n+const { extractSection } = require(\"../lib/handbook\");\n+\n function parseCorrections(markdown) {\n-  const start = markdown.indexOf(\"## Correction Notices\");\n-  const end = markdown.indexOf(\"## Transaction Ledger\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n+  const slice = extractSection(markdown, \"## Correction Notices\");\n   const notices = [];\n   const blocks = slice.split(/\\n### /).slice(1);\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out3\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/tmp/out3/transactions.json'\nobj=json.load(open(p))\nfor row in obj['items']:\n  if row['transaction_id']=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25':\n    print(row)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

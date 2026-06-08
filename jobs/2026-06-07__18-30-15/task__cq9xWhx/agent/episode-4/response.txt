@@ -1,0 +1,43 @@
+{
+  "analysis": "normalize/reconcile.js applies correction notices but sets previous_value to empty string and never computes exception_reason flags. It also lowercases status and maps ledger date->effective_date, amount->Number, but doesn’t round to 2 decimals. Correction application logic appears simplistic and likely wrong precedence/order, which could cause drift. We still need to inspect the earlier part of reconcile.js (status precedence, mail timing, ledger sourcing) and the parser modules for ledger/mail/corrections, plus Brief 01–09 rules. Then implement: deterministic ordering for corrections; correct previous_value; exception_reason computation (compliance_hold etc) using Brief 09 amendment; stable ledger row selection (provisional vs final); output writers contract fixes.",
+  "plan": "1) Re-open full reconcile.js from the top to understand current precedence logic and why statuses drift. 2) Read parser modules to see what data is available (mail timestamps, policy exceptions, etc). 3) Read Investigation Briefs 01–09 text to implement the authoritative rules, especially hold timing amendment in Brief 09 and correction notice precedence in Brief 04. 4) Patch reconcile.js to: select canonical ledger rows deterministically, apply corrections in correct sorted order with correct previous_value tracking and emit report sorted by notice_id, and compute exception_reason flags (semicolon-joined lexical order). 5) Patch writers to match contract envelopes and CSV header/order and formatting. 6) Run extractor twice to ensure byte-identical transactions.json and validate outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,420p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '252,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '468,760p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,940p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1515p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1735p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

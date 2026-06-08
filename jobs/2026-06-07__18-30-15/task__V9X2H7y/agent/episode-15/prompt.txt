@@ -1,0 +1,41 @@
+Current Terminal Screen:
+460:The committee packet references intercompany netting dispute as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts ag
+ainst amendment minutes before accepting any owner change.
+483:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+487:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+491:The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+495:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+497:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+509:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+525:In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves n
+arrative context so auditors can explain why a given transaction received compliance_hold.
+529:The committee packet references year-end close checklist drift as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts
+against amendment minutes before accepting any owner change.
+533:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+539:The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against
+ amendment minutes before accepting any owner change.
+541:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+561:The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against
+ amendment minutes before accepting any owner change.
+579:The committee packet references payroll accrual true-up as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against
+ amendment minutes before accepting any owner change.
+593:In May journal, external advisors reviewed payroll accrual true-up and asked for a machine-readable reconciliation trace. The archive preserves narrative co
+ntext so auditors can explain why a given transaction received compliance_hold.
+595:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+631:Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. Th
+e mid-year amendment later in this archive supersedes that draft practice.
+641:The committee packet references FX revaluation lag as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts against amen
+dment minutes before accepting any owner change.
+grep: write error: Broken pipe
+root@41841493f205:/app# rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /
+app/output
+root@41841493f205:/app#

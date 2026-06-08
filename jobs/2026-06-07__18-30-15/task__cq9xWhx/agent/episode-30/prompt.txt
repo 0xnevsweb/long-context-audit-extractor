@@ -1,0 +1,152 @@
+New Terminal Output:
+
+root@88ef4771bc8a:/app# sed -n '1857,1935p' /app/data/audit_archive.md
+## Email Excerpts
+
+Investigator commentary: only compliance-addressed threads with transaction subjects in this section affect merge logic; surrounding mail establishes timing con
+text.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 0
+
+Internal coordination on vendor onboarding backlog. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 1
+
+Internal coordination on lease modification restatement. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: legal-notices@corp.internal
+Subject: retention hold reminder — thread 2
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 3
+
+Internal coordination on year-end close checklist drift. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: controller@corp.internal
+Subject: close calendar revision — thread 4
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 5
+
+Internal coordination on payroll accrual true-up. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — thread 6
+
+Internal coordination on SOX sampling mismatch. No transaction identifiers
+appear in this message. Investigators archived it to preserve mailbox ordering
+around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 7
+
+Internal coordination on treasury wire cutoff failures. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 8
+
+Internal coordination on capital project capitalization. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: hr-payroll@corp.internal
+Subject: accrual true-up schedule — thread 9
+
+Internal coordination on inventory obsolescence reserve. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+mailbox ordering around compliance threads.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — thread 10
+
+Internal coordination on grant compliance attestation. No transaction
+identifiers appear in this message. Investigators archived it to preserve
+root@88ef4771bc8a:/app# sed -n '468,490p' /app/data/audit_archive.md
+## Investigation Brief 03 — Compliance Mail Timing
+
+Extract policy (authoritative):
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+## Investigation Brief 03 — Compliance Mail Timing — field notes
+
+Lead reviewer M. Chen noted that year-end close checklist drift created reconciliation noise in controller during December freeze. Staff initially blamed toolin
+g, but timeline reconstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Memo WP-3037 summarizes stakeholder interviews about year-end close checklist drift. Participants disagreed on whether unsigned amendments should ever override
+ledger owners; Brief 05 resolves that question for the extractor.
+
+In December freeze, external advisors reviewed year-end close checklist drift and asked for a machine-readable reconciliation trace. The archive preserves narra
+tive context so auditors can explain why a given transaction received compliance_hold.
+
+Working paper WP-7415 documents a three-way match failure tied to year-end close checklist drift. The team escalated when repeated extractor runs produced diffe
+rent status columns for the same transaction id.
+
+root@88ef4771bc8a:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> function findHeadingIndex(markdown, headingLine) {
+>   const re = new RegExp(
+>     `^${headingLine.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")}\\s*$`,
+>     "m",
+>   );
+>   const m = markdown.match(re);
+>   return m ? m.index : -1;
+> }
+>
+> function parseEmails(markdown) {
+>   const start = findHeadingIndex(markdown, "## Email Excerpts");
+>   if (start < 0) return [];
+>
+>   const end = findHeadingIndex(markdown, "## Policy Exceptions");
+>   const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);
+>
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>
+>     if (!fromMatch || !subjectMatch) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       sent: sentMatch ? sentMatch[1] : null,
+>       transaction_id: subjectMatch[1],
+>       status: statusMatch ? statusMatch[1].trim().toLowerCase() : null,
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@88ef4771bc8a:/app#

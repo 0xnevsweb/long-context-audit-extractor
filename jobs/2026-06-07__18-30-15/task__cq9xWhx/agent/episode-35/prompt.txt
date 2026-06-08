@@ -1,0 +1,45 @@
+Current terminal state:
+Current Terminal Screen:
+    }
+  ]
+}root@88ef4771bc8a:/app# wc -l /app/output/reconciliation_report.jsonl && head -n 20 /app/output/reconciliation_report.jsonl
+4 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+{"notice_id":"CORR-c27e46a1","transaction_id":"TXN-1b083448-63e3-5527-a20a-edd71416341c","field":"date","previous_value":"2024-08-08","new_value":"2024-09-01","
+effective":"2024-09-01"}
+root@88ef4771bc8a:/app# node - <<'NODE'
+> const fs=require('fs');
+> const lines=fs.readFileSync('/app/output/reconciliation_report.jsonl','utf8').trim().split(/\n/).filter(Boolean);
+> let ok=true;
+> let last='';
+> const seen=new Set();
+> for(const ln of lines){
+>   const o=JSON.parse(ln);
+>   if(last && o.notice_id < last) ok=false;
+>   last=o.notice_id;
+>   const k=o.transaction_id+'::'+o.field;
+>   if(seen.has(k)) ok=false;
+>   seen.add(k);
+> }
+> console.log('sorted_and_unique_by_txn_field=',ok,'lines=',lines.length);
+> NODE
+sorted_and_unique_by_txn_field= true lines= 4
+root@88ef4771bc8a:/app# rm -rf /tmp/audit_outA /tmp/audit_outB && mkdir -p /tmp/audit_outA /tmp/audit_outB
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_outA
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_outB
+root@88ef4771bc8a:/app# sha256sum /tmp/audit_outA/transactions.json /tmp/audit_outB/transactions.json
+d1c2eafed5356ad2ccbec12dc154a38c62927e5129c3cc13039c59c3c94d0732  /tmp/audit_outA/transactions.json
+d1c2eafed5356ad2ccbec12dc154a38c62927e5129c3cc13039c59c3c94d0732  /tmp/audit_outB/transactions.json
+root@88ef4771bc8a:/app# head -n 1 /app/output/transactions.csv && node -e 'const j=require("/app/output/transactions.json"); console.log(Object.keys(j), j.items
+[0].transaction_id, j.items[j.items.length-1].transaction_id);'
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+[ 'items' ] TXN-08b4472a-f4b7-5455-9f43-e97005d4a594 TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+root@88ef4771bc8a:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

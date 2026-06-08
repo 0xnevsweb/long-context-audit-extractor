@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>   const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(slice)) !== null) {
+>     ids.add(match[1]);
+>   }
+>   return ids;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@41841493f205:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> const { extractSection } = require("../lib/handbook");
+>
+> function parseCorrections(markdown) {
+>   const slice = extractSection(markdown, "## Correction Notices");
+>   const notices = [];
+>   const blocks = slice.split(/\n### /).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split(/\n/).filter(Boolean);
+>     const noticeId = lines[0].trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId };
+>     for (const line of lines.slice(1)) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("targets:")) entry.transaction_id = trimmed.split(":")[1].trim();
+>       else if (trimmed.startsWith("field:")) entry.field = trimmed.split(":")[1].trim();
+>       else if (trimmed.startsWith("value:")) entry.value = trimmed.split(":")[1].trim();
+>       else if (trimmed.startsWith("effective:")) entry.effective = trimmed.split(":")[1].trim();
+>     }
+>     notices.push(entry);
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@41841493f205:/app#

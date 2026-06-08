@@ -1,0 +1,31 @@
+{
+  "analysis": "We now have key policy content visible, including Brief 09 amendment: compliance_hold emails must be compared against the transaction ledger date BEFORE corrections (after ledger load + meeting amendments + compliance mail merges, but before correction changes date/status). Also we see exception flag rules at top of screen: compliance_hold when qualifying email exists after some comparison; high_value_exception when amount_usd>10000 and a policy exception approved_by compliance exists; retroactive_review when final status reversed, amount_usd>5000, and a winning correction changed status. We still need to inspect current code for reconcile/exceptions/corrections/report and then implement per rules. Known code issues: ledger parser includes decoy working copy and dedupes first row; email parser ignores sent date and compliance@ filter; corrections/report currently yielding empty report.",
+  "plan": "1) Open the extracted briefs 05–08 to capture meeting amendment/owner rules, mail rules, corrections precedence, and ledger sourcing. 2) Inspect current code files: parser/corrections.js, normalize/reconcile.js, normalize/exceptions.js, output/reportWriter.js, plus parser/meetings.js if briefs mention it. 3) Implement fixes:\n- parser/ledger.js: select canonical ledger section (exact header) and stop at end; handle duplicate TXN blocks preferring non-provisional or last non-provisional.\n- parser/emails.js: parse sent date and email type/status; track qualifying compliance_hold mail; enforce compliance@ sender for status changes.\n- parser/corrections.js: parse correction notices and sort deterministically.\n- normalize/reconcile.js: overlay order per briefs (ledger -> meetings amendments -> compliance mail status merges -> compute pre-correction date snapshot for hold -> apply corrections, recording winning corrections and previous_value -> produce final items.\n- normalize/exceptions.js: set exception_reason codes (compliance_hold, high_value_exception, retroactive_review) joined in lexical order.\n- output/reportWriter.js: ensure jsonl sorted by notice_id.\n4) Re-run extractor twice to ensure byte-identical transactions.json and verify non-empty reconciliation_report.jsonl. 5) Run final to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief0{5,6,7,8}.md; do echo \"=== $f ===\"; head -n 140 \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,39 @@
+{
+  "analysis": "We successfully extracted Brief 02 rules: base status from ledger; precedence pending<approved<rejected<reversed; email status changes only if From contains 'compliance@'. Our current reconcile uses any email and doesn’t check from_addr, so must fix. Also need remaining Briefs 03/04/06/07/08/09 outputs which didn’t show yet (likely truncated due to huge filler after the binding paragraph). We'll re-run sed with much tighter ranges right after each brief heading to capture only the binding directive paragraphs.",
+  "plan": "1) For each relevant brief, print only the first ~25 lines after its heading line to capture binding rules and avoid filler. 2) Implement Brief 02 email sender restriction and status precedence. 3) Then implement other brief rules once captured.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,510p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,730p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1095p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1245p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1465p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1708p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\nconst STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };\n\nfunction toCentsNumber(n) {\n  const x = Number(n);\n  if (!Number.isFinite(x)) return 0;\n  return Math.round(x * 100) / 100;\n}\n\nfunction reconcileTransactions(parsed) {\n  const byId = new Map();\n  for (const row of parsed.ledger || []) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // Meeting amendments (Brief 05): only signed amendments affect owner.\n  for (const meeting of parsed.meetings || []) {\n    if (!meeting || !meeting.transaction_id) continue;\n    if (!meeting.signed) continue;\n    const target = byId.get(meeting.transaction_id);\n    if (target && meeting.owner) target.owner = meeting.owner;\n  }\n\n  // Email excerpts (Brief 02): may change status only when From contains 'compliance@'.\n  for (const email of parsed.emails || []) {\n    const target = byId.get(email.transaction_id);\n    if (!target) continue;\n    if (!email.status) continue;\n    if (!String(email.from_addr || \"\").includes(\"compliance@\")) continue;\n\n    // Brief 02: status precedence from lowest to highest.\n    const cur = String(target.status || \"pending\").toLowerCase();\n    const next = String(email.status).toLowerCase();\n    const curRank = STATUS_ORDER[cur] ?? -1;\n    const nextRank = STATUS_ORDER[next] ?? -1;\n    if (nextRank >= curRank) target.status = next;\n  }\n\n  // Corrections: apply deterministically by notice_id, and emit report rows.\n  const report = [];\n  const notices = [...(parsed.corrections || [])].sort((a, b) =>\n    String(a.notice_id).localeCompare(String(b.notice_id)),\n  );\n\n  for (const notice of notices) {\n    const target = byId.get(notice.transaction_id);\n    if (!target) continue;\n\n    const fieldMap = { owner: \"owner\", status: \"status\", date: \"date\" };\n    const k = fieldMap[notice.field];\n    if (!k) continue;\n\n    const prev = target[k] == null ? \"\" : String(target[k]);\n    target[k] = notice.value;\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value: prev,\n      new_value: notice.value,\n      effective: notice.effective,\n    });\n  }\n\n  const policySet = parsed.policyExceptions instanceof Set ? parsed.policyExceptions : new Set();\n\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => {\n      const flags = [];\n      if (policySet.has(row.transaction_id)) flags.push(\"policy_exception\");\n\n      const exception_reason = flags.length ? flags.sort().join(\";\") : null;\n\n      return {\n        transaction_id: row.transaction_id,\n        owner: row.owner,\n        status: String(row.status).toLowerCase(),\n        effective_date: row.date,\n        amount_usd: toCentsNumber(row.amount),\n        exception_reason,\n      };\n    }),\n  );\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,39 @@
+{
+  "analysis": "transactions.json/exceptions.json envelopes now match the contract ({items:[]}). exceptions.json is empty because reconcile still never sets exception_reason. reconciliation_report exists but still has previous_value=\"\" and likely not filtered to winning corrections. Next we must implement exception_reason assignment (at least policy exceptions) and fix reconciliation report semantics and ordering. Also need CLI behavior for missing args—must verify cli.js. Finally, grader uses /app/output; we will run there at end.",
+  "plan": "1) Inspect cli.js to ensure missing --input/--outdir prints to stderr and exits 1; patch if needed. 2) Update normalize/reconcile.js: build base ledger map, incorporate policyExceptions into exception_reason using addExceptionFlag; apply emails only from compliance@; apply status precedence when multiple updates; apply corrections sorted by notice_id and compute previous_value before applying; for each (txn,field) keep only the winning correction (latest effective date; tie-breaker notice_id). Emit report lines for winning corrections only, sorted by notice_id. 3) Ensure output rows: amount_usd as number with 2 decimals, effective_date from date field, status lowercase. Sort transactions by transaction_id. 4) Rerun extractor and confirm exceptions.json has 3 items (policy exceptions size=3) and report previous_value populated. Then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\nconst { addExceptionFlag } = require(\"./exceptions\");\n\nconst STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };\n\nfunction isComplianceSender(from) {\n  return typeof from === \"string\" && from.toLowerCase().includes(\"compliance@\");\n}\n\nfunction maxStatus(a, b) {\n  const aa = String(a || \"pending\").toLowerCase();\n  const bb = String(b || \"pending\").toLowerCase();\n  return (STATUS_ORDER[bb] ?? -1) > (STATUS_ORDER[aa] ?? -1) ? bb : aa;\n}\n\nfunction reconcileTransactions(parsed) {\n  // Base from canonical ledger: last row wins for identical txn id (deterministic file order).\n  const byId = new Map();\n  for (const row of parsed.ledger) {\n    byId.set(row.transaction_id, { ...row });\n  }\n\n  // Meetings can adjust owner.\n  for (const meeting of parsed.meetings) {\n    const target = byId.get(meeting.transaction_id);\n    if (target && meeting.owner) target.owner = meeting.owner;\n  }\n\n  // Compliance emails can update status; apply with precedence (do not let a lower status downgrade).\n  for (const email of parsed.emails) {\n    if (!isComplianceSender(email.from)) continue;\n    const target = byId.get(email.transaction_id);\n    if (target && email.status) {\n      target.status = maxStatus(target.status, email.status);\n    }\n  }\n\n  // Build output items.\n  const items = sortByTransactionId(\n    [...byId.values()].map((row) => ({\n      transaction_id: row.transaction_id,\n      owner: row.owner,\n      status: String(row.status).toLowerCase(),\n      effective_date: row.date,\n      amount_usd: Number(Number(row.amount).toFixed(2)),\n      exception_reason: null,\n    }))\n  );\n\n  const outById = new Map(items.map((r) => [r.transaction_id, r]));\n\n  // Policy exceptions: flag rows.\n  if (parsed.policyExceptions && parsed.policyExceptions.forEach) {\n    parsed.policyExceptions.forEach((txnId) => {\n      const row = outById.get(txnId);\n      if (row) addExceptionFlag(row, \"policy_exception\");\n    });\n  }\n\n  // Corrections: pick a winning correction per (transaction_id, field): latest effective, tie-break notice_id.\n  const correctionByKey = new Map();\n  for (const n of parsed.corrections || []) {\n    if (!n || !n.notice_id || !n.transaction_id || !n.field) continue;\n    const key = `${n.transaction_id}::${n.field}`;\n    const prev = correctionByKey.get(key);\n    if (!prev) {\n      correctionByKey.set(key, n);\n      continue;\n    }\n    const a = String(prev.effective || \"\");\n    const b = String(n.effective || \"\");\n    if (b > a || (b === a && String(n.notice_id) > String(prev.notice_id))) {\n      correctionByKey.set(key, n);\n    }\n  }\n\n  // Apply winning corrections in notice_id order and produce report with previous_value.\n  const winners = [...correctionByKey.values()].sort((x, y) =>\n    String(x.notice_id).localeCompare(String(y.notice_id))\n  );\n\n  const report = [];\n  for (const notice of winners) {\n    const row = outById.get(notice.transaction_id);\n    if (!row) continue;\n\n    let field = notice.field;\n    if (field === \"date\") field = \"effective_date\";\n\n    const previous_value = row[field] == null ? \"\" : String(row[field]);\n\n    // Apply.\n    if (field === \"owner\") row.owner = notice.value;\n    else if (field === \"status\") row.status = String(notice.value).toLowerCase();\n    else if (field === \"effective_date\") row.effective_date = notice.value;\n\n    report.push({\n      notice_id: notice.notice_id,\n      transaction_id: notice.transaction_id,\n      field: notice.field,\n      previous_value,\n      new_value: String(notice.value),\n      effective: notice.effective,\n    });\n  }\n\n  // Ensure exceptions are null not empty string.\n  for (const row of items) {\n    if (!row.exception_reason) row.exception_reason = null;\n  }\n\n  // Contract: report sorted by notice_id ascending.\n  report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));\n\n  return { items, report };\n}\n\nmodule.exports = { reconcileTransactions, STATUS_ORDER };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out6 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out6\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nexc=json.load(open('/tmp/out6/exceptions.json'))['items']\nprint('exceptions', len(exc))\nprint([r['transaction_id'] for r in exc])\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 3 /tmp/out6/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /app/output && mkdir -p /app/output && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /app/output\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

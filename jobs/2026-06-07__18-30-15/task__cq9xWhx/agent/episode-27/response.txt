@@ -1,0 +1,15 @@
+{
+  "analysis": "The combined cat output again got swamped by filler/truncated, so we still can’t see the actual rule text at the top of those brief extracts. We'll inspect each /tmp/briefXX_rules.txt individually with head and grep for the first few non-empty lines; that will surface the binding rules before the filler.",
+  "plan": "1) For each brief rules file, show first 30 lines and grep for key terms (must, compliance_hold, correction, effective_date, exception). 2) Use that to implement remaining logic.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief03_rules.txt /tmp/brief04_rules.txt /tmp/brief06_rules.txt /tmp/brief07_rules.txt /tmp/brief08_rules.txt /tmp/brief09_rules.txt; do echo \"===== $f head\"; head -n 40 $f; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief03_rules.txt /tmp/brief04_rules.txt /tmp/brief06_rules.txt /tmp/brief07_rules.txt /tmp/brief08_rules.txt /tmp/brief09_rules.txt; do echo \"===== $f key\"; grep -nE \"must|compliance_hold|correction|notice|effective|exception|flag|output|date\" $f; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

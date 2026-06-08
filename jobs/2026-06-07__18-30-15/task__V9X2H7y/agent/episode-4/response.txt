@@ -1,0 +1,47 @@
+{
+  "analysis": "parseCorrections exists and likely works, but the archive contains decoy headings: Email Excerpts appears twice (archived thread at 238 and authoritative at 1857), Policy Exceptions has a draft at 970 and authoritative at 3849, and Transaction Ledger has working copy at 3904 and canonical at 3912. Current parsers use indexOf for headings (e.g., policy.js uses the first '## Policy Exceptions' which will hit the draft), so they’re reading non-authoritative sections. That explains missing later mail, holds, and correction misapplication. We must update parsers to select the authoritative sections (probably the last occurrence, or the heading without parenthetical, per archive). Then implement reconciliation semantics per Briefs 01–09, plus correction reporting and exceptions.",
+  "plan": "1) Read Investigation Briefs 01–09 to implement binding rules, especially about authoritative sections selection and hold timing override in Brief 09. 2) Fix section slicing in parser/emails.js, parser/policy.js, parser/corrections.js, parser/ledger.js (and meetings if applicable) to target the authoritative headings (e.g., exact '## Email Excerpts' line, '## Policy Exceptions' without '(draft)', '## Transaction Ledger' without '(working copy)'). Use a shared helper: findHeadingBlock(markdown, headingExact) that finds the last exact heading match and slices until next '## ' heading. 3) After parsers are corrected, rerun extractor and confirm corrections and exceptions are now populated. 4) Then fix normalize/reconcile.js to follow the briefs: status precedence, compliance@ sender restriction, hold logic, correction precedence, compute previous_value, and produce sorted outputs and report.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '11,120p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '240,360p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '360,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,720p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '720,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '920,1150p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1150,1450p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1450,1750p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1750,2050p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

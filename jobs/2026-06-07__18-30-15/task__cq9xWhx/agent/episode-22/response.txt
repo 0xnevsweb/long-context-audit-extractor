@@ -1,0 +1,35 @@
+{
+  "analysis": "We updated reconcile.js to enforce Brief 02 email sender restriction (From must include compliance@) and status precedence. We still need Briefs 03/04/06/07/08/09 rules to implement compliance_hold timing, correction notice precedence/winning definition, effective_date rules, and exception flag computation. The sed outputs for those briefs did not appear in the last batch (likely scrolled off). Next: run those sed commands again and keep output minimal, then implement missing rules. Also need to adjust reconciliation_report.jsonl to include only winning correction notices (per contract) once Brief 04 defines precedence.",
+  "plan": "1) Re-run tight sed ranges for Briefs 03,04,06,07,08,09 and capture outputs to /tmp for reliable viewing. 2) Based on those rules, modify parsers if needed (e.g., email timestamps) and implement exception flags and correction winning logic. 3) Rerun extractor and validate outputs and determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '468,510p' /app/data/audit_archive.md > /tmp/brief03_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '685,740p' /app/data/audit_archive.md > /tmp/brief04_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1058,1105p' /app/data/audit_archive.md > /tmp/brief06_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1201,1265p' /app/data/audit_archive.md > /tmp/brief07_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1419,1495p' /app/data/audit_archive.md > /tmp/brief08_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1670,1725p' /app/data/audit_archive.md > /tmp/brief09_head.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief03_head.txt /tmp/brief04_head.txt /tmp/brief06_head.txt /tmp/brief07_head.txt /tmp/brief08_head.txt /tmp/brief09_head.txt; do echo \"===== $f\"; cat $f; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

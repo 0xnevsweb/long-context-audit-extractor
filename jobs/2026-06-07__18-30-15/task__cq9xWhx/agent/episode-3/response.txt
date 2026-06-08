@@ -1,0 +1,47 @@
+{
+  "analysis": "We found clear contract mismatches in writers: csvWriter omits exception_reason column and amount formatting; jsonWriter writes envelopes as {transactions:…} and {exceptions:…} instead of {items:[…]}; exceptions filter exists in normalize/exceptions.js; reconcile.js initializes exception_reason but likely never sets it. Corrections parsing exists under src/parser/corrections.js, and sections parser wires it, but our earlier run produced an empty reconciliation_report, suggesting corrections not parsed or not applied/emitted. Next we need to inspect index.js pipeline plus reconcile/exceptions normalization and the parser modules to implement the actual Brief 01–09 semantics and ensure deterministic ordering and proper output shapes.",
+  "plan": "1) Inspect src/index.js to see the extraction pipeline and what data sources are used. 2) Inspect parser modules: sections.js, ledger.js, mail.js, exceptions.js, corrections.js, and policy.js to see if they correctly locate canonical sections and ignore decoys. 3) Inspect normalize/reconcile.js and normalize/exceptions.js to understand current reconciliation behavior and why holds/corrections are wrong/unstable. 4) Then patch writers to match the output contract (envelopes, CSV header/order, exception_reason column, amount formatting). 5) Finally rerun extraction twice and diff outputs to confirm determinism and non-empty corrections/exceptions as appropriate.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f | sort\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/mail.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

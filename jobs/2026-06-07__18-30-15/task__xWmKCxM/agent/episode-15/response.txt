@@ -1,0 +1,27 @@
+{
+  "analysis": "meetings.js parsed amendments with regex and captures owner and signed flag. Our loop to read /tmp brief files failed due to incorrect quoting in the command, creating literal filenames /tmp/brief\"$b\".md. However /tmp/brief09.md exists (seen earlier). We need to (re)create /tmp/brief05.md–/tmp/brief08.md properly, then extract binding sections. Also still need parser/corrections.js and normalize/reconcile.js content (not shown yet in this output).",
+  "plan": "1) Recreate /tmp/brief05.md–/tmp/brief09.md with correct filenames using awk. 2) Confirm they exist. 3) Extract binding sections/keywords from briefs 05–08. 4) Dump parser/corrections.js and normalize/reconcile.js to understand current reconcile behavior fully, then patch code accordingly.",
+  "commands": [
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## Investigation Brief 06/{exit}' /app/data/audit_archive.md > /tmp/brief05.md\nawk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## Investigation Brief 07/{exit}' /app/data/audit_archive.md > /tmp/brief06.md\nawk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## Investigation Brief 08/{exit}' /app/data/audit_archive.md > /tmp/brief07.md\nawk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## Investigation Brief 09/{exit}' /app/data/audit_archive.md > /tmp/brief08.md\nawk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md > /tmp/brief09.md\nls -la /tmp/brief0{5,6,7,8,9}.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== Brief $b binding section =====\"; awk 'BEGIN{p=0} /Committee ruling \\(binding for extract\\)/{p=1} p{print} /^## / && p && $0 !~ /Investigation Brief/ {exit}' /tmp/brief${b}.md | head -n 120; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== Brief $b keywords =====\"; grep -nEi \"binding|must|supersed|hold|correction|notice|precedence|owner|ledger\" /tmp/brief${b}.md | head -n 60; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,560p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,31 @@
+{
+  "analysis": "The terminal still shows narrative markdown content, but we do have a prompt, so commands should execute; however their output isn’t appearing, suggesting stdout might be overwhelmed or the interface is truncating/scrolling oddly. To ensure we can retrieve results, we should redirect command outputs to files and then display only very small snippets, or use `cat` with `head` and `tail`. We can also write a marker to confirm execution.",
+  "plan": "1) Print a clear marker and current directory to confirm commands are running and output is visible. 2) List /tmp for expected files and redirect listing to a file, then show first lines. 3) If files missing, recreate them and log to /tmp/log.txt. 4) Then proceed with controlled viewing by showing only head -n 40 for each file.",
+  "commands": [
+    {
+      "keystrokes": "echo \"=== MARKER $(date -Is) ===\"; pwd\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /tmp > /tmp/tmp_ls.txt\nhead -n 40 /tmp/tmp_ls.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/corrections.js /tmp/reconcile.js /tmp/exceptions.js /tmp/reportWriter.js /tmp/brief05.md /tmp/brief06.md /tmp/brief07.md /tmp/brief08.md /tmp/brief09.md; do test -f \"$f\" && echo \"FOUND $f\" || echo \"MISSING $f\"; done > /tmp/tmp_check.txt\ncat /tmp/tmp_check.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "if grep -q \"MISSING\" /tmp/tmp_check.txt; then cp /app/audit-extractor/src/parser/corrections.js /tmp/corrections.js; cp /app/audit-extractor/src/normalize/reconcile.js /tmp/reconcile.js; cp /app/audit-extractor/src/normalize/exceptions.js /tmp/exceptions.js; cp /app/audit-extractor/src/output/reportWriter.js /tmp/reportWriter.js; awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## Investigation Brief 06/{exit}' /app/data/audit_archive.md > /tmp/brief05.md; awk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## Investigation Brief 07/{exit}' /app/data/audit_archive.md > /tmp/brief06.md; awk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## Investigation Brief 08/{exit}' /app/data/audit_archive.md > /tmp/brief07.md; awk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## Investigation Brief 09/{exit}' /app/data/audit_archive.md > /tmp/brief08.md; awk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md > /tmp/brief09.md; fi\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /tmp/brief0{5,6,7,8,9}.md /tmp/corrections.js /tmp/reconcile.js /tmp/exceptions.js /tmp/reportWriter.js 2>/dev/null | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{5,6,7,8,9}.md; do echo \"===== $(basename $f) head =====\"; head -n 40 \"$f\"; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

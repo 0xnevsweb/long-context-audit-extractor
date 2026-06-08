@@ -1,0 +1,51 @@
+{
+  "analysis": "Repo and output contract inspected. Extractor runs and produces identical outputs across two runs (at least for the four files diffed), so drift may be triggered by specific parsing/reconciliation paths not yet exercised/validated. Also `rg` (ripgrep) is not installed, so we need to use grep/sed instead. The archive tail shows duplicate TXN-ba9e6ade entries (provisional/final) which likely relates to “correction notices land on wrong ledger rows” and reconciliation precedence. reconciliation_report.jsonl is currently empty, suggesting corrections are not being detected/applied at all. Next we must inspect authoritative Investigation Briefs 01–09 and then inspect parser/normalize code for holds, mail timing, corrections, and ledger dedupe/selection logic.",
+  "plan": "1) Use grep to locate Investigation Briefs 01–09 and Brief 09 amendment language in the archive, then view those sections to capture the binding rules. 2) Inspect source files involved: parser/policy.js, parser/emails.js, parser/corrections.js, parser/ledger.js, normalize/reconcile.js, normalize/exceptions.js, and reportWriter. 3) Specifically verify: (a) how duplicate ledger rows are resolved (provisional vs final), (b) how corrections are parsed and mapped to transaction_id + field, (c) how holds are applied over time with Brief 09 override, and (d) how compliance email status updates are applied and ordered. 4) After identifying defects, implement fixes and rerun extractor to ensure reconciliation_report.jsonl is populated and outputs match the contract and are stable.",
+  "commands": [
+    {
+      "keystrokes": "grep -nE \"Investigation Brief (0[1-9])|Brief (0[1-9])\" /app/data/audit_archive.md | head -n 60\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"Brief 09|Investigation Brief 09|Amendment|override|supersed|supersede\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=1&&NR<=1200{print}' /app/data/audit_archive.md | nl -ba | sed -n '1,200p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -RInE \"hold|compliance|correction|notice|provisional|duplicate|status precedence\" /app/audit-extractor/src | head -n 120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

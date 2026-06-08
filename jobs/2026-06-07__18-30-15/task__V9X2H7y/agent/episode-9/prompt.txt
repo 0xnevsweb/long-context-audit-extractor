@@ -1,0 +1,105 @@
+New Terminal Output:
+
+root@41841493f205:/app# rm -rf /tmp/out4 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out4
+root@41841493f205:/app# ls -la /tmp/out4
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 01:34 .
+drwxrwxrwt 1 root root 4096 Jun  8 01:34 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:34 exceptions.json
+-rw-r--r-- 1 root root 1045 Jun  8 01:34 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2439 Jun  8 01:34 transactions.csv
+-rw-r--r-- 1 root root 7404 Jun  8 01:34 transactions.json
+root@41841493f205:/app# head -n 5 /tmp/out4/transactions.json
+{
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@41841493f205:/app# python3 - <<'PY'
+> import json
+> obj=json.load(open('/tmp/out4/transactions.json'))
+> print('top_keys', list(obj.keys())[:10])
+> items=obj.get('items')
+> print('items_type', type(items), 'len', len(items) if isinstance(items,list) else None)
+> for row in (items or []):
+>   if row.get('transaction_id')=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25':
+>     print('TXN-885 row', row)
+>     break
+> PY
+top_keys ['transactions']
+items_type <class 'NoneType'> len None
+root@41841493f205:/app# wc -l /tmp/out4/reconciliation_report.jsonl && head -n 5 /tmp/out4/reconciliation_report.jsonl
+6 /tmp/out4/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"","new_value":"reversed","effective"
+:"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"","new_value":"approved","effective"
+:"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"","new_value":"reversed","effective"
+:"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"","new_value":"dlee","effective":"202
+4-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"","new_value":"2024-08-01","effective"
+:"2024-08-01"}
+root@41841493f205:/app# node - <<'NODE'
+> const fs = require('node:fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md = fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed = parseArchive(md);
+> console.log('ledger', parsed.ledger.length);
+> console.log('emails', parsed.emails.length, 'sample', parsed.emails[0]);
+> console.log('policyExceptions', parsed.policyExceptions.size);
+> console.log('corrections', parsed.corrections.length, 'sample', parsed.corrections[0]);
+> NODE
+ledger 34
+emails 6 sample {
+  from: 'compliance@corp.internal',
+  transaction_id: 'TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4',
+  status: 'rejected'
+}
+policyExceptions 3
+corrections 6 sample {
+  notice_id: 'CORR-7f2a91bc',
+  transaction_id: 'TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f',
+  field: 'status',
+  value: 'reversed',
+  effective: '2024-05-10'
+}
+root@41841493f205:/app# sed -n '1,240p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@41841493f205:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@41841493f205:/app#

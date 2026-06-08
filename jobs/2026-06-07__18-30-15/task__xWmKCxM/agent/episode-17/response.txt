@@ -1,0 +1,19 @@
+{
+  "analysis": "Our grep for key lines in briefs is returning mostly narrative hits (compliance_hold mention etc.) but not the binding directive lines—likely because the files contain lots of other matches and the binding lines are beyond the first 40 results. We still need the actual Committee ruling text for Briefs 05–08. Also we still haven’t seen corrections.js content (parser) or the top of reconcile.js due to output truncation. Next we should directly extract the specific directive paragraphs by searching within each brief for the heading line and printing a small range after it.",
+  "plan": "1) For each brief05–brief08, locate the line number of \"Committee ruling\" and print the next ~60 lines to capture binding rules only. 2) Show parser/corrections.js and the top of reconcile.js again but in smaller chunks and possibly with `nl -ba` to ensure we see enough. 3) Once we have binding rules, implement code patches for ledger selection, meeting amendment owner rules, email timing and hold computation, correction winning logic, and exception flagging.",
+  "commands": [
+    {
+      "keystrokes": "for b in 05 06 07 08; do echo \"===== Brief $b directive =====\"; ln=$(grep -n \"Committee ruling\" /tmp/brief${b}.md | head -n 1 | cut -d: -f1); echo \"line=$ln\"; if [ -n \"$ln\" ]; then sed -n \"${ln},$((ln+90))p\" /tmp/brief${b}.md; fi; echo; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/corrections.js | sed -n '1,220p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/normalize/reconcile.js | sed -n '1,260p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,47 @@
+{
+  "analysis": "Terminal is currently showing part of the audit_archive.md around Investigation Brief 05, but we haven’t yet captured the missing code views (corrections parser, reconcile logic, report writer) nor fully extracted Investigation Briefs 01–09. We need to re-run the intended file views that likely got interrupted by the large awk output, then continue reading the briefs to capture the authoritative rules (holds, mail timing, correction precedence, ledger sourcing, duplicates/provisional rows).",
+  "plan": "1) Re-display the source files needed to understand why reconciliation_report.jsonl is empty and how reconciliation is currently implemented. 2) Capture Investigation Brief 05 onward through Brief 09 in manageable chunks so we can implement the mid-year amendment. 3) Then we’ll implement code fixes (ledger parsing boundaries + duplicate resolution, email parsing with sent date + compliance@ filter, corrections parsing/apply + report generation, exception flagging), and re-run extractor to validate outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## Investigation Brief 06/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## Investigation Brief 07/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## Investigation Brief 08/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## Investigation Brief 09/{exit}' /app/data/audit_archive.md | sed -n '1,260p'\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md | sed -n '1,320p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

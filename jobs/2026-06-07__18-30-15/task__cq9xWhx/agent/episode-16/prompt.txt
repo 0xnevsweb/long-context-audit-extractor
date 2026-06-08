@@ -1,0 +1,199 @@
+New Terminal Output:
+
+root@88ef4771bc8a:/app# sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@88ef4771bc8a:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@88ef4771bc8a:/app# sed -n '1,220p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@88ef4771bc8a:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/output/jsonWriter.js
+> @@
+>  const fs = require("node:fs");
+>
+>  function writeTransactionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+>
+>  function writeExceptionsJson(filePath, items) {
+> -  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+> +  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2));
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@88ef4771bc8a:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/output/csvWriter.js
+> @@
+>  function writeTransactionsCsv(filePath, items) {
+> -  const header = "transaction_id,owner,status,effective_date,amount_usd";
+> +  const header =
+> +    "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>    const lines = items.map(
+>      (row) =>
+> -      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${row.amount_usd}`,
+> +      `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${Number(row.amount_usd).toFixed(2)},${row.exception_reason ?? ""}`,
+>    );
+>    fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@88ef4771bc8a:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/normalize/reconcile.js
+> @@
+>  const { sortByTransactionId } = require("../utils/sort");
+> @@
+>  function reconcileTransactions(parsed) {
+>    const byId = new Map();
+>    for (const row of parsed.ledger) {
+>      byId.set(row.transaction_id, { ...row });
+>    }
+> @@
+> -  const report = [];
+> -  for (const notice of parsed.corrections) {
+> +  // Apply corrections deterministically.
+> +  const report = [];
+> +  const notices = [...(parsed.corrections || [])].sort((a, b) =>
+> +    String(a.notice_id).localeCompare(String(b.notice_id)),
+> +  );
+> +  for (const notice of notices) {
+>      const target = byId.get(notice.transaction_id);
+>      if (!target) {
+>        continue;
+>      }
+> +
+> +    const fieldMap = { owner: "owner", status: "status", date: "date" };
+> +    const k = fieldMap[notice.field];
+> +    if (!k) continue;
+> +
+> +    const prev = target[k] == null ? "" : String(target[k]);
+> +    target[k] = notice.value;
+> +
+> -    if (notice.field === "owner") {
+> -      target.owner = notice.value;
+> -    } else if (notice.field === "status") {
+> -      target.status = notice.value;
+> -    } else if (notice.field === "date") {
+> -      target.date = notice.value;
+> -    }
+>      report.push({
+>        notice_id: notice.notice_id,
+>        transaction_id: notice.transaction_id,
+>        field: notice.field,
+> -      previous_value: "",
+> +      previous_value: prev,
+>        new_value: notice.value,
+>        effective: notice.effective,
+>      });
+>    }
+> @@
+> -  const items = sortByTransactionId(
+> -    [...byId.values()].map((row) => ({
+> -      transaction_id: row.transaction_id,
+> -      owner: row.owner,
+> -      status: String(row.status).toLowerCase(),
+> -      effective_date: row.date,
+> -      amount_usd: Number(row.amount),
+> -      exception_reason: null,
+> -    })),
+> -  );
+> +  const items = sortByTransactionId(
+> +    [...byId.values()].map((row) => {
+> +      const amount = Number(row.amount);
+> +      return {
+> +        transaction_id: row.transaction_id,
+> +        owner: row.owner,
+> +        status: String(row.status).toLowerCase(),
+> +        effective_date: row.date,
+> +        amount_usd: Number.isFinite(amount) ? Number(amount.toFixed(2)) : 0,
+> +        // TODO: full exception flagging per Briefs 07–09; keep null unless set.
+> +        exception_reason: row.exception_reason ?? null,
+> +      };
+> +    }),
+> +  );
+> @@
+>    return { items, report };
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@88ef4771bc8a:/app# mkdir -p /app/output
+root@88ef4771bc8a:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@88ef4771bc8a:/app# ls -la /app/output && head -n 2 /app/output/transactions.csv && head -n 5 /app/output/transactions.json && wc -l /app/output/reconciliat
+ion_report.jsonl
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 01:35 .
+drwxr-xr-x 1 root root 4096 Jun  8 01:35 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:35 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 01:35 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 01:35 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 01:35 transactions.json
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+{
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+0 /app/output/reconciliation_report.jsonl
+root@88ef4771bc8a:/app#

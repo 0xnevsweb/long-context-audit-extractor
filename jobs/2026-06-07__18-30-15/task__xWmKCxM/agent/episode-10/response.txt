@@ -1,0 +1,43 @@
+{
+  "analysis": "The last command batch didn’t show outputs; we’re still seeing old archive text. Likely we need another Ctrl+C to stop whatever is streaming/piped, then rerun the code inspection commands. We'll proceed carefully and ensure every keystrokes string ends with a newline.",
+  "plan": "Interrupt any lingering output, then immediately print a marker. Then rerun the code file views first (small, deterministic output). After that, extract Investigation Brief 05–09 into /tmp files and view with head to avoid flooding.",
+  "commands": [
+    {
+      "keystrokes": "C-c\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo \"=== resumed $(date -Is) ===\"\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## Investigation Brief 06/{exit}' /app/data/audit_archive.md > /tmp/brief05.md\nawk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## Investigation Brief 07/{exit}' /app/data/audit_archive.md > /tmp/brief06.md\nawk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## Investigation Brief 08/{exit}' /app/data/audit_archive.md > /tmp/brief07.md\nawk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## Investigation Brief 09/{exit}' /app/data/audit_archive.md > /tmp/brief08.md\nawk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## Investigation Brief 10/{exit}' /app/data/audit_archive.md > /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief0{5,6,7,8,9}.md; do echo \"===== $f =====\"; head -n 80 \"$f\"; done\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

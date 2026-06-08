@@ -1,0 +1,23 @@
+{
+  "analysis": "The last command output shown is from grepping brief files, but it’s only returning narrative/case-study lines, not the binding rule blocks—meaning our /tmp/briefXX extracts include a lot of filler and the key lines we need aren’t being matched or are beyond the first head. Also, we didn’t see the parser file listing output, so we still don’t know actual parser module names. Next: re-run the parser file listing and directly locate the binding rule paragraphs in each brief by searching for 'Committee ruling (binding' and then printing around those matches.",
+  "plan": "1) List parser directory contents again (small output). 2) For each brief file, search for the exact phrase 'Committee ruling' and print ~60 lines after it to capture the authoritative rules, avoiding case studies. 3) Also search Brief 09 for 'supersedes'/'override' and print around it. With rules in hand, we can implement reconcile logic and exception flags correctly.",
+  "commands": [
+    {
+      "keystrokes": "find /app/audit-extractor/src/parser -maxdepth 2 -type f -print | sort | sed -n '1,200p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "for b in 01 02 03 04 05 06 07 08 09; do f=/tmp/brief${b}.txt; if [ -f $f ]; then echo \"===== BRIEF $b committee ruling excerpt =====\"; grep -n \"Committee ruling\" -n $f | head; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nfrom pathlib import Path\nfor b in ['01','02','03','04','05','06','07','08','09']:\n    p=Path(f'/tmp/brief{b}.txt')\n    if not p.exists():\n        continue\n    s=p.read_text(errors='ignore').splitlines()\n    idx=[i for i,l in enumerate(s) if 'Committee ruling' in l]\n    print(f'=== BRIEF {b}: committee ruling blocks ===')\n    for i in idx[:3]:\n        start=max(0,i-2); end=min(len(s), i+60)\n        for j in range(start,end):\n            print(f'{j+1:4d}: {s[j]}')\n        print('---')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\np=Path('/tmp/brief09.txt')\ns=p.read_text(errors='ignore').splitlines()\nkeys=['supersed','override','compliance_hold','mail','timing','comparison']\nprint('=== BRIEF 09 key excerpts ===')\nfor i,l in enumerate(s):\n    lo=l.lower()\n    if any(k in lo for k in keys):\n        print(f'{i+1:4d}: {l}')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

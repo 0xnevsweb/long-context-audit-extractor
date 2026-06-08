@@ -1,0 +1,39 @@
+{
+  "analysis": "We still don't see the outputs from the CLI validation/cmp tests, and the screen is showing part of the authoritative Email Excerpts section, suggesting our brief09 extraction dumped a large tail and scrolled past earlier outputs. Also, our awk for brief09 captures everything from Brief 09 to end-of-file (too large). We need to (1) re-run the small CLI tests again, (2) limit brief09 extraction to just the brief section by stopping at the next '## ' heading that is not part of Brief 09 (likely a Case Study or structured sections). We'll capture outputs to files and then view only first ~200 lines.",
+  "plan": "1) Re-run CLI missing arg tests and determinism test, capturing output. 2) Re-extract Brief 09 only: from its heading until the next line that starts with '## ' but is not the same heading (e.g., '## Case Study' or '## Email Excerpts'). We'll stop on '^## (Case Study|Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)'. 3) Display the extracted brief texts for 03/07/09 from the saved files.",
+  "commands": [
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --outdir /tmp/x 2>/tmp/err1; echo \"exit=$?\"; cat /tmp/err1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md 2>/tmp/err2; echo \"exit=$?\"; cat /tmp/err2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/r1 /tmp/r2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/r1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/r2 && cmp -s /tmp/r1/transactions.json /tmp/r2/transactions.json; echo \"transactions_json_identical_exit=$?\"\n",
+      "duration": 3.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} p && /^## (Case Study|Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)/{exit}' /app/data/audit_archive.md > /tmp/brief09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/brief09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /tmp/brief03.txt 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,180p' /tmp/brief07.txt 2>/dev/null || true\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

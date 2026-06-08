@@ -1,0 +1,6 @@
+{
+  "analysis": "All required artifacts are being written under /app/output with correct names. transactions.json and exceptions.json use the required {\"items\": [...]} envelope, transactions.csv header matches the contract including exception_reason, and exceptions.json contains only rows with non-null exception_reason. reconciliation_report.jsonl is non-empty and contains one JSON per winning correction, sorted by notice_id. Determinism was verified by producing two runs and cmp showing transactions.json byte-identical. Missing-args CLI behavior was already correct (stderr + exit 1).",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

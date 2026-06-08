@@ -1,0 +1,237 @@
+New Terminal Output:
+root@fca90c221e79:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  8 00:35 .
+drwxr-xr-x 1 root root 4096 Jun  8 01:30 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  8 00:35 data
+root@fca90c221e79:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 00:35 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 data
+drwxr-xr-x 2 root root 4096 Jun  8 00:31 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@fca90c221e79:/app# find /app/audit-extractor/src -maxdepth 3 -type f -print
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@fca90c221e79:/app# sed -n '1,200p' /app/audit-extractor/docs/extractor-output-contract.md
+# Audit Extractor Output Contract
+
+Service root: `/app/audit-extractor`
+
+## CLI
+
+`node /app/audit-extractor/src/cli.js extract --input <markdown-path> --outdir <directory>`
+
+Missing `--input` or `--outdir`: message on stderr, exit code 1.
+
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of
+ the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes onl
+y.
+
+## Artifacts
+
+`extract` writes exactly these files under `--outdir`:
+
+- `transactions.json`
+- `transactions.csv`
+- `exceptions.json`
+- `reconciliation_report.jsonl`
+
+Identical input must produce byte-identical `transactions.json` on repeated runs.
+
+## `transactions.json`
+
+Top-level envelope:
+
+```json
+{ "items": [ /* transaction rows */ ] }
+```
+
+Each row:
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `transaction_id` | string | `TXN-…` |
+| `owner` | string | |
+| `status` | string | lowercase: `pending`, `approved`, `rejected`, `reversed` |
+| `effective_date` | string | `YYYY-MM-DD` |
+| `amount_usd` | number | two decimal places |
+| `exception_reason` | string or null | semicolon-joined flag codes in lexical order, or null |
+
+Sort `items` by `transaction_id` ascending.
+
+## `transactions.csv`
+
+Header (exact order):
+
+`transaction_id,owner,status,effective_date,amount_usd,exception_reason`
+
+Same rows as `transactions.json` in the same order. Empty cell when `exception_reason` is null.
+
+## `exceptions.json`
+
+```json
+{ "items": [ /* flagged rows only */ ] }
+```
+
+Same row shape as `transactions.json`. Include only rows where `exception_reason` is non-null. Sort by `transaction_id` ascending.
+
+## `reconciliation_report.jsonl`
+
+One JSON object per line, sorted by `notice_id` ascending. Each line records one winning correction notice:
+
+| Field | Type |
+|-------|------|
+| `notice_id` | string |
+| `transaction_id` | string |
+| `field` | string |
+| `previous_value` | string |
+| `new_value` | string |
+| `effective` | string |
+
+`previous_value` is the field value immediately before that correction applies.
+root@fca90c221e79:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --help
+missing --input or --outdir
+root@fca90c221e79:/app# rg -n "recon|reconc|hold|status|correction|notice|ledger|mail" /app/audit-extractor/src
+bash: rg: command not f
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+econstruction showed manual overrides arriving after batch lock.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against post-correction effective dates when flagging holds. The mi
+d-year amendment later in this archive supersedes that draft practice.
+
+Risk assessment WP-2046 ties treasury wire cutoff failures to control deficiencies around mail ingestion. Teams must not treat decoy ledger headings or appendix
+ commentary as authoritative transaction sources.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Memo WP-9086 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Follow-up #736 confirmed that treasury had been using an informal spreadsheet for treasury wire cutoff failures. The formal extractor must instead derive rows o
+nly from the canonical ledger and structured sections at file end.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+The committee packet references treasury wire cutoff failures as a contributing factor to late compliance holds. Investigators cross-checked mail excerpts again
+st amendment minutes before accepting any owner change.
+
+Memo WP-9556 summarizes stakeholder interviews about treasury wire cutoff failures. Participants disagreed on whether unsigned amendments should ever override l
+edger owners; Brief 05 resolves that question for the extractor.
+
+Working paper WP-6752 documents a three-way match failure tied to treasury wire cutoff failures. The team escalated when repeated extractor runs produced differ
+ent status columns for the same transaction id.
+
+## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+
+Auditor directive (mandatory for extract):
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+root@fca90c221e79:/app# mkdir -p /tmp/audit_run1 /tmp/audit_run2 /app/output
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_run1
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_run2
+root@fca90c221e79:/app# ls -la /tmp/audit_run1 && ls -la /tmp/audit_run2
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 01:30 .
+drwxrwxrwt 1 root root 4096 Jun  8 01:30 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:30 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 01:30 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 01:30 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 01:30 transactions.json
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 01:31 .
+drwxrwxrwt 1 root root 4096 Jun  8 01:30 ..
+-rw-r--r-- 1 root root   22 Jun  8 01:31 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 01:31 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 01:31 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 01:31 transactions.json
+root@fca90c221e79:/app# diff -u /tmp/audit_run1/reconciliation_report.jsonl /tmp/audit_run2/reconciliation_report.jsonl | head -n 200
+root@fca90c221e79:/app# diff -u /tmp/audit_run1/transactions.json /tmp/audit_run2/transactions.json | head -n 200
+root@fca90c221e79:/app# diff -u /tmp/audit_run1/exceptions.json /tmp/audit_run2/exceptions.json | head -n 200
+root@fca90c221e79:/app# node /app/audit-extractor/src/cli.js extract 2> /tmp/extractor_noargs.err; echo $?
+1
+root@fca90c221e79:/app# cat /tmp/extractor_noargs.err
+missing --input or --outdir
+root@fca90c221e79:/app#

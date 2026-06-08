@@ -1,0 +1,55 @@
+{
+  "analysis": "We still haven’t captured the Investigation Brief text because the sed ranges landed in Email Excerpts archived thread content. We do know there are multiple decoy headings and current parsers likely grab the first occurrence, causing wrong reconciliation. Next we should precisely locate the line numbers for each Investigation Brief heading and then print those exact ranges. Using awk to extract from a heading until the next heading will avoid guessing line ranges.",
+  "plan": "1) Get exact line numbers for Investigation Brief 01–09 headings. 2) Use an awk script to print each brief section from its heading to just before the next '## ' heading. 3) Also print the authoritative structured sections near end: Email Excerpts (the second one), Policy Exceptions (second), Correction Notices, and Transaction Ledger (canonical). 4) With rules in hand, proceed to implement parser heading selection fixes and reconciliation logic updates.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 01/{p=1} p{print} /^## / && !/^## Investigation Brief 01/ && p==1{exit}' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 02/{p=1} p{print} /^## / && !/^## Investigation Brief 02/ && p==1{exit}' /app/data/audit_archive.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 03/{p=1} p{print} /^## / && !/^## Investigation Brief 03/ && p==1{exit}' /app/data/audit_archive.md | head -n 160\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 04/{p=1} p{print} /^## / && !/^## Investigation Brief 04/ && p==1{exit}' /app/data/audit_archive.md | head -n 160\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 05/{p=1} p{print} /^## / && !/^## Investigation Brief 05/ && p==1{exit}' /app/data/audit_archive.md | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 06/{p=1} p{print} /^## / && !/^## Investigation Brief 06/ && p==1{exit}' /app/data/audit_archive.md | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 07/{p=1} p{print} /^## / && !/^## Investigation Brief 07/ && p==1{exit}' /app/data/audit_archive.md | head -n 220\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 08/{p=1} p{print} /^## / && !/^## Investigation Brief 08/ && p==1{exit}' /app/data/audit_archive.md | head -n 220\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'BEGIN{p=0} /^## Investigation Brief 09/{p=1} p{print} /^## / && !/^## Investigation Brief 09/ && p==1{exit}' /app/data/audit_archive.md | head -n 260\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1857,1908p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3849,3925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

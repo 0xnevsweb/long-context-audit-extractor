@@ -1,0 +1,23 @@
+{
+  "analysis": "We successfully captured key binding rules from Brief 09: compliance_hold timing compares qualifying email sent date against the transaction’s ledger date immediately before corrections are applied (pre-correction ledger date; before any correction changes date/status). Brief 03 governs mail-driven status changes; Brief 09 only affects hold flag. Our current email parser lacks 'sent:' date and we don’t compute compliance_hold at all. We still need Brief 03 (mail timing/qualifying emails), Brief 04 (winning correction notices), Brief 06 (effective_date output), and Briefs 07/08 (exception flag codes list and artifact rules). Next: view brief03/04/06/07/08 heads and key lines more carefully (they weren’t shown due to truncation). We'll print just the first 20 lines of each file and grep for backticked flag codes. Then implement: parseEmails to extract sent date and subject, compute compliance_hold based on qualifying emails and Brief 09 comparison date; adjust status updates per Brief 03; and modify reconciliation_report to output only winning corrections (per Brief 04).",
+  "plan": "1) Show first 30 lines of /tmp/brief03_rules.txt, /tmp/brief04_rules.txt, /tmp/brief06_rules.txt, /tmp/brief07_rules.txt, /tmp/brief08_rules.txt to capture rules. 2) Update parser/emails.js to parse 'sent:' lines and keep from_addr; restrict to compliance@ already. 3) Update reconcile.js to compute compliance_hold exception flag using Brief 09: compare email.sent date with pre-correction ledger date; determine 'qualifying email' per Brief 03. 4) Update correction application/report to only emit winning corrections per Brief 04 and sorted by notice_id.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief03_rules.txt /tmp/brief04_rules.txt /tmp/brief06_rules.txt /tmp/brief07_rules.txt /tmp/brief08_rules.txt; do echo \"===== $f head\"; head -n 40 $f; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "for f in /tmp/brief03_rules.txt /tmp/brief04_rules.txt /tmp/brief06_rules.txt /tmp/brief07_rules.txt /tmp/brief08_rules.txt; do echo \"===== $f key\"; grep -nE \"Auditor directive|Committee ruling|must|qualifying|sent:|compliance_hold|exception|flag|effective_date|winning|overlay|previous_value|notice_id\" $f; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\" -n /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

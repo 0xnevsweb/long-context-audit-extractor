@@ -1,0 +1,39 @@
+{
+  "analysis": "We’ve rewritten handbook.js and the parsers (ledger/emails/policy/corrections) to use extractSection selecting the last exact canonical heading. Now we need to rerun the extractor and validate: (1) transactions.json envelope matches contract (top-level {items:[]}), (2) canonical ledger is used (TXN-885... amount 500.00), (3) policy exceptions/corrections/emails now come from authoritative sections (later in file). We also still need to fix reconcile logic (previous_value, winning corrections, holds, status precedence, compliance sender restriction), but first confirm parsing now returns the right raw data and output shape issue seen earlier.",
+  "plan": "1) Run extractor to a fresh directory. 2) Inspect produced artifacts; check transactions.json structure and a known transaction value from canonical ledger (TXN-885...). 3) Confirm corrections are now parsed by checking whether reconciliation_report is still empty (it will likely still be empty until reconcile is fixed, but we can also inspect parsed corrections by running a small node snippet importing parser/sections). 4) If transactions.json envelope is still wrong, fix jsonWriter/index to match output contract.",
+  "commands": [
+    {
+      "keystrokes": "rm -rf /tmp/out4 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out4\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/out4\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 5 /tmp/out4/transactions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nobj=json.load(open('/tmp/out4/transactions.json'))\nprint('top_keys', list(obj.keys())[:10])\nitems=obj.get('items')\nprint('items_type', type(items), 'len', len(items) if isinstance(items,list) else None)\nfor row in (items or []):\n  if row.get('transaction_id')=='TXN-88519dfd-79ff-5de0-ae59-862ab932bc25':\n    print('TXN-885 row', row)\n    break\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /tmp/out4/reconciliation_report.jsonl && head -n 5 /tmp/out4/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed = parseArchive(md);\nconsole.log('ledger', parsed.ledger.length);\nconsole.log('emails', parsed.emails.length, 'sample', parsed.emails[0]);\nconsole.log('policyExceptions', parsed.policyExceptions.size);\nconsole.log('corrections', parsed.corrections.length, 'sample', parsed.corrections[0]);\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}
