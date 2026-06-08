@@ -1,0 +1,31 @@
+{
+  "analysis": "sections.js simply runs each parser on the full markdown; it does not select the authoritative tail sections. That means parsers that use indexOf likely grab the first occurrence (e.g., emails start at first '## Email Excerpts' which is explicitly non-authoritative earlier; policy exceptions start at first '## Policy Exceptions (draft)'; corrections likely similarly). This explains drift/wrong merges. We need to change parsers to pick the last authoritative occurrence (near end) or otherwise disambiguate. We still need the actual rule statements from Briefs 01–08 (our excerpt command output is currently showing narrative, not rule headers—probably scrolled). We'll re-extract brief excerpts into a file and then view just the first ~40 lines of each brief where rules are stated. Then implement parser selection fixes + sent date parsing + provisional ledger handling and reconciliation/outputs.",
+  "plan": "1) Create a compact file with only the first N lines of each brief (01–09) to capture rule statements cleanly and view it. 2) Patch parsers to select the last occurrence of each structured section: Ledger Rows, Meeting Minutes, Email Excerpts, Policy Exceptions, Correction Notices. Also update ledger parser to parse provisional and not drop duplicates incorrectly; instead choose correct row per Brief 01. Update emails parser to include sent date. 3) After rules are confirmed, patch normalize/reconcile.js, exceptions.js, and writers per required output contract and determinism. Next commands: generate /tmp/brief_rules.txt with concise excerpts; locate structured section boundaries near end for use in parsing.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nsrc='/app/data/audit_archive.md'\nlines=open(src,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nout=[]\nfor idx,(n,i) in enumerate(starts):\n  j=starts[idx+1][1] if idx+1<len(starts) else len(lines)\n  excerpt=lines[i:min(j,i+80)]\n  out.append(f\"\\n===== Investigation Brief {n:02d} (excerpt lines {i+1}-{min(j,i+80)}) =====\")\n  out.extend(excerpt)\nopen('/tmp/brief_rules.txt','w',encoding='utf-8').write('\\n'.join(out))\nprint('Wrote /tmp/brief_rules.txt')\nPY\n",
+    "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '240,520p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,820p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## \\(Ledger Rows\\|Meeting Minutes\\|Email Excerpts\\|Policy Exceptions\\|Correction Notices\\)\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 420 /app/data/audit_archive.md | head -n 220\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

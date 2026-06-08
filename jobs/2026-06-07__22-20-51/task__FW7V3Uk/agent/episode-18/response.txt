@@ -1,0 +1,23 @@
+{
+  "analysis": "Now policy.js has the same issue: it contains string literals with embedded escaped newlines that got turned into actual newlines, breaking JS. Our earlier multi-file rewrite introduced many such issues. We must rewrite all modified files to avoid backslash escape sequences in string literals (\"\\n\", regex literals with \\n, etc.). Use String.fromCharCode(10) for newline splitting consistently. We'll rewrite policy.js similarly. After that, rerun; if other files fail (csvWriter with \"\\n\" join, jsonWriter with \"\\n\", normalize files), we'll rewrite those too using NL constants.",
+  "plan": "1) Rewrite parser/policy.js to use NL constant and no \"\\n\" escapes. 2) Rewrite output writers and any other files that still use \"\\n\" escapes (csvWriter, jsonWriter, reportWriter maybe). 3) Rerun extractor; iterate on next syntax error until it runs.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/policy.js | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/parser/policy.js').write_text('''function parsePolicyExceptions(markdown) {\n  const NL = String.fromCharCode(10);\n\n  const start = markdown.indexOf(\"## Policy Exceptions\");\n  const end = markdown.indexOf(\"## Correction Notices\");\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n\n  const exceptions = [];\n  const blocks = slice.split(/^### Policy Exception/m).slice(1);\n\n  for (const block of blocks) {\n    const lines = block.split(NL);\n    const entry = {};\n\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"transaction:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"approved_by:\")) {\n        entry.approved_by = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"reason:\")) {\n        entry.reason = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.approved_by) exceptions.push(entry);\n  }\n\n  return exceptions;\n}\n\nmodule.exports = { parsePolicyExceptions };\n''', encoding='utf-8')\nprint('policy.js fixed')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/output/reportWriter.js').write_text('''const fs = require(\"node:fs\");\n\nfunction writeReconciliationReport(filePath, report) {\n  const NL = String.fromCharCode(10);\n  const body = report.map((row) => JSON.stringify(row)).join(NL);\n  fs.writeFileSync(filePath, body ? body + NL : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\n''', encoding='utf-8')\n\nPath('/app/audit-extractor/src/output/jsonWriter.js').write_text('''const fs = require(\"node:fs\");\n\nfunction writeTransactionsJson(filePath, items) {\n  const NL = String.fromCharCode(10);\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + NL);\n}\n\nfunction writeExceptionsJson(filePath, items) {\n  const NL = String.fromCharCode(10);\n  fs.writeFileSync(filePath, JSON.stringify({ items }, null, 2) + NL);\n}\n\nmodule.exports = { writeTransactionsJson, writeExceptionsJson };\n''', encoding='utf-8')\n\nPath('/app/audit-extractor/src/output/csvWriter.js').write_text('''const fs = require(\"node:fs\");\n\nfunction writeTransactionsCsv(filePath, items) {\n  const NL = String.fromCharCode(10);\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const amt = Number(row.amount_usd).toFixed(2);\n    const ex = row.exception_reason == null ? \"\" : String(row.exception_reason);\n    return `${row.transaction_id},${row.owner},${row.status},${row.effective_date},${amt},${ex}`;\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(NL) + NL);\n}\n\nmodule.exports = { writeTransactionsCsv };\n''', encoding='utf-8')\n\nprint('writers fixed')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1\n",
+      "duration": 2.0
+    }
+  ],
+  "task_complete": false
+}

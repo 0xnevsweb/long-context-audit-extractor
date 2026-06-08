@@ -1,0 +1,19 @@
+{
+  "analysis": "Still not getting the grep output on-screen; only a narrative slice from around line 395. To avoid losing output, we should redirect grep results into a temp file and then cat it, or use `python - <<'PY'` to print specific headings with context. We'll write a small command to extract and print the brief headings with their line numbers, then we can print exact ranges. Also we can directly use `rg -n` if available, but grep is fine.\n\nProceed with creating a small helper output file containing heading line numbers.",
+  "plan": "1) Save all Investigation Brief heading line numbers to /tmp/briefs.txt and display it. 2) Use those line numbers to print exact ranges for Briefs 01/03/04/05/07/08/09. 3) Then start code edits for parsers/writers/reconcile logic.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md > /tmp/briefs.txt\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "cat /tmp/briefs.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "awk -F: '{print $1\"\\t\"$2}' /tmp/briefs.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  2910: field: status
+  2911: value: approved
+  2912: effective: 2024-06-01
+  2913:
+  2914: ### CORR-9f4c13de
+  2915: targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+  2916: field: status
+  2917: value: reversed
+  2918: effective: 2024-06-15
+  2919:
+  2920: ### CORR-a05d24ef
+  2921: targets: TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+  2922: field: owner
+  2923: value: dlee
+  2924: effective: 2024-04-20
+  2925:
+  2926: ### CORR-b16e35f0
+  2927: targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+  2928: field: date
+  2929: value: 2024-08-01
+  2930: effective: 2024-08-01
+  2931:
+  2932: ### CORR-c27e46a1
+  2933: targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+  2934: field: date
+  2935: value: 2024-09-01
+  2936: effective: 2024-09-01
+  2937:
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf-8').read().splitlines()
+> # Find the ledger headings line numbers
+> for i,l in enumerate(lines,1):
+>     if re.match(r'^##\s+Transaction Ledger(\s*\(working copy\))?\s*$', l):
+>         print(i,l)
+> PY
+2938 ## Transaction Ledger (working copy)
+2946 ## Transaction Ledger
+root@c97f4e7457e4:/app#

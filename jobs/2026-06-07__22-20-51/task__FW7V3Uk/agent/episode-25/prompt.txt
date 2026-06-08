@@ -1,0 +1,41 @@
+Current Terminal Screen:
+   382  Subject: wire desk weekend coverage — coordination 17
+   383
+   384  Controller office moved the June rates close checklist because of FX
+   385  revaluation lag staffing gaps. This email does not reference compliance@
+   386  senders or transaction ids.
+   387
+   388  From: legal-notices@corp.internal
+   389  Subject: wire desk weekend coverage — coordination 18
+   390
+   391  Treasury ops summarized weekend wire coverage impacts on inventory
+   392  obsolescence reserve. No merge fields present.
+   393
+   394  From: legal-notices@corp.internal
+   395  Subject: close calendar revision — coordination 19
+   396
+   397  Internal audit circulated observations on intercompany netting dispute
+   398  controls; findings here are contextual only and must not override
+   399  Investigation Brief merge rules.
+   400
+   401  From: audit-lead@corp.internal
+   402  Subject: FY24 sampling plan draft — coordination 20
+   403
+   404  Please confirm procurement coverage for the vendor onboarding backlog
+   405  walkthrough next week. We are not requesting any ledger changes from this
+   406  message.
+   407
+   408  From: controller@corp.internal
+   409  Subject: accrual true-up schedule — coordination 21
+   410
+   411  Risk committee excerpt: SOX sampling mismatch exposure in March walkthrough
+   412  was elevated but no compliance decisions are recorded in this message.
+   413
+   414  From: treasury-ops@corp.internal
+   415  Subject: FY24 sampling plan draft — coordination 22
+   416
+   417  Team — attaching the refreshed sampling grid for lease modification
+   418  restatement. No transaction ids in this note; it exists to preserve ordering
+   419  around compliance threads during August memo.
+   420
+root@c97f4e7457e4:/app#

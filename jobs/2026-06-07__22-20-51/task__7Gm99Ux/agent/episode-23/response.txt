@@ -1,0 +1,19 @@
+{
+  "analysis": "The output shown is from a grep over the full archive and is not the Brief 03/07 content we attempted to print; likely the long brief dump was truncated in the snapshot. We still need the actual Brief 03 and 07 text to know the compliance_hold comparison direction and mail-driven status merge rules. We'll extract those briefs into separate temp files by line number ranges and then view them with sed/head to ensure we see the authoritative wording.",
+  "plan": "1) Programmatically extract Brief 03 and Brief 07 blocks into /tmp/brief03.txt and /tmp/brief07.txt with python, then view them. 2) From those, implement: mail-driven status change logic (Brief 03), and compliance_hold date comparison direction (Brief 07, amended by Brief 09 to use pre-correction date). 3) Update reconcile.js accordingly and rerun extractor/diff.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nblocks={}\nfor a,b in zip(starts, starts[1:]):\n    head=lines[a]\n    m=re.match(r'^## Investigation Brief (0[1-9])\\b', head)\n    if not m: continue\n    num=m.group(1)\n    if num in ('03','07'):\n        blocks[num]='\\n'.join(lines[a:b])\nopen('/tmp/brief03.txt','w',encoding='utf-8').write(blocks.get('03',''))\nopen('/tmp/brief07.txt','w',encoding='utf-8').write(blocks.get('07',''))\nprint('wrote', {k:len(v.splitlines()) for k,v in blocks.items()})\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "echo '--- brief03 ---' && cat /tmp/brief03.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "echo '--- brief07 ---' && cat /tmp/brief07.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

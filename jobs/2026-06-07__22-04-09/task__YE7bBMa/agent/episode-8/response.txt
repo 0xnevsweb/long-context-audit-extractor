@@ -1,0 +1,27 @@
+{
+  "analysis": "Our grep hit list is dominated by unrelated 'retention hold reminder' subjects and generic 'must not override' boilerplate, not the Investigation Brief rule text we need. We still haven't displayed sections.js and ledger.js outputs in the visible terminal (likely scrolled off), and we still lack the actual rule paragraphs for ledger sourcing, meeting signedness, email timing/dedupe, correction precedence, exception/hold flags, and Brief 09 override. Next we should directly locate the Investigation Brief headings within /tmp/briefs_01_09.txt and then view each brief start with a bounded range to capture the authoritative rule statements near the top of each brief. We'll also re-display ledger.js/sections.js and capture them.",
+  "plan": "1) Find line numbers for each '## Investigation Brief 0X' inside /tmp/briefs_01_09.txt. 2) For each brief, print the first ~80-120 lines after the heading, as the authoritative rules are usually stated there (the rest is narrative). 3) Re-open sections.js and ledger.js (again) and, if needed, copy them to /tmp snippets for reference. 4) Identify structured tail section formats (ledger rows, meeting minutes, email excerpts, policy exceptions, correction notices) with grep -n on the original archive so we can align parsing with rules.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /tmp/briefs_01_09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nfor n,i in starts:\n  print('\\n'.join([f'\\n===== BRIEF {n:02d} (from line {i+1}) =====']+lines[i:i+140]))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## \\(Ledger Rows\\|Meeting Minutes\\|Email Excerpts\\|Policy Exceptions\\|Correction Notices\\)\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

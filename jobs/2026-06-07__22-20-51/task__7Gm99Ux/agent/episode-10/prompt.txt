@@ -1,0 +1,108 @@
+New Terminal Output:
+
+root@58b3f47e1f8d:/app# sed -n '1,260p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'
+> const fs = require("node:fs");
+> const { sortByNoticeId } = require("../utils/sort");
+>
+> function writeReconciliationReport(filePath, report) {
+>   const sorted = sortByNoticeId([...report]);
+>   const body = sorted.map((row) => JSON.stringify(row)).join("\n");
+>   fs.writeFileSync(filePath, body ? `${body}\n` : "");
+> }
+>
+> module.exports = { writeReconciliationReport };
+> EOF
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> const { sliceSectionByExactHeading } = require("./sections");
+>
+> function parsePolicyExceptions(markdown) {
+>   // Authoritative section heading is exactly `## Policy Exceptions`.
+>   const slice = sliceSectionByExactHeading(markdown, "## Policy Exceptions");
+>   const items = [];
+>
+>   // Each exception is a `### Policy Exception` block with fields.
+>   const blocks = slice.split(/^###\s+Policy Exception\s*$/gim).slice(1);
+>   for (const block of blocks) {
+>     const transactionMatch = block.match(/^transaction:\s*(TXN-[0-9a-f-]+)\s*$/im);
+>     if (!transactionMatch) continue;
+>     const approvedByMatch = block.match(/^approved_by:\s*(.+)\s*$/im);
+>     items.push({
+>       transaction_id: transactionMatch[1].trim(),
+>       approved_by: approvedByMatch ? approvedByMatch[1].trim().toLowerCase() : "",
+>     });
+>   }
+>
+>   return items;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> const { sliceSectionByExactHeading } = require("./sections");
+>
+> function parseEmails(markdown) {
+>   // Authoritative section heading is exactly `## Email Excerpts`.
+>   const slice = sliceSectionByExactHeading(markdown, "## Email Excerpts");
+>   const emails = [];
+>
+>   // Each email starts with a `From:` line.
+>   const blocks = slice.split(/^From:\s*/gim).slice(1);
+>   for (const b of blocks) {
+>     const block = `From: ${b}`;
+>     const fromMatch = block.match(/^From:\s*(.+)\s*$/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>     const txnMatch = block.match(/\b(TXN-[0-9a-f-]+)\b/i);
+>     const statusMatch = block.match(/^status:\s*(pending|approved|rejected|reversed)\s*$/im);
+>     if (!fromMatch || !sentMatch || !txnMatch || !statusMatch) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim().toLowerCase(),
+>       sent: sentMatch[1],
+>       transaction_id: txnMatch[1].toUpperCase(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/utils/sort.js && node -c /app/audit-extractor/src/output/reportWriter.js && node -c /app/audit-extracto
+r/src/parser/policy.js && node -c /app/audit-extractor/src/parser/emails.js
+root@58b3f47e1f8d:/app#

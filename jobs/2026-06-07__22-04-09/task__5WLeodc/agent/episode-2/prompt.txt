@@ -1,0 +1,41 @@
+Current Terminal Screen:
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@de10d3a691f3:/app# find audit-extractor/src -maxdepth 2 -type f -name '*.js' -print
+audit-extractor/src/lib/handbook.js
+audit-extractor/src/lib/constants.js
+audit-extractor/src/schema/validate.js
+audit-extractor/src/cli.js
+audit-extractor/src/output/jsonWriter.js
+audit-extractor/src/output/csvWriter.js
+audit-extractor/src/output/reportWriter.js
+audit-extractor/src/utils/sort.js
+audit-extractor/src/utils/date.js
+audit-extractor/src/normalize/exceptions.js
+audit-extractor/src/normalize/reconcile.js
+audit-extractor/src/index.js
+audit-extractor/src/parser/ledger.js
+audit-extractor/src/parser/meetings.js
+audit-extractor/src/parser/policy.js
+audit-extractor/src/parser/sections.js
+audit-extractor/src/parser/corrections.js
+audit-extractor/src/parser/emails.js
+root@de10d3a691f3:/app#

@@ -1,0 +1,194 @@
+New Terminal Output:
+root@57a25f8d12e0:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:04 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+root@57a25f8d12e0:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@57a25f8d12e0:/app# find /app/audit-extractor -maxdepth 3 -type f -name "*.js" -o -name "*.json" -o -name "*.md" | sed 's#^#/app/audit-extractor/#' | head
+/app/audit-extractor//app/audit-extractor/docs/extractor-output-contract.md
+/app/audit-extractor//app/audit-extractor/docs/architecture.md
+/app/audit-extractor//app/audit-extractor/data/audit_archive.md
+/app/audit-extractor//app/audit-extractor/config/defaults.json
+/app/audit-extractor//app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor//app/audit-extractor/src/lib/constants.js
+/app/audit-extractor//app/audit-extractor/src/schema/validate.js
+/app/audit-extractor//app/audit-extractor/src/cli.js
+/app/audit-extractor//app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor//app/audit-extractor/src/output/csvWriter.js
+root@57a25f8d12e0:/app# ls -la /app/audit-extractor/src
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+root@57a25f8d12e0:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@57a25f8d12e0:/app# find /app/audit-extractor/src -type f -maxdepth 2 -print
+find: warning: you have specified the global option -maxdepth after the argument -type, but global options are not positional, i.e., -maxdepth affects tests spe
+cified before it as well as those specified after it.  Please specify global options before other arguments.
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@57a25f8d12e0:/app# sed -n '1,200p' /app/audit-extractor/src/index.js 2>/dev/null || true
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: tru
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+erge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+## Investigation Brief 02 — Status Precedence — supporting chronology
+
+Regional lead E. Novak hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override ledg
+er owners; investigators cited Brief 05 during the session.
+
+Site visit #525 to fixed assets exported 19 compliance threads tied to capital project capitalization. Reviewers noted that owner field churn appeared whenever
+correction batches straddled a weekend wire cutoff.
+
+Grant compliance WP-9559 tied capital project capitalization attestation gaps to ledger slice confusion visible only when hold flags used corrected rather than
+pre-correction ledger dates.
+
+Peer review #804 of fixed assets sampling found 19 mislinked emails on capital project capitalization. None of the mislinked messages originated from compliance
+ addresses, supporting Brief 02 sender restrictions.
+
+Committee packet #320 chronicles how capital project capitalization escalated after R. Okonkwo observed retroactive status conflict between two correction batch
+es. Cross-checks against amendment minutes were required before accepting any owner change.
+
+External advisors reviewing capital project capitalization during July review asked for a machine-readable trace explaining why rejected rows received hold flag
+s. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+SOX testing team WP-4584 linked mailbox ingestion lag on capital project capitalization to a manual override logged at 02:14 local time between two automated co
+rrection imports.
+
+Data governance WP-7874 catalogs legacy fixed assets folders still containing capital project capitalization spreadsheets. Those folders are evidentiary only; e
+xtractor output must come from canonical structured sections.
+
+Memo WP-5125 summarizes a panel on capital project capitalization chaired by A. Ndiaye. Participants debated whether informal spreadsheets should ever override
+ledger owners; Brief 05 closes that debate for the FY24 extractor.
+
+Treasury liaison T. Singh explained that capital project capitalization related wires were paused during July review, delaying compliance responses and amplifyi
+ng effective-date mismatch on rejected rows.
+
+In July review, fixed assets migrated capital project capitalization workflows to a new ticketing tool. Migration cutover introduced ledger slice confusion, whi
+ch did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Audit technologist K. Morales replayed FY24 mailbox snapshots and showed how capital project capitalization threads arrived out of order relative to correction
+notices, surfacing unsigned amendment drift on four high-balance rows.
+
+Counsel memo WP-2194 advises retaining full capital project capitalization threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+
+Fixed-assets specialist P. Okafor argued that capital project capitalization capitalization memos should not alter ledger status; investigators agreed while not
+ing those memos still inform exception coding narratives.
+
+Lead reviewer E. Novak opened working paper WP-2468 after fixed assets reported that capital project capitalization distorted the July review reconciliation. Th
+e team reconstructed mailbox ordering and found unsigned amendment drift affecting at least 4 transaction threads.
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+
+Follow-up #356 confirmed that fixed assets routed capital project capitalization statements through a shared inbox with 20 delegates. Investigators flagged stat
+us precedence inversion as the likely root cause of inconsistent status columns.
+
+Working paper WP-7495 documents a three-way match failure on capital project capitalization where accrual true-ups near $19,845 never received matching complian
+ce responses during July review.
+
+Quality review #934 sampled 4 capital project capitalization tickets and found unsigned amendment drift whenever provisional ledger rows were not filtered befor
+e merge.
+root@57a25f8d12e0:/app#

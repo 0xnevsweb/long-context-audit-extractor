@@ -1,0 +1,139 @@
+{
+    "id": "37ecadd7-b2f2-4e9a-8e5b-80dae4d6a443",
+    "task_name": "task",
+    "trial_name": "task__7Gm99Ux",
+    "trial_uri": "file:///Users/admin/Documents/Snorkel/long-context-audit-extractor/jobs/2026-06-07__22-20-51/task__7Gm99Ux",
+    "task_id": {
+        "path": "task"
+    },
+    "source": null,
+    "task_checksum": "15d0ee228088a25b366903761f7ee1ba33e47b22cb49461451816eb1d26e8a8f",
+    "config": {
+        "task": {
+            "path": "task",
+            "git_url": null,
+            "git_commit_id": null,
+            "name": null,
+            "ref": null,
+            "overwrite": false,
+            "download_dir": null,
+            "source": null
+        },
+        "trial_name": "task__7Gm99Ux",
+        "trials_dir": "jobs/2026-06-07__22-20-51",
+        "timeout_multiplier": 1.0,
+        "agent_timeout_multiplier": null,
+        "verifier_timeout_multiplier": null,
+        "agent_setup_timeout_multiplier": null,
+        "environment_build_timeout_multiplier": null,
+        "agent": {
+            "name": "terminus-2",
+            "import_path": null,
+            "model_name": "openai/@openai/gpt-5.2",
+            "override_timeout_sec": null,
+            "override_setup_timeout_sec": null,
+            "max_timeout_sec": null,
+            "kwargs": {},
+            "env": {}
+        },
+        "environment": {
+            "type": "docker",
+            "import_path": null,
+            "force_build": false,
+            "delete": true,
+            "override_cpus": null,
+            "override_memory_mb": null,
+            "override_storage_mb": null,
+            "override_gpus": null,
+            "suppress_override_warnings": false,
+            "mounts": null,
+            "env": {},
+            "kwargs": {}
+        },
+        "verifier": {
+            "override_timeout_sec": null,
+            "max_timeout_sec": null,
+            "env": {},
+            "disable": false
+        },
+        "artifacts": [],
+        "job_id": "e39cf7fc-072a-4289-a17e-ddc1828a3ddf"
+    },
+    "agent_info": {
+        "name": "terminus-2",
+        "version": "2.0.0",
+        "model_info": {
+            "name": "@openai/gpt-5.2",
+            "provider": "openai"
+        }
+    },
+    "agent_result": {
+        "n_input_tokens": 872160,
+        "n_cache_tokens": 837248,
+        "n_output_tokens": 29350,
+        "cost_usd": 0.6185144,
+        "rollout_details": [],
+        "metadata": {
+            "n_episodes": 31,
+            "api_request_times_msec": [
+                12342.777013778687,
+                12503.890037536621,
+                18138.642072677612,
+                12086.199045181274,
+                10495.797872543335,
+                14408.344745635986,
+                13121.80209159851,
+                14093.03903579712,
+                22925.200939178467,
+                15225.003004074097,
+                14159.87491607666,
+                16450.013875961304,
+                20264.47606086731,
+                14516.818046569824,
+                10920.323133468628,
+                9310.176134109497,
+                7007.611989974976,
+                9039.483070373535,
+                10729.301929473877,
+                6447.552919387817,
+                27970.04008293152,
+                13104.573965072632,
+                10673.48027229309,
+                7668.920993804932,
+                9370.417833328247,
+                7472.679138183594,
+                7523.685932159424,
+                5276.977777481079,
+                30144.020080566406,
+                8176.565170288086,
+                3830.6169509887695
+            ],
+            "summarization_count": 0
+        }
+    },
+    "verifier_result": {
+        "rewards": {
+            "reward": 0.0
+        }
+    },
+    "exception_info": null,
+    "started_at": "2026-06-08T05:20:52.457173Z",
+    "finished_at": "2026-06-08T05:31:45.844938Z",
+    "environment_setup": {
+        "started_at": "2026-06-08T05:20:52.566326Z",
+        "finished_at": "2026-06-08T05:21:07.569922Z"
+    },
+    "agent_setup": {
+        "started_at": "2026-06-08T05:21:07.570083Z",
+        "finished_at": "2026-06-08T05:21:17.768891Z"
+    },
+    "agent_execution": {
+        "started_at": "2026-06-08T05:21:17.769184Z",
+        "finished_at": "2026-06-08T05:31:12.135004Z"
+    },
+    "verifier": {
+        "started_at": "2026-06-08T05:31:16.390088Z",
+        "finished_at": "2026-06-08T05:31:24.173857Z"
+    },
+    "step_results": null
+}

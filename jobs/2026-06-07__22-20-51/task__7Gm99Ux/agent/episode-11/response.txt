@@ -1,0 +1,31 @@
+{
+  "analysis": "sections.js was updated (not shown here but should now provide sliceSectionByExactHeading). ledger.js is clearly wrong per Brief 01: it uses indexOf (not anchored regex), it will start at the first occurrence of '## Transaction Ledger' which is the working copy at 2938 (since that occurs before 2946) and thus will parse the decoy ledger. It also keeps the first row per transaction_id (rows.some continue), whereas Brief 01 requires last non-provisional block per id in file order, ignoring blocks containing provisional:true (case-insensitive), and only ledger under heading exactly `## Transaction Ledger` is authoritative. So ledger parser is a key root cause. We need to rewrite ledger.js to use sliceSectionByExactHeading(markdown, '## Transaction Ledger'), parse all ### TXN blocks, ignore provisional blocks, and keep last row per id. Also corrections.js likely needs similar section slicing (ensure it uses exact heading). Meetings parser also should be section-scoped and likely requires signed:true. Next implement these parser fixes before reconciliation logic.",
+  "plan": "1) Rewrite ledger.js to: slice authoritative ledger section; split into blocks by /^###\\s+/; for each block, parse fields; detect provisional flag in block; if provisional true, skip; store row in map by id overwriting previous to keep last. 2) Rewrite corrections.js (and meetings.js) to slice authoritative headings instead of scanning entire markdown; corrections should use exact `## Correction Notices`; meetings should use exact authoritative minutes heading (need to find it; likely `## Committee Minutes`). We’ll first locate that heading in archive. 3) After parsers fixed, run parseArchive counts and run extractor to ensure it completes. Then address reconcile.js and exception logic.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Committee Minutes\\|^## Meeting\\|^## Committee\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nconst { sliceSectionByExactHeading } = require(\"./sections\");\n\nfunction parseLedger(markdown) {\n  // Only the section whose heading line is exactly `## Transaction Ledger` is authoritative.\n  const slice = sliceSectionByExactHeading(markdown, \"## Transaction Ledger\");\n  if (!slice) return [];\n\n  const byId = new Map();\n\n  const blocks = slice.split(/^###\\s+/m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const transactionId = (lines[0] || \"\").trim();\n    if (!/^TXN-[0-9a-f-]+$/i.test(transactionId)) continue;\n\n    // Ignore any ledger block that includes `provisional: true` (case-insensitive).\n    const provisionalMatch = block.match(/^provisional:\\s*(true|false)\\s*$/im);\n    if (provisionalMatch && provisionalMatch[1].trim().toLowerCase() === \"true\") {\n      continue;\n    }\n\n    const row = { transaction_id: transactionId.toUpperCase() };\n    for (const line of lines.slice(1)) {\n      const trimmed = line.trim();\n      if (/^amount:\\s*/i.test(trimmed)) {\n        row.amount = Number(trimmed.split(\":\")[1].trim());\n      } else if (/^owner:\\s*/i.test(trimmed)) {\n        row.owner = trimmed.split(\":\")[1].trim();\n      } else if (/^status:\\s*/i.test(trimmed)) {\n        row.status = trimmed.split(\":\")[1].trim();\n      } else if (/^date:\\s*/i.test(trimmed)) {\n        row.date = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    // When same transaction id appears multiple times, the last non-provisional wins.\n    byId.set(row.transaction_id, row);\n  }\n\n  return [...byId.values()];\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nfor i,l in enumerate(lines,1):\n    if re.match(r'^## (Committee Minutes|Committee|Meeting)', l):\n        print(i,l)\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed = parseArchive(md);\nconsole.log('ledger sample', parsed.ledger.slice(0,3));\nconsole.log('ledger count', parsed.ledger.length);\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

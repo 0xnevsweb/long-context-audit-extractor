@@ -1,0 +1,51 @@
+{
+  "analysis": "We’re viewing the archive around Email Excerpts; many messages are explicitly non-authoritative and some do not include transaction ids or compliance@ senders. This reinforces that email parsing must be strict: only qualifying compliance@ emails with required fields (including `sent:` line per prompt) should affect compliance_hold flag logic, and subject parsing must accurately extract TXN ids. Current emails parser doesn’t parse sent dates at all, so it cannot implement Brief 09 date comparison. Next we should locate the structured Email Excerpts section boundaries, and also read Briefs 07–09 from /tmp/briefs_01_09.txt (we still haven’t successfully displayed them). We also need to inspect corrections.js/meetings.js and sections.js utilities.",
+  "plan": "1) Locate the exact line numbers for Briefs 07–09 in /tmp/briefs_01_09.txt and print those ranges. 2) Print sections.js, corrections.js, meetings.js, sort/date utils to know what helpers we can reuse. 3) Locate structured headings (Email Excerpts, Policy Exceptions, Correction Notices) in the main markdown to understand formats; then update parsers accordingly.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 08\" /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nheads=[(i,l) for i,l in enumerate(lines,1) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nfor i,l in heads:\n    if l.startswith('## Investigation Brief 07') or l.startswith('## Investigation Brief 08') or l.startswith('## Investigation Brief 09'):\n        print(i,l)\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# dump briefs 07-09 with 20 lines of context boundaries\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nfor a,b in zip(starts, starts[1:]):\n    head=lines[a]\n    if head.startswith('## Investigation Brief 07') or head.startswith('## Investigation Brief 08') or head.startswith('## Investigation Brief 09'):\n        print('\\n'.join(lines[a:b]))\n        print('\\n'+'='*80+'\\n')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Email Excerpts\\|^## Policy Exceptions\\|^## Correction Notices\\|^## Transaction Ledger\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

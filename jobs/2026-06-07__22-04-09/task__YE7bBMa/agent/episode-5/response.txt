@@ -1,0 +1,51 @@
+{
+  "analysis": "ripgrep (rg) is not installed, so prior rg-based commands won’t work. We need to use grep/sed/python instead. We still need to view parser files and extract Investigation Briefs 01–09, especially Brief 09 amendment. We'll switch to grep -n and python scripts for searching/extracting. After rules are identified, we will implement fixes in Node sources (writers, reconciliation, exceptions, deterministic sorts, report sorting/previous_value).",
+  "plan": "1) Use grep -n to find Investigation Brief sections and structured section headings in /app/data/audit_archive.md. 2) Use python to extract Briefs 01–09 blocks into a temp file for reliable viewing. 3) View parser files (sections/ledger/meetings/emails) to see parsed fields. Then proceed to code edits once rules are clear.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## \\(Ledger Rows\\|Meeting Minutes\\|Email Excerpts\\|Policy Exceptions\\|Correction Notices\\)\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,encoding='utf-8').read().splitlines()\nbriefs=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    briefs.append((int(m.group(1)), i))\nbriefs.sort()\n# determine ends at next brief\nout=[]\nfor idx,(n,start) in enumerate(briefs):\n  end=briefs[idx+1][1] if idx+1<len(briefs) else len(lines)\n  out.append(f\"\\n### Investigation Brief {n:02d} (lines {start+1}-{end})\\n\")\n  out.extend(lines[start:end])\nopen('/tmp/briefs_01_09.txt','w',encoding='utf-8').write('\\n'.join(out))\nprint('Wrote /tmp/briefs_01_09.txt with',len(out),'lines')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,820p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,380p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

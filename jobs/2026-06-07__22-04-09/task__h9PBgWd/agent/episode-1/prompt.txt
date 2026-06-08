@@ -1,0 +1,201 @@
+New Terminal Output:
+root@8eb6883b8e1c:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:04 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+root@8eb6883b8e1c:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@8eb6883b8e1c:/app# ls -la /app/audit-extractor/src
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+root@8eb6883b8e1c:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@8eb6883b8e1c:/app# cat /app/audit-extractor/package.json
+{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js --help
+usage: node src/cli.js extract --input <path> --outdir <dir>
+root@8eb6883b8e1c:/app# rm -rf /tmp/audit-out && mkdir -p /tmp/audit-out
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out
+root@8eb6883b8e1c:/app# ls -la /tmp/audit-out && (for f in /tmp/audit-out/*; do echo "--- $f"; wc -c "$f"; done)
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:04 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:04 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:04 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:04 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 05:04 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 05:04 transactions.json
+--- /tmp/audit-out/exceptions.json
+22 /tmp/audit-out/exceptions.json
+--- /tmp/audit-out/reconciliation_report.jsonl
+0 /tmp/audit-out/reconciliation_report.jsonl
+--- /tmp/audit-out/transactions.csv
+2442 /tmp/audit-out/transactions.csv
+--- /tmp/audit-out/transactions.json
+7407 /tmp/audit-out/transactions.json
+root@8eb6883b8e1c:/app# python3 - <<'PY'
+> import hashlib,glob
+> for p in sorted(glob.glob('/tmp/audit-out/*')):
+>     h=hashlib.sha256(open(p,'rb').read()).hexdigest()
+>     print(h,p)
+> PY
+53c7fa41c422271d4a623c36fe5947c47c1eaba391627cf78150e224565756ea /tmp/audit-out/exceptions.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855 /tmp/audit-out/reconciliation_report.jsonl
+7fcb09b35e3c517da461c79b48a46bac07c4af597d76ad87809a70ab2e1a6b8c /tmp/audit-out/transactions.csv
+2ddfba78666d53e689d3e804de67a868a96cd533cd8bc8339286aab00e517fb1 /tmp/audit-out/transactions.json
+root@8eb6883b8e1c:/app# rm -rf /tmp/audit-out2 && mkdir -p /tmp/audit-out2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --
+outdir /tmp/audit-out2
+root@8eb6883b8e1c:/app# python3 - <<'PY'
+> import hashlib,glob,os
+> for p in sorted(glob.glob('/tmp/audit-out/*')):
+>     p2=p.replace('/tmp/audit-out/','/tmp/audit-out2/')
+>     b1=open(p,'rb').read(); b2=open(p2,'rb').read()
+>     print(os.path.basename(p), 'same' if b1==b2 else 'DIFF', len(b1), len(b2))
+> PY
+exceptions.json same 22 22
+reconciliation_report.jsonl same 0 0
+transactions.csv same 2442 2442
+transactions.json same 7407 7407
+root@8eb6883b8e1c:/app# grep -n "Investigation Brief" -n /app/data/audit_archive.md | head
+7:This index orients readers only. Reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy
+sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correction Notic
+es, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+26:## Investigation Brief 01 — Ledger Sourcing — supporting chronology
+214:## Investigation Brief 02 — Status Precedence
+222:## Investigation Brief 02 — Status Precedence — supporting chronology
+384:## Investigation Brief 03 — Compliance Mail Timing
+393:## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+555:## Investigation Brief 04 — Correction Notice Precedence
+564:## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+672:## Investigation Brief 05 — Meeting Amendments and Owners
+root@8eb6883b8e1c:/app# python3 - <<'PY'
+> import re
+> path='/app/data/audit_archive.md'
+> text=open(path,'r',encoding='utf-8').read().splitlines()
+> idx=[(i+1,l) for i,l in enumerate(text) if re.search(r'Investigation Brief\s+0?[1-9]\b',l)]
+> print('brief headers:',len(idx))
+> for i,(ln,l) in enumerate(idx[:30]):
+>     print(ln,l[:120])
+> PY
+brief headers: 19
+11 ## Investigation Brief 01 — Ledger Sourcing
+26 ## Investigation Brief 01 — Ledger Sourcing — supporting chronology
+214 ## Investigation Brief 02 — Status Precedence
+222 ## Investigation Brief 02 — Status Precedence — supporting chronology
+384 ## Investigation Brief 03 — Compliance Mail Timing
+393 ## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+555 ## Investigation Brief 04 — Correction Notice Precedence
+564 ## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+672 ## Investigation Brief 05 — Meeting Amendments and Owners
+680 ## Investigation Brief 05 — Meeting Amendments and Owners — supporting chronology
+856 ## Investigation Brief 06 — Effective Dates on Output
+865 ## Investigation Brief 06 — Effective Dates on Output — supporting chronology
+973 ## Investigation Brief 07 — Exception Flags (Part I)
+979 comparison used for `compliance_hold` is defined in Investigation Brief 09
+983 ## Investigation Brief 07 — Exception Flags (Part I) — supporting chronology
+1145 ## Investigation Brief 08 — Exception Flags (Part II)
+1153 ## Investigation Brief 08 — Exception Flags (Part II) — supporting chronology
+1455 ## Investigation Brief 09 — Mid-Year Amendment
+1465 ## Investigation Brief 09 — Mid-Year Amendment — supporting chronology
+root@8eb6883b8e1c:/app# python3 - <<'PY'
+> import re
+> lines=open('/app/data/audit_archive.md','r',encoding='utf-8').read().splitlines()
+> brief_starts=[]
+> for i,l in enumerate(lines):
+>     m=re.search(r'Investigation Brief\s+(0?[1-9])\b',l)
+>     if m:
+>         brief_starts.append((int(m.group(1)), i))
+> brief_starts=sorted(brief_starts)
+> for n,i in brief_starts:
+>     if 1<=n<=9:
+>         j=len(lines)
+>         for n2,i2 in brief_starts:
+>             if i2>i:
+>                 j=i2
+>                 break
+>         print(n, i+1, j)
+> PY
+1 11 25
+1 26 213
+2 214 221
+2 222 383
+3 384 392
+3 393 554
+4 555 563
+4 564 671
+5 672 679
+5 680 855
+6 856 864
+6 865 972
+7 973 982
+7 983 1144
+8 1145 1152
+8 1153 1454
+9 979 982
+9 1455 1464
+9 1465 3152
+root@8eb6883b8e1c:/app#

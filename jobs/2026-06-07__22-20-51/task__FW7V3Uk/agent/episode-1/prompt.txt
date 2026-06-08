@@ -1,0 +1,251 @@
+New Terminal Output:
+root@c97f4e7457e4:/app# tail -n 220 /app/data/audit_archive.md
+targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+field: date
+value: 2024-09-01
+effective: 2024-09-01
+
+## Transaction Ledger (working copy)
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 99999.00
+owner: decoy
+status: reversed
+date: 2020-01-01
+
+## Transaction Ledger
+
+### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+amount: 500.00
+owner: jdoe
+status: pending
+date: 2024-01-01
+
+### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+amount: 7500.00
+owner: asmith
+status: approved
+date: 2024-02-02
+
+### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+amount: 3246.84
+owner: bwong
+status: rejected
+date: 2024-03-03
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: ckim
+status: approved
+date: 2024-04-04
+
+### TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4
+amount: 5993.68
+owner: dlee
+status: pending
+date: 2024-05-05
+
+### TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+amount: 7367.10
+owner: evans
+status: pending
+date: 2024-06-06
+
+### TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+amount: 8740.52
+owner: frost
+status: approved
+date: 2024-07-07
+
+### TXN-1b083448-63e3-5527-a20a-edd71416341c
+amount: 10113.94
+owner: jdoe
+status: rejected
+date: 2024-08-08
+
+### TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+amount: 11487.36
+owner: asmith
+status: approved
+date: 2024-09-09
+
+### TXN-0f577e8c-c09d-517f-8807-b09a17924f9c
+amount: 12860.78
+owner: bwong
+status: pending
+date: 2024-10-10
+
+### TXN-33c930a7-114e-50c1-b790-e26c53e5f025
+amount: 14234.20
+owner: ckim
+status: pending
+date: 2024-11-11
+
+### TXN-de3b42d7-919c-5839-a490-b039d9c97092
+amount: 15607.62
+owner: dlee
+status: approved
+date: 2024-12-12
+
+### TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f
+amount: 16981.04
+owner: evans
+status: rejected
+date: 2024-01-13
+
+### TXN-53e38083-cc01-56a8-be81-f412d80c5f5d
+amount: 18354.46
+owner: frost
+status: approved
+date: 2024-02-14
+
+### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+amount: 19727.88
+owner: jdoe
+status: pending
+date: 2024-03-15
+
+### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+amount: 1601.30
+owner: asmith
+status: pending
+date: 2024-04-16
+
+### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+amount: 2974.72
+owner: bwong
+status: approved
+date: 2024-05-17
+
+### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+amount: 4348.14
+owner: ckim
+status: rejected
+date: 2024-06-18
+
+### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+amount: 5721.56
+owner: dlee
+status: approved
+date: 2024-07-19
+
+### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+amount: 7094.98
+owner: evans
+status: pending
+date: 2024-08-20
+
+### TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+amount: 8468.40
+owner: frost
+status: pending
+date: 2024-09-21
+
+### TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f
+amount: 9841.82
+owner: jdoe
+status: approved
+date: 2024-10-22
+
+### TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+amount: 11215.24
+owner: asmith
+status: rejected
+date: 2024-11-23
+
+### TXN-20cd5f27-165a-55cf-90db-b472725bb03b
+amount: 12588.66
+owner: bwong
+status: approved
+date: 2024-12-24
+
+### TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a
+amount: 13962.08
+owner: ckim
+status: pending
+date: 2024-01-25
+
+### TXN-08b4472a-f4b7-5455-9f43-e97005d4a594
+amount: 15335.50
+owner: dlee
+status: pending
+date: 2024-02-26
+
+### TXN-6a290cff-b5f2-5992-9a90-1f22dedca980
+amount: 16708.92
+owner: evans
+status: approved
+date: 2024-03-27
+
+### TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8
+amount: 18082.34
+owner: frost
+status: rejected
+date: 2024-04-01
+
+### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+amount: 19455.76
+owner: jdoe
+status: approved
+date: 2024-05-02
+
+### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+amount: 1329.18
+owner: asmith
+status: pending
+date: 2024-06-03
+
+### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+amount: 2702.60
+owner: bwong
+status: pending
+date: 2024-07-04
+
+### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+amount: 4076.02
+owner: ckim
+status: approved
+date: 2024-08-05
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: stale
+status: pending
+date: 2024-04-04
+provisional: true
+
+### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+amount: 4620.26
+owner: finalowner
+status: approved
+date: 2024-04-04
+
+root@c97f4e7457e4:/app# mkdir -p /tmp/audit_out1 /tmp/audit_out2
+root@c97f4e7457e4:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out1
+root@c97f4e7457e4:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out2
+root@c97f4e7457e4:/app# ls -la /tmp/audit_out1 && ls -la /tmp/audit_out2
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:21 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:21 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:21 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:21 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 05:21 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 05:21 transactions.json
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:21 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:21 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:21 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:21 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 05:21 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 05:21 transactions.json
+root@c97f4e7457e4:/app# sha256sum /tmp/audit_out1/* /tmp/audit_out2/* 2>/dev/null | sed 's#/tmp/audit_out[12]/##g' | sort
+2ddfba78666d53e689d3e804de67a868a96cd533cd8bc8339286aab00e517fb1  transactions.json
+2ddfba78666d53e689d3e804de67a868a96cd533cd8bc8339286aab00e517fb1  transactions.json
+53c7fa41c422271d4a623c36fe5947c47c1eaba391627cf78150e224565756ea  exceptions.json
+53c7fa41c422271d4a623c36fe5947c47c1eaba391627cf78150e224565756ea  exceptions.json
+7fcb09b35e3c517da461c79b48a46bac07c4af597d76ad87809a70ab2e1a6b8c  transactions.csv
+7fcb09b35e3c517da461c79b48a46bac07c4af597d76ad87809a70ab2e1a6b8c  transactions.csv
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  reconciliation_report.jsonl
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  reconciliation_report.jsonl
+root@c97f4e7457e4:/app# diff -u /tmp/audit_out1/transactions.json /tmp/audit_out2/transactions.json | sed -n '1,120p' || true
+root@c97f4e7457e4:/app#

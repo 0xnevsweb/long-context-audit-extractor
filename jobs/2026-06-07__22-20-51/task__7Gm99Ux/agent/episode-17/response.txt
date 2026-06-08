@@ -1,0 +1,31 @@
+{
+  "analysis": "index.js shows reconcileTransactions(parsed) where parsed includes ledger/meetings/emails/corrections/policyExceptions. csvWriter is wrong per requirements: header missing exception_reason column; amount_usd not formatted to two decimals; no handling of null exception_reason as empty cell; also should include exception_reason column and exact header order. jsonWriter likely needs envelope {items:[...]} and exceptions.json same. buildExceptions currently returns array, but jsonWriter probably wraps; need check. reconcile.js must now accept parsed object and set exception_reason per rules; report must include previous_value. Also validateOutputs may enforce schema; must check. Next we must fix csvWriter and jsonWriter if needed, update exceptions normalization to return envelope required by writer, and implement reconcile logic once Brief 07-09 rules understood (still need to view /tmp/briefs_07_09.txt).",
+  "plan": "1) Inspect jsonWriter.js, schema/validate.js, normalize/exceptions.js, normalize/reconcile.js to align with required envelopes and report expectations. 2) Fix csvWriter to produce correct header and formatting. 3) Fix jsonWriter to write envelopes exactly. 4) Update buildExceptions to return sorted flagged rows (or writer wraps). 5) Read /tmp/briefs_07_09.txt to implement compliance_hold timing and other precedence rules, then implement reconcile.js accordingly. 6) Run extractor and ensure validateOutputs passes; rerun for byte-identical output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /tmp/briefs_07_09.txt && head -n 60 /tmp/briefs_07_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -ni \"sent\\|hold\\|compliance\\|override\\|comparison\\|effective\" /tmp/briefs_07_09.txt | head -n 120\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

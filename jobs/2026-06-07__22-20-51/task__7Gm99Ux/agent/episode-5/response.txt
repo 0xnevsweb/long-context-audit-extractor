@@ -1,0 +1,59 @@
+{
+  "analysis": "We now see parser/emails.js tail: it extracts from_addr, transaction_id from a subject pattern, and status from a block, but it does NOT extract `sent:` date which is required for compliance_hold timing. policy.js uses indexOf slicing between headings (forbidden by Brief 01-style guidance and likely causes wrong section capture) and only collects transaction IDs, not approved_by: compliance required for policy_waiver. reportWriter just JSON.stringify’s report rows in existing order; spec requires sorting lines by notice_id ascending. reconcile.js earlier sets previous_value to empty string and doesn’t implement winning correction selection or proper overlays, and exceptions logic is missing. We must fix section parsing to use anchored heading regex, enhance email parsing to include sent date and qualify compliance@ emails, parse policy exception approvals, apply Brief 09 timing, compute exception flags, compute previous_value for each winning correction, and sort outputs correctly.",
+  "plan": "1) Inspect remaining relevant sources: parser/sections.js (should already do anchored headings), parser/corrections.js, parser/meetings.js, lib/handbook.js, output writers, utils/sort/date to see what helpers exist. 2) Read the authoritative Briefs 07–09 text from /tmp/briefs_01_09.txt to implement compliance_hold timing and correction precedence exactly. 3) Refactor parsers (emails.js, policy.js) to use sections.js slicing (anchored headings) rather than indexOf, and extract required fields (sent date, approved_by). 4) Update reconcile.js: apply overlays in correct order; select winning corrections deterministically; for each applied correction, record previous_value from the row state immediately before applying it; store report entries and sort by notice_id before writing. 5) Implement exception_reason computation with required codes and lexical ordering; create exceptions.json accordingly. 6) Update reportWriter to sort and ensure newline at end; update csvWriter/jsonWriter if needed for formatting and ordering. 7) Run CLI with /app/output and verify outputs and determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 07\" -n /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 08\" -n /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" -n /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/briefs_01_09.txt | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1200,2000p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

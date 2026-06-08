@@ -1,0 +1,99 @@
+{
+  "analysis": "Extractor runs but outputs do not match required schemas: transactions.json uses {\"transactions\": [...] } instead of {\"items\": [...]}, exceptions.json uses {\"exceptions\": []} instead of {\"items\": [...]}, CSV header is missing exception_reason column and amount formatting is not fixed to 2 decimals, and reconciliation_report.jsonl is empty. Likely reconciliation/exception logic is incomplete or reading wrong sections (it may be reading non-authoritative Email Excerpts and missing structured tail data). We need to read Briefs 01–09 (esp Brief 09) and inspect current parser/normalize/output code to correct merge logic, flagging, correction precedence, and determinism/sorting.",
+  "plan": "1) Inspect current extractor pipeline (src/index.js, handbook parser, reconcile/exceptions normalizers, and writers) to see current data model and where schema diverges. 2) Inspect parsers for ledger/emails/policy/corrections/meetings and how they locate the structured sections near the end. 3) Read the authoritative Investigation Briefs 01–09 and find the structured tail headings (Email Excerpts authoritative section, Policy Exceptions, Correction Notices, Transaction Ledger). 4) After understanding mismatches, update writers to emit exactly four required files with correct envelopes/headers/ordering and stable formatting, then update reconciliation and exception logic per briefs, ensuring deterministic output (explicit sorting, stable dedupe, no iteration over object keys without ordering).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '11,220p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '214,760p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '760,1120p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1120,1565p' /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Policy Exceptions\" /app/data/audit_archive.md | head\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Correction Notices\" /app/data/audit_archive.md | head\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Transaction Ledger\" /app/data/audit_archive.md | head\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

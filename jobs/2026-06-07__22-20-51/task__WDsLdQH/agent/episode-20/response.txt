@@ -1,0 +1,27 @@
+{
+  "analysis": "Extractor now crashes with `sortById is not a function`, so no outputs are generated. This indicates /src/utils/sort.js likely exports a different function name/signature than we used. We need to inspect that module and adjust reconcile.js to use the correct export (or implement local sorting). After fixing, rerun extractor and validate outputs.",
+  "plan": "1) Inspect /app/audit-extractor/src/utils/sort.js to see actual exports. 2) Patch normalize/reconcile.js to import and use the correct sort helper, or replace with a simple deterministic sort by transaction_id.\n3) Rerun extraction to /tmp outdirs, inspect generated files, and diff for determinism.",
+  "commands": [
+    {
+      "keystrokes": "cat /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"module.exports\" -n /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "perl -0777 -i -pe 's/const \\{ sortById \\} = require\\(\"\\.\\.\\/utils\\/sort\"\\);/const { sortByTransactionId } = require(\"..\\/utils\\/sort\");/g; s/\\bsortById\\(/sortByTransactionId(/g' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1 || echo \"exit=$?\"\n",
+      "duration": 3
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit-out1\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

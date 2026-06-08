@@ -1,0 +1,27 @@
+{
+  "analysis": "apply_patch is not available in this environment, so we cannot use it for edits. We need to modify files using tools like heredoc redirection, sed, or perl. ledger.js output shows it parses TXN blocks and fields; we need to inspect the top of ledger.js and sections.js to see how it slices (likely uses indexOf and may accidentally include working copy). We also need to update emails.js manually to fix the draft heading truncation. node -c succeeded because file is unchanged (or still syntactically ok).",
+  "plan": "1) Open current emails.js to edit it manually using a here-doc overwrite approach. 2) Inspect ledger.js and sections.js from the top to confirm section slicing and whether it selects 'Transaction Ledger (working copy)' incorrectly. 3) Implement robust section slicing helpers (exact heading line match) if needed. We'll start by rewriting emails.js with corrected end marker logic using /^##\\s+Policy Exceptions\\s*$/m.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  const start = markdown.indexOf(\"## Email Excerpts\");\n\n  // The archive contains decoy headings like \"## Policy Exceptions (draft)\".\n  // Stop at the authoritative \"## Policy Exceptions\" header line only.\n  const endMatch = markdown.match(/^##\\s+Policy Exceptions\\s*$/m);\n  const end = endMatch ? endMatch.index : -1;\n\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    if (!fromMatch || !subjectMatch || !statusMatch) {\n      continue;\n    }\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      status: statusMatch[1].trim().toLowerCase(),\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c audit-extractor/src/parser/emails.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,140p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,27 @@
+{
+  "analysis": "We have parser/corrections.js: it slices from '## Correction Notices' to '## Transaction Ledger' (good) and parses CORR- blocks under ### headings, extracting targets/field/value/effective. We saw emails.js ended, but we didn’t capture its heading markers; need to re-open from top. We still haven't seen sections.js and ledger.js in this terminal output, nor the archive structured sections themselves (sed output likely scrolled off). Next: re-open emails.js, sections.js, ledger.js and directly inspect the archive around the structured sections to confirm formats and any 'working copy' decoys. Also ensure parsers ignore 'Transaction Ledger (working copy)' and 'Policy Exceptions (draft)'.",
+  "plan": "1) View emails.js, sections.js, ledger.js to understand how they select sections and whether they accidentally parse decoy headings. 2) Re-print the archive around 2875-3055 to capture Policy Exceptions, Correction Notices, and Transaction Ledger sections. 3) Determine from Briefs 01–09 the reconciliation overlay order and correction/mail timing, then implement in normalize/reconcile.js and exceptions.js; but first gather the missing evidence.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2875,3065p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,35 @@
+{
+  "analysis": "Outputs are now deterministic across two runs (all diffs empty). CSV header/rows match required columns and amount formatting. JSON envelopes are correct ({items}). Exceptions.json now contains flagged rows. Remaining issues: reconciliation_report.jsonl is empty even though there are correction notices in archive; likely our corrections parser slices to the first occurrence of '## Transaction Ledger' which is the working copy (2938) so it might end too early or too late? Actually corrections.js uses end=markdown.indexOf('## Transaction Ledger') which hits working copy, so it slices only until 2938, which is fine (corrections are before 2938). Why report empty then? Possibly because parseCorrections expects blocks split by '^### ' and the noticeId is first line; in archive, correction notices are like '### CORR-...' which should match. Maybe parsed.corrections is empty due to headings mismatch (maybe multiple occurrences and indexOf finds earlier decoy '## Correction Notices'?) Need to confirm parseCorrections start marker uniqueness and whether it finds the right one. Also our reconcile chooses winners but only applies for fields owner/status/date; correction notices might use field 'status' but our correction parser stores entry.value and entry.field, ok. Let's quickly inspect parsed corrections count by running small node snippet. Fix corrections parser slicing to authoritative headings exact line matches, like we did for ledger/emails/policy, to avoid decoys. Then report should populate and reconciliation_report.jsonl non-empty. Also ensure report lines sorted by notice_id and previous_value correct.",
+  "plan": "1) Run a Node snippet to parse archive and print counts of corrections and sample entries to confirm parser output. 2) If corrections parsing is empty or wrong, update parser/corrections.js to locate headings by exact line match (authoritative) and end at exact '## Transaction Ledger' (not working copy) using regex match. 3) Re-run extractor and verify reconciliation_report.jsonl has expected number of lines and is deterministic.",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs=require('fs');\nconst md=fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst {parseCorrections}=require('./audit-extractor/src/parser/corrections');\nconst corr=parseCorrections(md);\nconsole.log('corrections', corr.length);\nconsole.log(corr.slice(0,5));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,200p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  const startMatch = markdown.match(/^##\\s+Correction Notices\\s*$/m);\n  const start = startMatch ? startMatch.index : -1;\n\n  // Ignore decoy ledger headings; end at authoritative \"## Transaction Ledger\".\n  const endMatch = markdown.match(/^##\\s+Transaction Ledger\\s*$/m);\n  const end = endMatch ? endMatch.index : -1;\n\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) {\n      continue;\n    }\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n    notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c audit-extractor/src/parser/corrections.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out1 && mkdir -p /tmp/out1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "wc -l /tmp/out1/reconciliation_report.jsonl && head -n 5 /tmp/out1/reconciliation_report.jsonl\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

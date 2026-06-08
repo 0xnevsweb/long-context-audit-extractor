@@ -1,0 +1,41 @@
+Current Terminal Screen:
+1978:Subject: wire desk weekend coverage — coordination 37
+1983:From: treasury-ops@corp.internal
+1984:Subject: accrual true-up schedule — coordination 38
+1989:From: hr-payroll@corp.internal
+1990:Subject: retention hold reminder — coordination 39
+1995:From: treasury-ops@corp.internal
+1996:Subject: close calendar revision — coordination 40
+2002:From: treasury-ops@corp.internal
+2003:Subject: retention hold reminder — coordination 41
+2009:From: hr-payroll@corp.internal
+2010:Subject: FY24 sampling plan draft — coordination 42
+2015:From: audit-lead@corp.internal
+2016:Subject: accrual true-up schedule — coordination 43
+2022:From: hr-payroll@corp.internal
+2023:Subject: wire desk weekend coverage — coordination 44
+2028:From: controller@corp.internal
+2029:Subject: close calendar revision — coordination 45
+2034:From: treasury-ops@corp.internal
+2035:Subject: wire desk weekend coverage — coordination 46
+2040:From: treasury-ops@corp.internal
+2041:Subject: FY24 sampling plan draft — coordination 47
+2047:From: audit-lead@corp.internal
+2048:Subject: retention hold reminder — coordination 48
+2053:From: audit-lead@corp.internal
+2054:Subject: close calendar revision — coordination 49
+2060:From: treasury-ops@corp.internal
+2061:Subject: FY24 sampling plan draft — coordination 50
+2066:From: audit-lead@corp.internal
+2067:Subject: FY24 sampling plan draft — coordination 51
+2072:From: treasury-ops@corp.internal
+2073:Subject: retention hold reminder — coordination 52
+2079:From: legal-notices@corp.internal
+2080:Subject: retention hold reminder — coordination 53
+2085:From: hr-payroll@corp.internal
+2086:Subject: retention hold reminder — coordination 54
+2092:From: audit-lead@corp.internal
+2093:Subject: FY24 sampling plan draft — coordination 55
+2099:From: controller@corp.internal
+2100:Subject: wire desk weekend coverage — coordination 56
+root@c97f4e7457e4:/app#

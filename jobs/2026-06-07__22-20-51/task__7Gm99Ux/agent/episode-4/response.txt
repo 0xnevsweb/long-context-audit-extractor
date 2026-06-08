@@ -1,0 +1,47 @@
+{
+  "analysis": "The screen still shows only the tail of the ledger and separator, suggesting our previous batch outputs may have been truncated/scrollback-lost in the provided snapshot. We still need to inspect the parser and writer source files and extract Investigation Briefs 01–09 text reliably (ideally writing to temp files and then viewing with sed/head). Next step: redirect brief extraction to /tmp/briefs.txt and open it in chunks; similarly capture key parser files for review.",
+  "plan": "1) Dump Investigation Briefs 01–09 into a temp file for reliable viewing, then view especially Briefs 07–09. 2) Print parser and writer sources to understand current parsing and output behavior. 3) After rules are known, implement fixes (reconcile/exceptions/report) and validate output determinism and correctness.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nout=[]\nfor a,b in zip(starts, starts[1:]):\n    title=lines[a]\n    if re.match(r'^## Investigation Brief 0[1-9]\\b', title):\n        out.append('\\n'.join(lines[a:b]))\n        out.append('\\n'+'='*100+'\\n')\nopen('/tmp/briefs_01_09.txt','w',encoding='utf-8').write('\\n'.join(out))\nprint('wrote /tmp/briefs_01_09.txt')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 07\\|Investigation Brief 08\\|Investigation Brief 09\" -n /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '900,1250p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1250,1650p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1650,2100p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

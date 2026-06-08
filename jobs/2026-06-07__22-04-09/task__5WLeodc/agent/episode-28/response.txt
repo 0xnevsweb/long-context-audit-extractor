@@ -1,0 +1,26 @@
+{
+  "analysis": "We obtained Brief 08 rules: policy_waiver requires approved status, amount>10000, and Policy Exception block with approved_by: compliance exactly. retroactive_review requires final status reversed, amount>5000, and a winning correction notice changed status. Great. We still need Brief 04 correction precedence details (winning correction selection, tie-break, per-field grouping) and overlay order plus previous_value handling from around lines 520-590 and 830-900, which weren’t shown in this snippet (scroll). We'll re-run those sed commands but narrower, or directly target around line 540-570 for correction rules and 850-875 for correction application order.\nNow implement: update policy parser to capture approved_by per txn; currently returns Set of ids only, insufficient for policy_waiver rule. Update emails parser to parse sent: date and filter compliance@. Update meetings parser to include effective date and apply only signed true with effective date. Update ledger parser to drop provisional blocks. Update reconcile to compute base state, apply signed meeting owner changes effective<=? (probably always apply if signed; need rule for effective date vs txn date) likely applies if effective <= ledger date? must check brief 05. Then apply mail-driven status changes with precedence (only upgrade? maybe choose max by STATUS_ORDER). Then determine compliance_hold using pre-correction date and qualifying email sent comparison rule: likely sent date > txn date? need threshold from Brief 09: compare email sent date against transaction date immediately before corrections; probably hold if sent date > txn date (response late). We'll infer: hold when sent date is after ledger date. Next: corrections: choose winning per txn+field by greatest effective date; apply in order of effective date; report should include each winning notice with previous_value before it applies. Sort report by notice_id asc.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '535,575p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '845,885p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '660,730p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,80p' audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,120p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

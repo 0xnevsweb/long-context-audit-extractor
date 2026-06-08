@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       const emails = complianceEmailsByTxn.get(txn) || [];
+>       // Interpretation: hold applies when a qualifying compliance email arrives after the (pre-correction) ledger date.
+>       const complianceHold = emails.some((e) => e.sent > preDate);
+>
+>       const hadWinningStatusCorrection = statusCorrected.has(txn);
+>       const exception_reason = computeExceptionReason({
+>         row,
+>         hadWinningStatusCorrection,
+>         policyApprovedByCompliance,
+>         complianceHold,
+>       });
+>
+>       return {
+>         transaction_id: row.transaction_id,
+>         owner: row.owner,
+>         status: normalizeStatus(row.status),
+>         effective_date: row.date,
+>         amount_usd: Number(row.amount),
+>         exception_reason,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@58b3f47e1f8d:/app# rm -rf /tmp/audit-out && mkdir -p /tmp/audit-out && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --ou
+tdir /tmp/audit-out
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import json
+> items=json.load(open('/tmp/audit-out/transactions.json'))['items']
+> print('flagged', sum(1 for r in items if r['exception_reason'] is not None))
+> print('holds', sum(1 for r in items if r['exception_reason'] and 'compliance_hold' in r['exception_reason'].split(';')))
+> PY
+flagged 17
+holds 2
+root@58b3f47e1f8d:/app#

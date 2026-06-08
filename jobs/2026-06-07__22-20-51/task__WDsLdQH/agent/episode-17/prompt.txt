@@ -1,0 +1,41 @@
+Current Terminal Screen:
+   857
+   858  Auditors compared effective_date columns to correction paperwork. Start from the
+   859  ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+   860  sets field `date` or `status`, use that notice's `effective` date as
+   861  `effective_date` only if that correction modified status or date; otherwise
+   862  keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+   863  places in CSV and as a JSON number.
+   864
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '973,982p'
+   973  ## Investigation Brief 07 — Exception Flags (Part I)
+   974
+   975  Exception coding review: `exception_reason` is null unless a code applies. Set
+   976  `over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+   977  when final status is `rejected`, a qualifying `compliance@` email referenced
+   978  that transaction, and that email block includes a `sent:` line. The sent-date
+   979  comparison used for `compliance_hold` is defined in Investigation Brief 09
+   980  (Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+   981  lexical order of the reason codes.
+   982
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '1145,1152p'
+  1145  ## Investigation Brief 08 — Exception Flags (Part II)
+  1146
+  1147  Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+  1148  `amount_usd` > 10000, and a Policy Exception block exists for that transaction
+  1149  with `approved_by: compliance` on its own line. Set `retroactive_review` when
+  1150  final status is `reversed`, `amount_usd` > 5000, and a winning correction
+  1151  notice changed status for that transaction.
+  1152
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '1455,1464p'
+  1455  ## Investigation Brief 09 — Mid-Year Amendment
+  1456
+  1457  Mid-year QA found compliance holds disappearing after date corrections. This
+  1458  amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+  1459  only, compare each qualifying email's `sent:` date against the transaction's
+  1460  ledger date immediately before correction notices are applied — that is, the date
+  1461  in effect after ledger load, meeting amendments, and compliance mail merges, but
+  1462  before any correction notice changes `date` or `status`. Brief 03 still governs
+  1463  mail-driven status changes; this amendment governs only the hold flag.
+  1464
+root@edd51c718576:/app#

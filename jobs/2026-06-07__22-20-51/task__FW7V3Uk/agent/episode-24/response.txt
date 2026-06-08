@@ -1,0 +1,23 @@
+{
+  "analysis": "grep results show Brief 04 is mostly narrative; we need the authoritative rule statements likely later in the brief (not in the first 40 grep hits) and similarly Brief 09. Our grep earlier was against /tmp/brief_09.md but output shown is from something else (line numbers ~526 etc) suggesting we accidentally grepped wrong file or the brief contains long mail excerpts. We must locate explicit rule bullets/structured directives within briefs. We'll search within brief_04 and brief_09 for key phrases like 'Rule:', 'Authoritative', 'Precedence:', 'Algorithm', or similar. Then implement winners and timing accordingly.",
+  "plan": "1) Use grep for likely rule markers in brief_04 and brief_09 (e.g. 'Rule', 'must', 'precedence', 'wins', 'effective date', 'if conflict'). 2) Print surrounding context around those lines using sed with line ranges. 3) If briefs are narrative-only, we will implement reasonable deterministic precedence: for each txn+field choose correction with latest effective date; if tie, highest notice_id lexical; apply corrections in ascending effective date then notice_id to compute previous_value. For compliance_hold per Brief 09 amendment, implement: qualifying compliance email sent date must be >= final effective_date (or >?)—we will confirm via brief text; if cannot locate, implement stable: sent >= effective_date. 4) Apply changes in reconcile/exceptions and rerun.",
+  "commands": [
+    {
+      "keystrokes": "grep -nEi \"\\brule\\b|authoritative|precedence|wins\\b|win\\b|tie|effective date|apply\" /tmp/brief_04.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"\\brule\\b|authoritative|hold|timing|sent:|compare|supersed|override|apply\" /tmp/brief_09.md | head -n 160\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief_04.md | sed -n '240,420p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief_09.md | sed -n '240,420p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

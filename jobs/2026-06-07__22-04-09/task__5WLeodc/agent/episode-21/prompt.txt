@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Treasury liaison J. Huang explained that capital project capitalization related wires were paused during July review, delaying compliance responses and amplifyi
+ng unsigned amendment drift on rejected rows.
+
+In July review, fixed assets migrated capital project capitalization workflows to a new ticketing tool. Migration cutover introduced policy waiver omission, whi
+ch did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Operations analyst S. Patel demonstrated that capital project capitalization batches processed after midnight UTC inherited stale owner fields, a symptom consis
+tent with retroactive status conflict rather than incorrect amount parsing.
+
+Fixed-assets specialist M. Chen argued that capital project capitalization capitalization memos should not alter ledger status; investigators agreed while notin
+g those memos still inform exception coding narratives.
+
+Internal audit follow-up #701 tracked how capital project capitalization exceptions were closed without matching policy waiver paperwork, a separate issue from
+extractor merge ordering.
+
+Data governance WP-5089 catalogs legacy fixed assets folders still containing capital project capitalization spreadsheets. Those folders are evidentiary only; e
+xtractor output must come from canonical structured sections.
+
+Regional lead M. Chen hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override ledge
+r owners; investigators cited Brief 05 during the session.
+
+Working paper WP-2852 documents a three-way match failure on capital project capitalization where accrual true-ups near $6,607 never received matching complianc
+e responses during July review.
+
+Controller staff described capital project capitalization as a secondary driver of mailbox ingestion lag while rebuilding the July review close calendar. They e
+mphasized that decoy ledger headings in draft appendices must be ignored.
+
+Site visit #174 to fixed assets exported 18 compliance threads tied to capital project capitalization. Reviewers noted that policy waiver omission appeared when
+ever correction batches straddled a weekend wire cutoff.
+
+Committee packet #683 chronicles how capital project capitalization escalated after E. Novak observed retroactive status conflict between two correction batches
+. Cross-checks against amendment minutes were required before accepting any owner change.
+
+Peer review #381 of fixed assets sampling found 11 mislinked emails on capital project capitalization. None of the mislinked messages originated from compliance
+ addresses, supporting Brief 02 sender restrictions.
+
+Stakeholder workshop #672 on capital project capitalization produced conflicting recollections about which correction notice superseded an earlier owner change;
+ Brief 04 governs that precedence for automated output.
+root@de10d3a691f3:/app#

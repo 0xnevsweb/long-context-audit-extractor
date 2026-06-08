@@ -1,0 +1,75 @@
+{
+  "analysis": "We are at /app with no prior commands run in this session. We need to inspect the existing audit-extractor Node project, understand current extractor logic, read /app/data/audit_archive.md for authoritative rules (Investigation Briefs 01–09 with Brief 09 overriding hold timing), then fix implementation to produce deterministic, correctly reconciled outputs (4 files) with correct CLI behavior and stable sorting/formatting.",
+  "plan": "1) Inspect repository layout and existing CLI/extractor code. 2) Open the audit archive and specifically extract the authoritative rules from Investigation Briefs 01–09 (and any structured ledger/corrections sections near the end) to understand merge order, correction precedence, and compliance mail timing (Brief 09 override). 3) Run current extractor on the given input into a temp outdir to observe drift/incorrectness. 4) Update Node sources to: enforce CLI requirements; parse ledger/meetings/mail/policy exceptions/corrections deterministically; apply overlays in correct order; compute exception flags exactly; sort outputs as specified; format CSV and JSON stably. 5) Re-run extractor and validate outputs are byte-identical across repeated runs.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /app\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f -print\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/index.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -type f -maxdepth 5 -name '*.js' -print -exec sed -n '1,200p' {} \\;\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Brief 0[1-9]|Brief\\s+0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\ntext=open(p,'r',encoding='utf-8').read().splitlines()\n# Print line ranges around each Investigation Brief 01-09 heading\npat=re.compile(r'^(#+\\s*)?(Investigation\\s+Brief\\s*0?([1-9])\\b|Brief\\s*0?([1-9])\\b)',re.I)\nidx=[]\nfor i,l in enumerate(text,1):\n    m=pat.search(l)\n    if m:\n        n=m.group(3) or m.group(4)\n        if n: idx.append((int(n),i,l))\nidx=sorted(idx)\nfor n,i,l in idx:\n    print(f\"\\n--- BRIEF {n:02d} @ line {i} ---\\n{l}\")\n    start=max(1,i-2); end=min(len(text),i+120)\n    for j in range(start,end+1):\n        print(f\"{j:6d}: {text[j-1]}\")\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 220 /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "mkdir -p /tmp/audit_out1 /tmp/audit_out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_out1 && ls -la /tmp/audit_out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sha256sum /tmp/audit_out1/* /tmp/audit_out2/* 2>/dev/null | sed 's#/tmp/audit_out[12]/##g' | sort\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/audit_out1/transactions.json /tmp/audit_out2/transactions.json | sed -n '1,120p' || true\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

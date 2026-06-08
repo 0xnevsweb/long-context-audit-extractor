@@ -1,0 +1,23 @@
+{
+  "analysis": "We can now see Correction Notices format: blocks like '### CORR-...' with targets, field, value, effective. Then there is a decoy '## Transaction Ledger (working copy)' with fake amounts, followed by the authoritative '## Transaction Ledger' with real data. This confirms parsers must match headings exactly; using indexOf(\"## Transaction Ledger\") will incorrectly capture the working copy because it appears first. Similarly, policy parser using indexOf(\"## Policy Exceptions\") will capture draft section. This explains drift and wrong reconciliation.\n\nNext we must patch parsers (ledger, policy, corrections, emails) to locate exact authoritative headings via regex anchored to full line. Then update reconcile to apply corrections in the right order and generate reconciliation_report.jsonl lines for winning corrections. Also adjust writers to required schemas and determinism.",
+  "plan": "1) Inspect current ledger.js and corrections.js to confirm they use indexOf and thus pick wrong sections; then modify them to find exact heading lines and slice accordingly. 2) Inspect emails.js to ensure it reads the authoritative email section (likely not the 'Email Excerpts (archived thread)' which is explicitly non-authoritative). 3) Implement robust section slicing helper in sections.js (e.g., findHeadingBlock(markdown, /^## Transaction Ledger$/m, next heading)) and use it in all parsers.\n4) Patch jsonWriter/csvWriter to required envelopes/columns and stable formatting.\n5) Patch reconcile/exceptions to implement Brief rules and determinism; then run extractor twice and diff outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,23 @@
+{
+  "analysis": "ReportWriter now sorts by notice_id (good). Smoke run succeeded and produced four files, but reconciliation_report.jsonl is empty and exceptions.json is tiny because reconcile.js still applies corrections naively and report entries are not produced correctly (likely corrections parser is now selecting tail, so report should not be empty—meaning reconcileTransactions may be ignoring corrections due to field name mismatch: it expects notice.field 'date' but archive uses 'date' yes; yet report empty indicates parsed.corrections likely empty or sections selection wrong earlier). Also exceptions.js never sets exception_reason, so none flagged. We must implement actual reconciliation semantics and ensure corrections are parsed from tail (we changed corrections parser to lastIndexOf; should verify). Next: inspect parser outputs quickly by running a small node snippet to print counts and sample items. Then implement reconcile/exceptions properly, including correction precedence, status precedence, signed meeting, compliance sender filter, and Brief 09 hold timing using email.sent and pre-correction date snapshot. Then rerun extractor and confirm non-empty report and deterministic outputs.",
+  "plan": "1) Run a diagnostic node snippet to parse archive and print counts/samples for ledger/meetings/emails/corrections/policyExceptions to confirm parsers target correct sections. 2) Read /tmp/brief_rules.txt to capture Brief 01–08 specific rules (especially corrections precedence Brief 04, meeting signedness Brief 05, email rules Brief 03, exception codes). 3) Rewrite normalize/reconcile.js to: apply meeting owner changes only when allowed; apply qualifying compliance emails (from_addr contains 'compliance@') with proper precedence and ordering by sent date; store last qualifying email sent date; compute pre-correction snapshot date/status for Brief 09 compliance_hold comparisons; apply corrections in correct order, capturing previous_value per field and only recording winning corrections; sort items by transaction_id. 4) Rewrite normalize/exceptions.js to assign exception_reason codes (policy_exception + compliance_hold at minimum) in lexical order or null. 5) Rerun CLI twice into /app/output and compare sha256sum to confirm determinism; inspect outputs for envelope keys and CSV formatting.",
+  "commands": [
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconsole.log({\n  ledger: p.ledger.length,\n  meetings: p.meetings.length,\n  emails: p.emails.length,\n  corrections: p.corrections.length,\n  policyExceptions: p.policyExceptions.size,\n});\nconsole.log('ledger sample', p.ledger.slice(0,3));\nconsole.log('emails sample', p.emails.slice(0,3));\nconsole.log('corrections sample', p.corrections.slice(0,5));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"===== Investigation Brief 0[1-8]\" -n /tmp/brief_rules.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"—\" /tmp/brief_rules.txt | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Brief 0[1-9]\" /tmp/brief_rules.txt | head -n 120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

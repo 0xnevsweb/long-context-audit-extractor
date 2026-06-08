@@ -1,0 +1,39 @@
+{
+  "analysis": "Confirmed bugs:\n- ledger.js uses indexOf(\"## Transaction Ledger\"), which will start at the earlier '## Transaction Ledger (working copy)' and thus parse decoy ledger rows, and it dedupes by first-seen transaction_id (so it will keep provisional/stale owner rows and drop later authoritative duplicates).\n- corrections.js slices from '## Correction Notices' to indexOf('## Transaction Ledger'), which again finds the working-copy heading first and may truncate incorrectly (though still likely okay here, but fragile).\n- emails: there are two headings: '## Email Excerpts (archived thread)' at ~200 (explicitly non-authoritative) and '## Email Excerpts' at ~1732 (likely authoritative structured). Current emails parser uses indexOf('## Email Excerpts') which will match the archived thread first, and it ignores sent date entirely.\nThese explain status drift, compliance hold missing later mail, and wrong ledger row mapping.\n\nNext we must implement exact heading matching to the authoritative sections, parse sent date, keep last non-provisional ledger row per txn per Brief 01, parse policy exception approval, apply correction precedence & overlay order, and compute exception_reason codes. Also fix output schemas and determinism.",
+  "plan": "1) Read the authoritative rule briefs (01,03,04,05,07,08,09) precisely to implement: ledger sourcing (provisional and duplicates), status precedence and mail application, meeting owner amendments, correction notice precedence and effective application, and Brief 09 hold timing rule.\n2) Refactor parsers to use exact heading matches via regex ^## Heading$ (multiline) and slice until next ^## . Implement helper function used by ledger/emails/policy/corrections.\n3) Update ledger parser to parse only authoritative ledger section, include provisional flag, and choose correct row when duplicates exist (ignore provisional; otherwise last occurrence).\n4) Update emails parser to parse authoritative Email Excerpts section, include sent date, and allow multiple emails per txn; dedupe if briefs require.\n5) Update policy parser to parse blocks and capture transaction_id and approved_by.\n6) Update reconcile.js to apply overlay order per briefs and produce reconciliation_report entries for each winning correction (with previous_value). Sort deterministically.\n7) Update exceptions.js to compute exception_reason codes with lexical join and null.\n8) Update writers: correct envelopes {items}, CSV header includes exception_reason, amount formatting to 2 decimals, empty cell for null.\n9) Run extractor twice to /tmp dirs and diff outputs for determinism.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,120p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '360,430p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '540,720p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '720,980p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '960,1120p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1400,1515p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1715,1905p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2865,2910p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,59 @@
+============================= test session starts ==============================
+platform linux -- Python 3.11.2, pytest-8.4.1, pluggy-1.6.0
+rootdir: /tests
+plugins: json-ctrf-0.3.5
+collected 22 items
+
+../tests/test_outputs.py ......F...............                          [100%]
+
+=================================== FAILURES ===================================
+______________________ test_transactions_csv_matches_json ______________________
+
+pipeline_output = PosixPath('/app/output')
+golden_transactions = [{'amount_usd': 15335.5, 'effective_date': '2024-02-26', 'exception_reason': 'over_limit', 'owner': 'dlee', ...}, {'am...g', ...}, {'amount_usd': 8468.4, 'effective_date': '2024-09-21', 'exception_reason': None, 'owner': 'frost', ...}, ...]
+
+    def test_transactions_csv_matches_json(
+        pipeline_output: Path, golden_transactions: list[dict]
+    ) -> None:
+        """Verify transactions.csv header, ordering, and cell values mirror JSON rows."""
+        with (pipeline_output / "transactions.csv").open(encoding="utf-8", newline="") as handle:
+            reader = csv.DictReader(handle)
+>           assert reader.fieldnames == [
+                "transaction_id",
+                "owner",
+                "status",
+                "effective_date",
+                "amount_usd",
+                "exception_reason",
+            ]
+E           AssertionError: assert ['transaction... 'amount_usd'] == ['transaction...ption_reason']
+E             
+E             Right contains one more item: 'exception_reason'
+E             Use -v to get more diff
+
+/tests/test_outputs.py:207: AssertionError
+==================================== PASSES ====================================
+=========================== short test summary info ============================
+PASSED ../tests/test_outputs.py::test_archive_is_long_context
+PASSED ../tests/test_outputs.py::test_archive_policy_is_distributed
+PASSED ../tests/test_outputs.py::test_cli_requires_arguments
+PASSED ../tests/test_outputs.py::test_output_files_exist
+PASSED ../tests/test_outputs.py::test_transactions_json_schema
+PASSED ../tests/test_outputs.py::test_transactions_sorted
+PASSED ../tests/test_outputs.py::test_exceptions_json_only_flagged
+PASSED ../tests/test_outputs.py::test_exceptions_sorted_by_transaction_id
+PASSED ../tests/test_outputs.py::test_reconciliation_report
+PASSED ../tests/test_outputs.py::test_duplicate_ledger_last_wins
+PASSED ../tests/test_outputs.py::test_skips_provisional_ledger_rows
+PASSED ../tests/test_outputs.py::test_ignores_decoy_ledger_section
+PASSED ../tests/test_outputs.py::test_compliance_hold_uses_pre_correction_ledger_date
+PASSED ../tests/test_outputs.py::test_compliance_hold_requires_sent_line
+PASSED ../tests/test_outputs.py::test_non_compliance_email_does_not_change_status
+PASSED ../tests/test_outputs.py::test_retroactive_review_on_status_correction
+PASSED ../tests/test_outputs.py::test_compliance_email_sent_date_gate
+PASSED ../tests/test_outputs.py::test_correction_effective_date_from_handbook
+PASSED ../tests/test_outputs.py::test_compliance_email_without_sent_applies_status
+PASSED ../tests/test_outputs.py::test_deterministic_rerun
+PASSED ../tests/test_outputs.py::test_meeting_signed_owner_override
+FAILED ../tests/test_outputs.py::test_transactions_csv_matches_json - Asserti...
+========================= 1 failed, 21 passed in 0.76s =========================

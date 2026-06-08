@@ -1,0 +1,41 @@
+Current Terminal Screen:
+209: Interview notes with the compliance desk confirmed status fights between mail,
+210: amendments, and corrections. Ledger rows provide the base status (lowercase on
+211: output). Status precedence from lowest to highest is: pending, approved,
+212: rejected, reversed. Email excerpts may change status only when the From line
+213: contains `compliance@` anywhere in the address; ignore all other senders.
+214:
+215: ## Investigation Brief 02
+216: — Status Precedence — supporting chronology
+217:
+218: Regional lead E. Novak hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override
+ ledger owners; investigators cited Brief 05 during the session.
+219:
+220: Site visit #525 to fixed assets exported 19 compliance threads tied to capital project capitalization. Reviewers noted that owner field churn appeared when
+ever correction batches straddled a weekend wire cutoff.
+221:
+
+context around 211
+208:
+209: Interview notes with the compliance desk confirmed status fights between mail,
+210: amendments, and corrections. Ledger rows provide the base status (lowercase on
+211: output). Status precedence from lowest to highest is: pending, approved,
+212: rejected, reversed. Email excerpts may change status only when the From line
+213: contains `compliance@` anywhere in the address; ignore all other senders.
+214:
+215: ## Investigation Brief 02
+216: — Status Precedence — supporting chronology
+217:
+218: Regional lead E. Novak hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override
+ ledger owners; investigators cited Brief 05 during the session.
+219:
+220: Site visit #525 to fixed assets exported 19 compliance threads tied to capital project capitalization. Reviewers noted that owner field churn appeared when
+ever correction batches straddled a weekend wire cutoff.
+221:
+222: Grant compliance WP-9559 tied capital project capitalization attestation gaps to ledger slice confusion visible only when hold flags used corrected rather
+than pre-correction ledger dates.
+223:
+224: Peer review #804 of fixed assets sampling found 19 mislinked emails on capital project capitalization. None of the mislinked messages originated from compl
+iance addresses, supporting Brief 02 sender restrictions.
+225:
+root@de10d3a691f3:/app#

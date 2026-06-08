@@ -1,0 +1,120 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# sed -n '545,570p' /tmp/briefs_01_09.md
+Controller staff described FX revaluation lag as a secondary driver of mailbox ingestion lag while rebuilding the June rates close calendar. They emphasized tha
+t decoy ledger headings in draft appendices must be ignored.
+
+Interview #698 with treasury counsel captured how FX revaluation lag correspondence referenced amounts near $31,302 without matching ledger rows. Investigators
+preserved the thread because correction batch ordering can change downstream exception coding.
+
+Follow-up #552 confirmed that treasury routed FX revaluation lag statements through a shared inbox with 21 delegates. Investigators flagged retroactive status c
+onflict as the likely root cause of inconsistent status columns.
+
+## Investigation Brief 04
+— Correction Notice Precedence
+
+The corrections desk ships multiple notices per field. When several notices
+target the same transaction and field, the notice with the lexicographically
+greatest `effective` date wins. For each winning notice, `previous_value` in
+`reconciliation_report.jsonl` is the field value immediately before that notice
+applies (after ledger, amendments, and emails). Owner corrections override
+both ledger owners and signed meeting amendments when applied in this step.
+
+## Investigation Brief 04
+— Correction Notice Precedence — supporting chronology
+
+Quality review #167 sampled 23 payroll accrual true-up tickets and found correction batch ordering whenever provisional ledger rows were not filtered before mer
+ge.
+
+Lead reviewer A. Ndiaye opened working paper WP-8370 after HR finance reported that payroll accrual true-up distorted the May journal reconciliation. The team r
+econstructed mailbox ordering and found hold flag suppression affecting at least 5 transaction threads.
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+
+Treasury liaison J. Huang explained that payroll accrual true-up related wires were paused during May journal, delaying compliance responses and amplifying stat
+us precedence inversion on rejected rows.
+root@de10d3a691f3:/app# sed -n '852,875p' /tmp/briefs_01_09.md
+Follow-up #458 confirmed that external audit routed revenue cutoff testing statements through a shared inbox with 3 delegates. Investigators flagged hold flag s
+uppression as the likely root cause of inconsistent status columns.
+
+Quality review #450 sampled 22 revenue cutoff testing tickets and found policy waiver omission whenever provisional ledger rows were not filtered before merge.
+
+## Investigation Brief 06
+— Effective Dates on Output
+
+Auditors compared effective_date columns to correction paperwork. Start from the
+ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+sets field `date` or `status`, use that notice's `effective` date as
+`effective_date` only if that correction modified status or date; otherwise
+keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+places in CSV and as a JSON number.
+
+## Investigation Brief 06
+— Effective Dates on Output — supporting chronology
+
+Internal audit follow-up #770 tracked how vendor onboarding backlog exceptions were closed without matching policy waiver paperwork, a separate issue from extra
+ctor merge ordering.
+
+Stakeholder workshop #200 on vendor onboarding backlog produced conflicting recollections about which correction notice superseded an earlier owner change; Brie
+f 04 governs that precedence for automated output.
+
+Privacy review #629 redacted personal data from vendor onboarding backlog threads but retained transaction identifiers needed for reconciliation testing.
+
+Lead reviewer J. Huang opened working paper WP-9697 after procurement reported that vendor onboarding backlog distorted the Q1 close reconciliation. The team re
+constructed mailbox ordering and found ledger slice confusion affecting at least 4 transaction threads.
+root@de10d3a691f3:/app# sed -n '679,715p' /tmp/briefs_01_09.md
+## Investigation Brief 05
+— Meeting Amendments and Owners — supporting chronology
+
+Working paper WP-9136 documents a three-way match failure on SOX sampling mismatch where accrual true-ups near $2,522 never received matching compliance respons
+es during March walkthrough.
+
+Regional lead A. Ndiaye hosted a readout on SOX sampling mismatch where finance controllers disputed whether unsigned meeting notes should override ledger owner
+s; investigators cited Brief 05 during the session.
+
+Treasury liaison R. Okonkwo explained that SOX sampling mismatch related wires were paused during March walkthrough, delaying compliance responses and amplifyin
+g effective-date mismatch on rejected rows.
+
+During March walkthrough, T. Singh compared two cold extractor runs and documented policy waiver omission on SOX sampling mismatch. Operations initially attribu
+ted the drift to cache state; QA disproved that hypothesis the following morning.
+
+In March walkthrough, internal audit migrated SOX sampling mismatch workflows to a new ticketing tool. Migration cutover introduced status precedence inversion,
+ which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Controller staff described SOX sampling mismatch as a secondary driver of correction batch ordering while rebuilding the March walkthrough close calendar. They
+emphasized that decoy ledger headings in draft appendices must be ignored.
+
+Risk assessment WP-1972 links SOX sampling mismatch to control gaps in mail ingestion for internal audit. The assessment explicitly warns against treating alter
+nate ledger headings or appendix commentary as transaction sources.
+
+Lead reviewer L. Bergstrom opened working paper WP-7911 after internal audit reported that SOX sampling mismatch distorted the March walkthrough reconciliation.
+ The team reconstructed mailbox ordering and found effective-date mismatch affecting at least 17 transaction threads.
+
+SOX testing team WP-5166 linked hold flag suppression on SOX sampling mismatch to a manual override logged at 02:14 local time between two automated correction
+imports.
+
+Counsel memo WP-2386 advises retaining full SOX sampling mismatch threads because litigation hold scope may extend beyond the transactions named in formal notic
+es.
+
+Fixed-assets specialist E. Novak argued that SOX sampling mismatch capitalization memos should not alter ledger status; investigators agreed while noting those
+memos still inform exception coding narratives.
+
+Audit technologist R. Okonkwo replayed FY24 mailbox snapshots and showed how SOX sampling mismatch threads arrived out of order relative to correction notices,
+surfacing correction batch ordering on four high-balance rows.
+
+External advisors reviewing SOX sampling mismatch during March walkthrough asked for a machine-readable trace explaining why rejected rows received hold flags.
+The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+Peer review #521 of internal audit sampling found 17 mislinked emails on SOX sampling mismatch. None of the mislinked messages originated from compliance addres
+ses, supporting Brief 02 sender restrictions.
+
+Site visit #842 to internal audit exported 22 compliance threads tied to SOX sampling mismatch. Reviewers noted that status precedence inversion appeared whenev
+er correction batches straddled a weekend wire cutoff.
+
+Interview #931 with internal audit counsel captured how SOX sampling mismatch correspondence referenced amounts near $37,647 without matching ledger rows. Inves
+tigators preserved the thread because unsigned amendment drift can change downstream exception coding.
+
+Privacy review #271 redacted personal data from SOX sampling mismatch threads but retained transaction identifiers needed for reconciliation testing.
+
+root@de10d3a691f3:/app#

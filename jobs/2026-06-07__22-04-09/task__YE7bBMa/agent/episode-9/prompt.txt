@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@57a25f8d12e0:/app# grep -n "^## \(Ledger Rows\|Meeting Minutes\|Email Excerpts\|Policy Exceptions\|Correction Notices\)" /app/data/audit_archive.md
+200:## Email Excerpts (archived thread)
+788:## Policy Exceptions (draft)
+1732:## Email Excerpts
+2883:## Policy Exceptions
+2900:## Correction Notices
+root@57a25f8d12e0:/app#

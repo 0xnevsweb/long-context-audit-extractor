@@ -1,0 +1,25 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# sed -n '1,220p' audit-extractor/src/schema/validate.js
+function validateOutputs(items, exceptions, report) {
+  if (!Array.isArray(items) || items.length === 0) {
+    throw new Error("no transactions produced");
+  }
+  if (!Array.isArray(exceptions)) {
+    throw new Error("invalid exceptions");
+  }
+  if (!Array.isArray(report)) {
+    throw new Error("invalid report");
+  }
+}
+
+module.exports = { validateOutputs };
+root@de10d3a691f3:/app# sed -n '1,220p' audit-extractor/src/lib/constants.js
+module.exports = {
+  SECTION_LEDGER: "## Transaction Ledger",
+  SECTION_MEETINGS: "## Meeting Notes",
+  SECTION_EMAILS: "## Email Excerpts",
+  SECTION_POLICY: "## Policy Exceptions",
+  SECTION_CORRECTIONS: "## Correction Notices",
+};
+root@de10d3a691f3:/app#

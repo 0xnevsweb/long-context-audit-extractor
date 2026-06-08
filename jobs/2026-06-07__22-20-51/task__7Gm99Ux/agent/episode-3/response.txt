@@ -1,0 +1,51 @@
+{
+  "analysis": "The last command output on screen is the end of the authoritative Transaction Ledger and shows the provisional row and final non-provisional duplicate for TXN-ba9e6ade..., confirming Brief 01 behavior is needed. However, the parser/brief-reading commands we queued did not display in this snippet, so we still need to inspect parser files (corrections/meetings/emails/policy/handbook) and extract the exact rules from Investigation Briefs 07–09 (and likely earlier briefs for overlay order and correction precedence). Implementation gaps remain: exception flags, report previous_value, correct winning correction selection and application timing, and ensuring final output formats/sorting.",
+  "plan": "1) Re-run the code-inspection commands for the parsers and writers to understand current behavior. 2) Extract and display Investigation Briefs 02–09 from the archive with a script to avoid truncated output and ensure we see Brief 09 amendment text. 3) Once rules are clear, update reconcile.js and exceptions.js (and possibly parsers/sort utils) to implement correct overlay order, stable deterministic corrections, compliance_hold timing per Brief 09, policy waivers, retroactive_review, and proper report lines with previous_value. 4) Run extractor and validate outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,300p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,300p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# collect investigation briefs 01-09 blocks\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nbriefs={}\nfor a,b in zip(starts, starts[1:]):\n    title=lines[a]\n    m=re.match(r'^## (Investigation Brief 0[1-9])\\b', title)\n    if not m: continue\n    briefs[m.group(1)]=(a,b)\nfor k in sorted(briefs.keys()):\n    a,b=briefs[k]\n    print('\\n'.join(lines[a:b]))\n    print('\\n'+'='*100+'\\n')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

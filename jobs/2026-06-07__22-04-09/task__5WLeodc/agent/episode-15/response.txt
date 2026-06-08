@@ -1,0 +1,31 @@
+{
+  "analysis": "We extracted a key authoritative rule snippet: ledger provides base status; status precedence order is pending < approved < rejected < reversed; emails may change status only if From contains `compliance@` anywhere; ignore other senders. We still need additional rules from Briefs 01–09: meeting amendments (signed only), mail timing/holds (Brief 09 amendment), correction precedence and how previous_value is computed, exception flag codes and how to derive them (policy exceptions, compliance holds), and overall overlay order. Next we should pull more contexts around these rule lines and find other explicit rule sections in briefs.",
+  "plan": "1) Display larger ranges around the found rule lines (~180-260 etc) in /tmp/briefs_01_09.md to capture full rule statements for Brief 01/02. 2) Search within briefs file for 'hold' and 'Brief 09' and 'unsigned' to capture amendment and hold timing rules. 3) Once we have all authoritative rules, implement them in code: parseEmails sender filter, compare status by precedence (don’t just overwrite), meeting amendments apply only if signed, corrections apply in correct order and compute previous_value, and build exception flags. Also update writers and sorting per spec.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '150,260p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"unsigned|signed\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"hold\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"Correction Notices|previous_value|immediately before|notice_id\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"exception|flag code|policy exception\" /tmp/briefs_01_09.md | head -n 160\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"Brief 09\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

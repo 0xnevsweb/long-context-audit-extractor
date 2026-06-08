@@ -1,0 +1,41 @@
+Current Terminal Screen:
+amount: 18354.46
+owner: frost
+status: approved
+date: 2024-02-14
+
+### TXN-378cf202-0cc9-578e-91ea-d8d008c534e9
+amount: 19727.88
+owner: jdoe
+status: pending
+date: 2024-03-15
+
+### TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+amount: 1601.30
+owner: asmith
+status: pending
+date: 2024-04-16
+
+### TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c
+amount: 2974.72
+owner: bwong
+status: approved
+date: 2024-05-17
+
+### TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a
+amount: 4348.14
+owner: ckim
+status: rejected
+date: 2024-06-18
+
+### TXN-16df04da-aef5-5537-ae87-993fc75b7be3
+amount: 5721.56
+owner: dlee
+status: approved
+date: 2024-07-19
+
+### TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966
+amount: 7094.98
+owner: evans
+status: pending
+root@de10d3a691f3:/app#

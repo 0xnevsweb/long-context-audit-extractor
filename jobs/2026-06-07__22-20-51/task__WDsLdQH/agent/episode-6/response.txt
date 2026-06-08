@@ -1,0 +1,39 @@
+{
+  "analysis": "We can see the authoritative Transaction Ledger section format at the file end: repeated blocks starting with '### TXN-...' followed by key/value lines (amount, owner, status, date) and sometimes 'provisional: true'. We also see duplicate transaction_id entries (TXN-ba9e6ade...) with a provisional row and a final row, implying Brief 01 likely instructs filtering provisional rows. We still need to view the earlier parts of the tail sections for Policy Exceptions and Correction Notices, and inspect current parsers/reconcile logic to ensure they: (a) select the authoritative '## Transaction Ledger' section (not working copy), (b) parse these blocks correctly, (c) drop provisional rows, (d) apply meeting amendments, compliance emails, and correction notices in the correct order and precedence per Briefs 02–05/09. Then we must update outputs to required schemas and deterministic sorting.",
+  "plan": "1) Print the start of the authoritative structured tail sections: Policy Exceptions and Correction Notices, plus the header of Transaction Ledger to confirm the exact headings and record shapes. 2) Inspect parser implementations (especially sections.js and ledger.js) to see if they accidentally choose 'Transaction Ledger (working copy)' or draft Policy Exceptions. 3) Inspect reconcile.js to see overlay order and correction selection; then implement missing logic and ensure report entries are generated with previous_value/new_value and correct effective date. After that, patch writers for correct envelopes/CSV formatting and add exception_reason computation with lexical sorting and null behavior.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2865,2910p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2910,2948p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

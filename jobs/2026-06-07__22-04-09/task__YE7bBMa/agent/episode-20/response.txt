@@ -1,0 +1,19 @@
+{
+  "analysis": "Parsers now find ledger(32), meetings(4), emails(6), policyExceptions(3), but corrections is 0, meaning corrections parser still isn’t slicing correctly (likely start heading mismatch due to extra text like '## Correction Notices' vs '## Correction Notices (something)' or lastIndexOf without newline and start<0). However grep earlier showed '## Correction Notices' at line 2900, so parser should find it; likely parseCorrections uses markdown.indexOf(\"## Transaction Ledger\") for end or similar? We need to inspect corrections.js fully and fix it to slice between the last '## Correction Notices' and the last '## Transaction Ledger' (or end of file). Once corrections parse works, we can build reconciliation_report and apply corrections with proper precedence. Next: open corrections.js and adjust to use lastIndexOf bounds. Then re-run parse counts.",
+  "plan": "1) View corrections.js to see how it slices; fix start/end selection to reliably capture tail correction notices: start at last '## Correction Notices', end at last '## Transaction Ledger' (or EOF). 2) Re-run diagnostic node snippet to confirm corrections count >0 and sample entries. 3) Then proceed to implement reconciliation/exceptions per briefs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  // Use the canonical tail section.\n  const start = markdown.lastIndexOf(\"## Correction Notices\");\n  if (start < 0) {\n    return [];\n  }\n\n  // Corrections appear before the canonical Transaction Ledger.\n  const end = markdown.lastIndexOf(\"## Transaction Ledger\");\n  const slice = end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) {\n      continue;\n    }\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n    notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconsole.log({corrections: p.corrections.length});\nconsole.log(p.corrections.slice(0,6));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

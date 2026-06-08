@@ -11,13 +11,6 @@ RNG = random.Random(20240605)
 OUT = Path(__file__).resolve().parents[1] / "environment" / "audit-extractor" / "data" / "audit_archive.md"
 SEED = Path(__file__).resolve().parents[1] / "tests" / "seeds" / "audit_archive.md"
 
-POLICY_MARKERS = [
-    "Committee ruling (binding for extract):",
-    "Auditor directive (mandatory for extract):",
-    "Extract policy (authoritative):",
-    "Controller memo (binding reconciliation rule):",
-]
-
 POLICY_BLOCKS: list[tuple[str, str]] = [
     (
         "Investigation Brief 01 — Ledger Sourcing",
@@ -116,7 +109,7 @@ POLICY_BLOCKS: list[tuple[str, str]] = [
         ).strip(),
     ),
     (
-        "Investigation Brief 08 — Exception Flags (Part II) and Artifacts",
+        "Investigation Brief 08 — Exception Flags (Part II)",
         textwrap.dedent(
             """
             Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
@@ -124,17 +117,6 @@ POLICY_BLOCKS: list[tuple[str, str]] = [
             with `approved_by: compliance` on its own line. Set `retroactive_review` when
             final status is `reversed`, `amount_usd` > 5000, and a winning correction
             notice changed status for that transaction.
-
-            `extract --outdir` must write: `transactions.json` as `{"items":[...]}` sorted
-            by `transaction_id` ascending with fields transaction_id, owner, status
-            (lowercase), effective_date, amount_usd, exception_reason (null or
-            semicolon-joined codes). `transactions.csv` uses header
-            transaction_id,owner,status,effective_date,amount_usd,exception_reason with the
-            same rows; leave exception_reason blank when null. `exceptions.json` is
-            `{"items":[...]}` with only rows where exception_reason is set.
-            `reconciliation_report.jsonl` is one JSON object per winning correction with
-            notice_id, transaction_id, field, previous_value, new_value, effective, sorted
-            by notice_id ascending.
             """
         ).strip(),
     ),
@@ -170,70 +152,153 @@ CASE_TOPICS = [
     ("year-end close checklist drift", "controller", "December freeze"),
 ]
 
-NARRATIVE_PARAS = [
-    "Lead reviewer {name} noted that {topic} created reconciliation noise in {unit} during {period}. "
-    "Staff initially blamed tooling, but timeline reconstruction showed manual overrides arriving after batch lock.",
-    "Interview #{num} with {unit} highlighted how {topic} statements were forwarded without the matching ledger row. "
-    "Counsel advised preserving the full thread because downstream exception coding depends on mail timestamps.",
-    "Working paper {wp} documents a three-way match failure tied to {topic}. The team escalated when repeated "
-    "extractor runs produced different status columns for the same transaction id.",
-    "During {period}, {name} circulated a draft finding on {topic}. Finance operations pushed back, arguing the "
-    "issue was transient cache state; QA reproduced the drift on a cold run the next morning.",
-    "The committee packet references {topic} as a contributing factor to late compliance holds. Investigators "
-    "cross-checked mail excerpts against amendment minutes before accepting any owner change.",
-    "Site visit #{num} to {unit} captured mailbox exports showing how {topic} correspondence arrived between "
-    "two correction batches. Reviewers flagged the gap because effective-date logic must honor notice precedence.",
-    "Memo {wp} summarizes stakeholder interviews about {topic}. Participants disagreed on whether unsigned "
-    "amendments should ever override ledger owners; Brief 05 resolves that question for the extractor.",
-    "In {period}, external advisors reviewed {topic} and asked for a machine-readable reconciliation trace. "
-    "The archive preserves narrative context so auditors can explain why a given transaction received compliance_hold.",
-    "Follow-up #{num} confirmed that {unit} had been using an informal spreadsheet for {topic}. The formal "
-    "extractor must instead derive rows only from the canonical ledger and structured sections at file end.",
-    "Risk assessment {wp} ties {topic} to control deficiencies around mail ingestion. Teams must not treat "
-    "decoy ledger headings or appendix commentary as authoritative transaction sources.",
-    "Draft guidance in this paragraph is non-binding: some early tooling compared compliance mail against "
-    "post-correction effective dates when flagging holds. The mid-year amendment later in this archive "
-    "supersedes that draft practice.",
+REVIEWERS = [
+    "M. Chen",
+    "R. Okonkwo",
+    "S. Patel",
+    "L. Bergstrom",
+    "A. Ndiaye",
+    "J. Huang",
+    "K. Morales",
+    "T. Singh",
+    "E. Novak",
+    "P. Okafor",
+]
+
+FINDINGS = [
+    "mailbox ingestion lag",
+    "unsigned amendment drift",
+    "correction batch ordering",
+    "status precedence inversion",
+    "owner field churn",
+    "effective-date mismatch",
+    "hold flag suppression",
+    "ledger slice confusion",
+    "policy waiver omission",
+    "retroactive status conflict",
+]
+
+INVESTIGATION_PASSAGES = [
+    "Lead reviewer {name} opened working paper {wp} after {unit} reported that {topic} "
+    "distorted the {period} reconciliation. The team reconstructed mailbox ordering and "
+    "found {finding} affecting at least {count} transaction threads.",
+    "Interview #{num} with {unit} counsel captured how {topic} correspondence referenced "
+    "amounts near ${amount:,} without matching ledger rows. Investigators preserved the "
+    "thread because {finding} can change downstream exception coding.",
+    "During {period}, {name} compared two cold extractor runs and documented {finding} "
+    "on {topic}. Operations initially attributed the drift to cache state; QA disproved "
+    "that hypothesis the following morning.",
+    "Site visit #{num} to {unit} exported {count} compliance threads tied to {topic}. "
+    "Reviewers noted that {finding} appeared whenever correction batches straddled a "
+    "weekend wire cutoff.",
+    "Memo {wp} summarizes a panel on {topic} chaired by {name}. Participants debated "
+    "whether informal spreadsheets should ever override ledger owners; Brief 05 closes "
+    "that debate for the FY24 extractor.",
+    "External advisors reviewing {topic} during {period} asked for a machine-readable "
+    "trace explaining why rejected rows received hold flags. The archive preserves "
+    "narrative chronology even though only structured tail sections are authoritative.",
+    "Follow-up #{num} confirmed that {unit} routed {topic} statements through a shared "
+    "inbox with {count} delegates. Investigators flagged {finding} as the likely root "
+    "cause of inconsistent status columns.",
+    "Risk assessment {wp} links {topic} to control gaps in mail ingestion for {unit}. "
+    "The assessment explicitly warns against treating alternate ledger headings or "
+    "appendix commentary as transaction sources.",
+    "Committee packet #{num} chronicles how {topic} escalated after {name} observed "
+    "{finding} between two correction batches. Cross-checks against amendment minutes "
+    "were required before accepting any owner change.",
+    "Working paper {wp} documents a three-way match failure on {topic} where accrual "
+    "true-ups near ${amount:,} never received matching compliance responses during "
+    "{period}.",
+    "Controller staff described {topic} as a secondary driver of {finding} while "
+    "rebuilding the {period} close calendar. They emphasized that decoy ledger headings "
+    "in draft appendices must be ignored.",
+    "Audit technologist {name} replayed FY24 mailbox snapshots and showed how {topic} "
+    "threads arrived out of order relative to correction notices, surfacing {finding} on "
+    "four high-balance rows.",
+    "In {period}, {unit} migrated {topic} workflows to a new ticketing tool. Migration "
+    "cutover introduced {finding}, which did not reproduce once ledger sourcing rules "
+    "from Brief 01 were applied manually.",
+    "Counsel memo {wp} advises retaining full {topic} threads because litigation hold "
+    "scope may extend beyond the transactions named in formal notices.",
+    "Operations analyst {name} demonstrated that {topic} batches processed after midnight "
+    "UTC inherited stale owner fields, a symptom consistent with {finding} rather than "
+    "incorrect amount parsing.",
+    "Peer review #{num} of {unit} sampling found {count} mislinked emails on {topic}. "
+    "None of the mislinked messages originated from compliance addresses, supporting "
+    "Brief 02 sender restrictions.",
+    "Treasury liaison {name} explained that {topic} related wires were paused during "
+    "{period}, delaying compliance responses and amplifying {finding} on rejected rows.",
+    "Internal audit follow-up #{num} tracked how {topic} exceptions were closed without "
+    "matching policy waiver paperwork, a separate issue from extractor merge ordering.",
+    "Data governance {wp} catalogs legacy {unit} folders still containing {topic} "
+    "spreadsheets. Those folders are evidentiary only; extractor output must come from "
+    "canonical structured sections.",
+    "Draft sidebar (non-authoritative): some prototype tooling compared compliance mail "
+    "timestamps against post-correction effective dates when flagging holds. Brief 09 "
+    "later in this archive supersedes that draft practice for production reconciliation.",
+    "Regional lead {name} hosted a readout on {topic} where finance controllers disputed "
+    "whether unsigned meeting notes should override ledger owners; investigators cited "
+    "Brief 05 during the session.",
+    "Quality review #{num} sampled {count} {topic} tickets and found {finding} whenever "
+    "provisional ledger rows were not filtered before merge.",
+    "Tax counsel flagged {topic} restatement risk during {period} close, unrelated to "
+    "extractor precedence but relevant to why the archive retains full correspondence.",
+    "Platform engineer {name} noted that {topic} webhook retries duplicated compliance "
+    "messages in the investigative export, requiring deduplication by subject and sent "
+    "timestamp during human review.",
+    "Stakeholder workshop #{num} on {topic} produced conflicting recollections about "
+    "which correction notice superseded an earlier owner change; Brief 04 governs that "
+    "precedence for automated output.",
+    "SOX testing team {wp} linked {finding} on {topic} to a manual override logged at "
+    "02:14 local time between two automated correction imports.",
+    "Vendor management {name} described {topic} onboarding delays that pushed compliance "
+    "responses past ledger dates on several rejected rows during {period}.",
+    "Privacy review #{num} redacted personal data from {topic} threads but retained "
+    "transaction identifiers needed for reconciliation testing.",
+    "Fixed-assets specialist {name} argued that {topic} capitalization memos should not "
+    "alter ledger status; investigators agreed while noting those memos still inform "
+    "exception coding narratives.",
+    "Grant compliance {wp} tied {topic} attestation gaps to {finding} visible only when "
+    "hold flags used corrected rather than pre-correction ledger dates.",
 ]
 
 
-def narrative_section(title: str, topic: str, unit: str, period: str, count: int) -> str:
+def _pick_topic() -> tuple[str, str, str]:
+    return RNG.choice(CASE_TOPICS)
+
+
+def investigation_dossier(title: str, topic: str, unit: str, period: str, count: int) -> str:
     lines = [f"## {title}", ""]
-    names = ["M. Chen", "R. Okonkwo", "S. Patel", "L. Bergstrom", "A. Ndiaye", "J. Huang"]
+    templates = INVESTIGATION_PASSAGES.copy()
+    RNG.shuffle(templates)
     for i in range(count):
-        template = RNG.choice(NARRATIVE_PARAS)
+        template = templates[i % len(templates)]
         para = template.format(
-            name=RNG.choice(names),
+            name=RNG.choice(REVIEWERS),
             topic=topic,
             unit=unit,
             period=period,
             num=RNG.randint(100, 999),
             wp=f"WP-{RNG.randint(10, 99)}{RNG.randint(10, 99)}",
+            finding=RNG.choice(FINDINGS),
+            count=RNG.randint(3, 24),
+            amount=RNG.randint(1800, 48000),
         )
         lines.append(para)
         lines.append("")
     return "\n".join(lines)
 
 
-def policy_brief(title: str, policy: str, marker_idx: int, narrative_count: int) -> list[str]:
-    topic, unit, period = RNG.choice(CASE_TOPICS)
-    marker = POLICY_MARKERS[marker_idx % len(POLICY_MARKERS)]
-    lines = [f"## {title}", "", marker, "", policy, ""]
-    lines.append(
-        narrative_section(
-            f"{title} — field notes",
-            topic,
-            unit,
-            period,
-            narrative_count,
-        )
-    )
+def policy_brief(title: str, policy: str, dossier_count: int) -> list[str]:
+    topic, unit, period = _pick_topic()
+    lines = [f"## {title}", "", policy, ""]
+    lines.append(investigation_dossier(f"{title} — supporting chronology", topic, unit, period, dossier_count))
     return lines
 
 
-def case_study(idx: int, count: int = 36) -> list[str]:
+def case_study(idx: int, count: int = 14) -> list[str]:
     topic, unit, period = CASE_TOPICS[idx % len(CASE_TOPICS)]
-    return [narrative_section(f"Case Study {idx + 1:02d} — {topic.title()}", topic, unit, period, count)]
+    return [investigation_dossier(f"Case Study {idx + 1:02d} — {topic.title()}", topic, unit, period, count)]
 
 
 def decoy_email_excerpts() -> list[str]:
@@ -274,28 +339,57 @@ def decoy_policy_exceptions() -> list[str]:
     ]
 
 
+MAIL_CONTEXT_BODIES = [
+    "Team — attaching the refreshed sampling grid for {topic}. No transaction ids in this note; "
+    "it exists to preserve ordering around compliance threads during {period}.",
+    "Please confirm {unit} coverage for the {topic} walkthrough next week. We are not requesting "
+    "any ledger changes from this message.",
+    "Legal asked us to retain the full {topic} mailbox export even though most messages lack "
+    "transaction subjects. Chronology matters for the investigation narrative.",
+    "Controller office moved the {period} close checklist because of {topic} staffing gaps. "
+    "This email does not reference compliance@ senders or transaction ids.",
+    "Internal audit circulated observations on {topic} controls; findings here are contextual "
+    "only and must not override Investigation Brief merge rules.",
+    "HR finance noted a payroll accrual discussion unrelated to extractor output. Included for "
+    "mailbox ordering fidelity during the {topic} review window.",
+    "Treasury ops summarized weekend wire coverage impacts on {topic}. No merge fields present.",
+    "External counsel requested preservation of {topic} threads from {period} without implying "
+    "any status change authority.",
+    "Data platform ticket #{num} tracks an ingestion delay that affected {unit} exports. The "
+    "delay is explanatory background, not a reconciliation input.",
+    "Risk committee excerpt: {topic} exposure in {period} was elevated but no compliance "
+    "decisions are recorded in this message.",
+]
+
+
 def contextual_emails(count: int) -> list[str]:
     lines: list[str] = []
-    contextual_senders = [
-        ("audit-lead@corp.internal", "FY24 sampling plan draft"),
-        ("treasury-ops@corp.internal", "wire desk weekend coverage"),
-        ("controller@corp.internal", "close calendar revision"),
-        ("legal-notices@corp.internal", "retention hold reminder"),
-        ("hr-payroll@corp.internal", "accrual true-up schedule"),
+    senders = [
+        "audit-lead@corp.internal",
+        "treasury-ops@corp.internal",
+        "controller@corp.internal",
+        "legal-notices@corp.internal",
+        "hr-payroll@corp.internal",
+    ]
+    subjects = [
+        "FY24 sampling plan draft",
+        "wire desk weekend coverage",
+        "close calendar revision",
+        "retention hold reminder",
+        "accrual true-up schedule",
     ]
     for i in range(count):
-        sender, subject = RNG.choice(contextual_senders)
+        topic, unit, period = _pick_topic()
+        sender = RNG.choice(senders)
+        subject = RNG.choice(subjects)
+        body_t = RNG.choice(MAIL_CONTEXT_BODIES)
+        body = body_t.format(topic=topic, unit=unit, period=period, num=RNG.randint(1000, 9999))
         lines.extend(
             [
                 f"From: {sender}",
-                f"Subject: {subject} — thread {i}",
+                f"Subject: {subject} — coordination {i}",
                 "",
-                textwrap.fill(
-                    f"Internal coordination on {RNG.choice(CASE_TOPICS)[0]}. "
-                    f"No transaction identifiers appear in this message. "
-                    f"Investigators archived it to preserve mailbox ordering around compliance threads.",
-                    width=78,
-                ),
+                textwrap.fill(body, width=78),
                 "",
             ]
         )
@@ -332,7 +426,7 @@ def structured_tail() -> list[str]:
         "Investigator commentary: only compliance-addressed threads with transaction "
         "subjects in this section affect merge logic; surrounding mail establishes timing context.",
         "",
-        *contextual_emails(140),
+        *contextual_emails(80),
         "From: compliance@corp.internal",
         "Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
         "sent: 2024-06-15",
@@ -342,7 +436,7 @@ def structured_tail() -> list[str]:
         "Subject: Re: TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
         "status: approved",
         "",
-        *contextual_emails(80),
+        *contextual_emails(50),
         "From: compliance@audit.corp",
         "Subject: Re: TXN-de3b42d7-919c-5839-a490-b039d9c97092",
         "status: rejected",
@@ -352,7 +446,7 @@ def structured_tail() -> list[str]:
         "sent: 2024-08-15",
         "status: rejected",
         "",
-        *contextual_emails(60),
+        *contextual_emails(40),
         "From: compliance@corp.internal",
         "Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c",
         "sent: 2024-08-10",
@@ -645,9 +739,9 @@ def build_corpus() -> str:
         "",
         "## Reconciliation and Exception Policy (FY24 Audit Handbook)",
         "",
-        "This index orients readers only. Binding reconciliation rules appear inside "
-        "Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, "
-        "decoy sections, and archived threads are not authoritative. Structured source data "
+        "This index orients readers only. Reconciliation rules appear inside Investigation "
+        "Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy "
+        "sections, and archived threads are not authoritative. Structured source data "
         "appears near the file end under Email Excerpts, Policy Exceptions, Correction "
         "Notices, and the canonical Transaction Ledger heading.",
         "",
@@ -656,32 +750,36 @@ def build_corpus() -> str:
         "",
     ]
 
-    parts.extend(policy_brief(POLICY_BLOCKS[0][0], POLICY_BLOCKS[0][1], 0, 30))
-    parts.extend(case_study(0))
-    parts.extend(case_study(1))
+    parts.extend(policy_brief(POLICY_BLOCKS[0][0], POLICY_BLOCKS[0][1], 28))
+    parts.extend(case_study(0, 28))
+    parts.extend(case_study(1, 28))
     parts.extend(decoy_email_excerpts())
-    parts.extend(policy_brief(POLICY_BLOCKS[1][0], POLICY_BLOCKS[1][1], 1, 28))
-    parts.extend(case_study(2))
-    parts.extend(case_study(3))
-    parts.extend(policy_brief(POLICY_BLOCKS[2][0], POLICY_BLOCKS[2][1], 2, 28))
-    parts.extend(case_study(4))
-    parts.extend(case_study(5))
-    parts.extend(policy_brief(POLICY_BLOCKS[3][0], POLICY_BLOCKS[3][1], 3, 28))
-    parts.extend(case_study(6))
-    parts.extend(policy_brief(POLICY_BLOCKS[4][0], POLICY_BLOCKS[4][1], 4, 28))
-    parts.extend(case_study(7))
+    parts.extend(policy_brief(POLICY_BLOCKS[1][0], POLICY_BLOCKS[1][1], 26))
+    parts.extend(case_study(2, 26))
+    parts.extend(case_study(3, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[2][0], POLICY_BLOCKS[2][1], 26))
+    parts.extend(case_study(4, 26))
+    parts.extend(case_study(5, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[3][0], POLICY_BLOCKS[3][1], 26))
+    parts.extend(case_study(6, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[4][0], POLICY_BLOCKS[4][1], 26))
+    parts.extend(case_study(7, 26))
     parts.extend(decoy_policy_exceptions())
-    parts.extend(case_study(8))
-    parts.extend(policy_brief(POLICY_BLOCKS[5][0], POLICY_BLOCKS[5][1], 5, 28))
-    parts.extend(case_study(9))
-    parts.extend(policy_brief(POLICY_BLOCKS[6][0], POLICY_BLOCKS[6][1], 6, 28))
-    parts.extend(case_study(10))
-    parts.extend(case_study(11))
-    parts.extend(policy_brief(POLICY_BLOCKS[7][0], POLICY_BLOCKS[7][1], 7, 28))
-    parts.extend(case_study(0, 42))
-    parts.extend(case_study(3, 42))
-    parts.extend(policy_brief(AMENDMENT_BLOCK[0], AMENDMENT_BLOCK[1], 8, 32))
-    parts.extend(case_study(6, 42))
+    parts.extend(case_study(8, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[5][0], POLICY_BLOCKS[5][1], 26))
+    parts.extend(case_study(9, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[6][0], POLICY_BLOCKS[6][1], 26))
+    parts.extend(case_study(10, 26))
+    parts.extend(case_study(11, 26))
+    parts.extend(policy_brief(POLICY_BLOCKS[7][0], POLICY_BLOCKS[7][1], 26))
+    parts.extend(case_study(0, 30))
+    parts.extend(case_study(3, 30))
+    parts.extend(case_study(1, 30))
+    parts.extend(case_study(5, 30))
+    parts.extend(policy_brief(AMENDMENT_BLOCK[0], AMENDMENT_BLOCK[1], 28))
+    parts.extend(case_study(6, 30))
+    parts.extend(case_study(8, 30))
+    parts.extend(case_study(10, 30))
     parts.extend(structured_tail())
 
     return "\n".join(parts) + "\n"
@@ -692,9 +790,12 @@ def main() -> None:
     OUT.write_text(corpus, encoding="utf-8")
     SEED.write_text(corpus, encoding="utf-8")
     chars = len(corpus)
+    lines = [line.strip() for line in corpus.splitlines() if line.strip()]
+    unique_ratio = len(set(lines)) / len(lines)
     marker = "## Investigation Brief 09 — Mid-Year Amendment"
     pos_09 = corpus.find(marker)
     print(f"wrote {OUT} ({chars:,} chars, ~{chars // 4:,} tokens)")
+    print(f"unique line ratio: {unique_ratio:.3f}")
     print(f"Brief 09 starts at char {pos_09:,} ({100 * pos_09 / chars:.1f}% into file)")
 
 

@@ -1,0 +1,15 @@
+{
+  "analysis": "We have the critical Brief 09 rule: compliance_hold timing must compare qualifying compliance email sent date against the transaction ledger date as of just before corrections are applied (after ledger+meetings+mail merges, before any correction changes date/status). This explains current bug: our parser doesn’t capture sent date, and ledger selection/corrections application likely wrong. We still need other briefs (01–08) for ledger sourcing (provisional handling), meeting signedness, email status change rules (Brief 03), correction precedence (Brief 04), owner override rules (Brief 05), exception flags definitions (likely 06–08). Next steps: extract concise excerpts for Briefs 01–08; then implement code changes: parseEmails to include sent date; ledger parser to handle provisional duplicates properly; reconciliation to track pre-correction date for hold comparisons; implement exception_reason with codes incl compliance_hold and policy_exception; correct outputs and sorting; report previous_value; deterministic operations.",
+  "plan": "1) Extract top rule paragraphs for Briefs 01–08 (first ~80 lines each) so we can implement all required semantics. 2) Patch parsers: (a) ledger parse provisional and keep non-provisional when duplicates exist; (b) emails parse sent date; (c) sections parser choose authoritative tail sections (ignore draft earlier). 3) Patch normalize/reconcile.js: deterministic ordering; apply meeting owner only if signed (if brief says); apply compliance emails only from compliance@ and per brief (status precedence and timing), while storing qualifying compliance email sent dates for hold evaluation; apply corrections in precedence order and produce report with previous_value; sort report by notice_id. 4) Patch exceptions.js to compute exception_reason codes with lexical ordering and null when none; build exceptions.json accordingly. 5) Patch writers to match required envelope {items}, CSV header/amount formatting/empty null cell, and JSONL sorting by notice_id. 6) Run CLI twice and verify stable hashes and required files in /app/output.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-8])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nfor n,i in starts:\n  print(f\"\\n===== BRIEF {n:02d} (excerpt) =====\")\n  print('\\n'.join(lines[i:i+90]))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

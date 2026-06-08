@@ -1,0 +1,6 @@
+{
+  "analysis": "Extractor now runs cleanly and writes exactly the four required files into the grader outdir (/app/output). Outputs are deterministic across reruns (previously verified), JSON envelopes use {\"items\": [...]}, CSV header matches required columns including exception_reason, exceptions.json contains only flagged rows, and reconciliation_report.jsonl is non-empty and sorted by notice_id with previous_value/new_value/effective. We also fixed the decoy/working-copy ledger issue, added compliance email sent parsing, policy exception parsing, and implemented winning correction selection so only winning notices appear in the report.",
+  "plan": "Mark task complete.",
+  "commands": [],
+  "task_complete": true
+}

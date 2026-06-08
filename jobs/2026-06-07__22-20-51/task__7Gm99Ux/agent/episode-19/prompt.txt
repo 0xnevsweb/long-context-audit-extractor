@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       row.transaction_id,
+>       row.owner,
+>       row.status,
+>       row.effective_date,
+>       amountStr,
+>       exc,
+>     ]
+>       .map(csvEscape)
+>       .join(",");
+>   });
+>
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n"));
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@58b3f47e1f8d:/app# sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js
+const fs = require("node:fs");
+
+function writeTransactionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ transactions: items }, null, 2));
+}
+
+function writeExceptionsJson(filePath, items) {
+  fs.writeFileSync(filePath, JSON.stringify({ exceptions: items }, null, 2));
+}
+
+module.exports = { writeTransactionsJson, writeExceptionsJson };
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+> const { sortByTransactionId } = require("../utils/sort");
+>
+> function buildExceptions(items) {
+>   const flagged = items.filter((row) => row.exception_reason != null);
+>   return sortByTransactionId(flagged);
+> }
+>
+> module.exports = { buildExceptions };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/output/csvWriter.js && node -c /app/audit-extractor/src/normalize/exceptions.js
+root@58b3f47e1f8d:/app#

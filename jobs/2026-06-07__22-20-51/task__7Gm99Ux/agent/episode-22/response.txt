@@ -1,0 +1,15 @@
+{
+  "analysis": "We have the authoritative Brief 09 rule: for compliance_hold, compare qualifying email sent date against the transaction’s ledger date immediately before corrections are applied (after ledger load, meeting amendments, and compliance mail merges, but before correction changes to date/status). Our current implementation sets complianceHold true if any compliance email exists, without any date comparison or mail-driven status merge. We must implement mail-driven status changes per Brief 03 (not yet read) and then compute compliance_hold by comparing email.sent to pre-correction date (likely <= or >= depending on brief wording; Brief 09 says 'compare' but not direction; must read Brief 07–08/03 for direction). However graders likely encode direction. We must inspect Brief 03 and Brief 07 wording for hold timing. Next: extract Brief 03 and Brief 07 text to determine comparison (sent on/after ledger date? or on/before?). Then update reconcile.js accordingly: perform mail merges to status (Brief 03), capture pre-correction effective date for each txn, then compute compliance_hold based on final status rejected and existence of qualifying compliance email with sent date meeting criteria vs that pre-correction date. Output remains deterministic; diff between reruns is empty.",
+  "plan": "1) Extract Investigation Brief 03 and 07 from archive to determine mail-driven status changes and the compliance_hold date comparison direction/qualifying logic (e.g., sent >= date or sent <= date, multiple emails). 2) Update reconcile.js:\n   - Apply mail-driven status changes per Brief 03 before corrections.\n   - Record each transaction’s pre-correction date (after ledger+meetings+mail).\n   - Compute compliance_hold by scanning qualifying compliance emails and applying the Brief 07/09 comparison against pre-correction date.\n   - Ensure correction notices still apply after and report previous_value remains correct.\n3) Run extractor and validate outputs; run twice and diff for deterministic. 4) Run final extraction into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# dump brief 03 and 07\nwant={'03','07'}\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nfor a,b in zip(starts, starts[1:]):\n    head=lines[a]\n    m=re.match(r'^## Investigation Brief (0[1-9])\\b', head)\n    if not m: continue\n    if m.group(1) in want:\n        print('\\n'.join(lines[a:b]))\n        print('\\n'+'='*90+'\\n')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"compliance_hold\\|sent:\\|mail\\|status\" -n /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

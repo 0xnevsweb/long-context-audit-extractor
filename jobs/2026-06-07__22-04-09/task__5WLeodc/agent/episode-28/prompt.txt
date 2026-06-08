@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Operations analyst K. Morales demonstrated that year-end close checklist drift batches processed after midnight UTC inherited stale owner fields, a symptom cons
+istent with ledger slice confusion rather than incorrect amount parsing.
+
+Lead reviewer P. Okafor opened working paper WP-3517 after controller reported that year-end close checklist drift distorted the December freeze reconciliation.
+ The team reconstructed mailbox ordering and found owner field churn affecting at least 4 transaction threads.
+
+Stakeholder workshop #915 on year-end close checklist drift produced conflicting recollections about which correction notice superseded an earlier owner change;
+ Brief 04 governs that precedence for automated output.
+
+Counsel memo WP-6330 advises retaining full year-end close checklist drift threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+
+## Investigation Brief 08
+— Exception Flags (Part II)
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+## Investigation Brief 08
+— Exception Flags (Part II) — supporting chronology
+
+In May journal, HR finance migrated payroll accrual true-up workflows to a new ticketing tool. Migration cutover introduced correction batch ordering, which did
+ not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Risk assessment WP-1874 links payroll accrual true-up to control gaps in mail ingestion for HR finance. The assessment explicitly warns against treating alterna
+te ledger headings or appendix commentary as transaction sources.
+
+Platform engineer J. Huang noted that payroll accrual true-up webhook retries duplicated compliance messages in the investigative export, requiring deduplicatio
+n by subject and sent timestamp during human review.
+
+Internal audit follow-up #315 tracked how payroll accrual true-up exceptions were closed without matching policy waiver paperwork, a separate issue from extract
+or merge ordering.
+
+Treasury liaison S. Patel explained that payroll accrual true-up related wires were paused during May journal, delaying compliance responses and amplifying stat
+us precedence inversion on rejected rows.
+
+root@de10d3a691f3:/app#

@@ -1,0 +1,35 @@
+{
+  "analysis": "We now see parseMeetings extracts transaction_id, owner, and signed(boolean). parseEmails extracts from_addr, transaction_id, and status, but crucially does NOT parse the `sent:` date so timing/ordering cannot be applied yet—this likely causes compliance holds missing later mail and drift. We still need ledger.js and sections.js outputs (not shown yet), and we must read /tmp/briefs_01_09.txt to implement correct rules (including Brief 09 timing amendment). Next step: view ledger.js/sections.js and read the briefs file portions; then implement code changes: parse email sent date, apply sender filter (compliance@), dedupe if required, apply status precedence with timing, signed meeting rules, provisional ledger filtering, corrections precedence with previous_value tracking, output contract fixes, and deterministic sorting.",
+  "plan": "1) Display sections.js and ledger.js fully to know how parsing is wired and what fields exist (provisional, amount, date). 2) Read /tmp/briefs_01_09.txt (search within it for keywords: provisional, signed, compliance, hold, correction precedence, mail timing, dedupe, exception codes) using grep/sed. 3) Based on rules: update parser/emails.js to capture sent date; update normalize/reconcile.js to sort and apply merges deterministically and to compute previous_value when applying corrections; update normalize/exceptions.js to compute exception_reason codes (policy exceptions, holds, etc.) and lexical-sort codes; update writers to match required envelopes and CSV format; update sort util comparator stability and add sortByNoticeId. 4) Run CLI twice and compare hashes.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"hold\\|HOLD\\|provisional\\|signed\\|sender\\|compliance@\\|dedup\\|correction\\|supersed\\|precedence\\|effective\" /tmp/briefs_01_09.txt | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Brief 09\" -n /tmp/briefs_01_09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,860p' /tmp/briefs_01_09.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

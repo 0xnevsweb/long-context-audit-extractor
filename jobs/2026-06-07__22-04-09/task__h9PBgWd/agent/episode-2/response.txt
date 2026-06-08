@@ -1,0 +1,43 @@
+{
+  "analysis": "Authoritative reconciliation rules are now clear from Briefs 01–09. Key requirements likely not implemented: (a) only use section with heading exactly `## Transaction Ledger` and ignore working copy + any ledger block containing `provisional: true` (case-insensitive); last non-provisional block wins per TXN id. (b) Mail status changes only from senders containing `compliance@`; apply only if `sent:` >= ledger date for that transaction, else ignore; if no sent line, apply if precedence allows. (c) Meeting owner amendments only when signed:true and effective>=ledger date when effective present. (d) Corrections: per transaction+field choose lexicographically greatest effective date; apply after ledger+amendments+mail; owner correction overrides even signed amendments; report previous_value is value immediately before applying winning notice. (e) Effective_date output rules: start ledger date; if winning correction changes status or date, effective_date becomes notice effective; otherwise keep ledger date. (f) Exception flags: over_limit if amount_usd>10000; compliance_hold if final status rejected and qualifying compliance email referenced with a sent line AND sent-date comparison per Brief09 against the pre-corrections date in effect after ledger+amendments+mail (including any mail-driven date changes if any exist), but before correction changes date/status. policy_waiver and retroactive_review depend on policy exception blocks and status correction presence. Current output shows no report lines and no exceptions, strongly suggesting parsers are reading wrong sections (e.g., archived thread/draft/working copy) or correction parsing/selection is broken, leading to missing corrections and policy blocks. Next: inspect parser/sections.js and individual parsers to ensure correct section selection boundaries (regex anchored), and reconcile logic in normalize/reconcile.js and exceptions.js.",
+  "plan": "1) Inspect parseArchive implementation and the section-finding regex logic to ensure it selects only authoritative headings (exact whole line match) and chooses correct instances (e.g., `## Email Excerpts` not archived thread, `## Policy Exceptions` not draft, `## Transaction Ledger` not working copy). Implement Brief 01 whole-line anchored matching, and ignore provisional blocks within the authoritative ledger section. 2) Inspect parsers for ledger/emails/policy/corrections/meetings to see expected formats and current bugs. 3) Inspect normalize/reconcile.js to verify overlay order (ledger -> signed meeting owner -> compliance mail status w/ sent constraints -> corrections last) and correction selection (lexicographically greatest effective per tx+field) + reconciliation report previous_value. 4) Inspect normalize/exceptions.js to ensure flags follow Briefs 07–09, including the Brief09 pre-correction date comparison for compliance_hold and lexical ordering of codes. After code changes (next iteration), rerun extractor twice and diff outputs for determinism and verify report non-empty if corrections exist.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

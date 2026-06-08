@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> ''', encoding='utf-8')
+> print('corrections.js fixed')
+> PY
+corrections.js fixed
+root@c97f4e7457e4:/app# rm -rf /tmp/audit_out_fix1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fi
+x1
+/app/audit-extractor/src/parser/corrections.js:17
+    const lines = block.split("
+                              ^
+
+SyntaxError: Invalid or unexpected token
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/parser/sections.js:4:30)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@c97f4e7457e4:/app# wc -l /tmp/audit_out_fix1/reconciliation_report.jsonl && head -n 20 /tmp/audit_out_fix1/reconciliation_report.jsonl
+wc: /tmp/audit_out_fix1/reconciliation_report.jsonl: No such file or directory
+root@c97f4e7457e4:/app#

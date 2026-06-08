@@ -1,0 +1,23 @@
+{
+  "analysis": "We still aren’t seeing the ls/sed output for /tmp/brief03.txt and /tmp/brief07.txt, suggesting the snapshot is capturing earlier scrollback. We need to re-run the file existence and small head commands and also redirect outputs to ensure they appear. We'll run `wc -l` and `head` and `tail` on the files; those are short and should show. If the files are empty, our extraction regex may have failed; then we’ll locate Brief 03/07 line ranges directly from the archive via python and print those ranges.",
+  "plan": "1) Check if /tmp/brief03.txt and /tmp/brief07.txt exist and have nonzero size/lines. 2) If empty, find headings and extract again robustly. 3) Once we have the actual wording, implement compliance_hold date comparison vs pre-correction date per Brief 09, and mail-driven status merges per Brief 03, then rerun extractor.",
+  "commands": [
+    {
+      "keystrokes": "wc -l /tmp/brief03.txt /tmp/brief07.txt && ls -l /tmp/brief03.txt /tmp/brief07.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 40 /tmp/brief03.txt; echo '---'; tail -n 40 /tmp/brief03.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 40 /tmp/brief07.txt; echo '---'; tail -n 40 /tmp/brief07.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nfor i,l in enumerate(lines,1):\n    if re.match(r'^## Investigation Brief 03\\b', l) or re.match(r'^## Investigation Brief 07\\b', l):\n        print(i,l)\nPY\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

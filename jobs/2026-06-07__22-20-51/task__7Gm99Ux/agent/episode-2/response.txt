@@ -1,0 +1,55 @@
+{
+  "analysis": "We’ve inspected parts of reconcile.js and exceptions.js. reconcileTransactions currently: (a) applies meeting amendments and correction notices but sets report.previous_value to empty string always (wrong per spec), (b) outputs exception_reason always null (no flag logic implemented), (c) likely ignores compliance emails / policy exceptions entirely, and (d) uses row.date directly as effective_date without any normalization. exceptions.js merely filters on exception_reason truthiness, but since exception_reason is always null, exceptions.json will always be empty. A diff of two runs produced no differences, so current output is deterministic, but it’s semantically incorrect: missing exception flags, incorrect reconciliation_report.jsonl previous_value, and likely incorrect hold timing and correction precedence per Briefs 01–09. Next we need to read Brief 02–09 and inspect parsers for meetings/emails/policy/corrections/ledger to implement full policy and correct overlay order, then update writers to match exact output requirements (sorting by transaction_id / notice_id; JSONL lines sorted; CSV formatting with 2 decimals and empty cell for null).",
+  "plan": "1) Read the remaining Investigation Briefs (especially 07–09 and 09 amendment) and structured sections for emails/policy exceptions/corrections to implement correct semantics: ledger sourcing, meeting overlays, email merges, correction precedence, and compliance_hold timing comparison. 2) Inspect current parsers: corrections.js, meetings.js, emails.js, policy.js, and handbook.js to see what data they extract and where drift bugs can occur (e.g., section boundary regex, picking wrong ledger section, unstable selection). 3) Inspect output writers to ensure they produce exactly four files with correct sorting and formatting; update if needed (transactions.json envelope, exceptions.json envelope, CSV header/order, JSONL sorted by notice_id). 4) Implement in reconcile.js: proper overlay order from briefs; compute previous_value correctly when applying each winning correction; ensure winning corrections are selected deterministically; compute exception_reason flags and lexical ordering; output null when no flags. 5) Run extractor into /app/output and validate file contents/sorting; re-run to confirm byte-identical outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"Brief 07\\|Brief 08\\|Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "awk 'NR>=1&&NR<=2000{print}' /app/data/audit_archive.md | grep -n \"Investigation Brief 07\" -n\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f: lines=f.readlines()\nheads=[]\nfor i,l in enumerate(lines,1):\n    if re.match(r'^## Investigation Brief 0[1-9]\\b', l):\n        heads.append((i,l.strip()))\nprint('brief headings:')\nfor i,h in heads: print(i,h)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\npath='/app/data/audit_archive.md'\nwith open(path,'r',encoding='utf-8') as f: txt=f.read().splitlines()\n# print briefs 07-09 blocks by heading boundaries\nidx=[i for i,l in enumerate(txt) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nidx.append(len(txt))\nfor start_i in idx:\n    if start_i>=len(txt):\n        continue\n    head=txt[start_i]\n    if head.startswith('## Investigation Brief 07') or head.startswith('## Investigation Brief 08') or head.startswith('## Investigation Brief 09'):\n        # find next heading\n        nxt=min([j for j in idx if j>start_i])\n        block='\\n'.join(txt[start_i:nxt])\n        print(block)\n        print('\\n'+'='*80+'\\n')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

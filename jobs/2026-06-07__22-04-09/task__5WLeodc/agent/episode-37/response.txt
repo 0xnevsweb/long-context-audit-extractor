@@ -1,0 +1,63 @@
+{
+  "analysis": "Exceptions builder and index.js updated successfully. Now we must fix writers to adhere to required formats and to omit internal metadata fields (prefixed _). JSON writer currently uses wrong envelope keys and includes all fields. CSV writer missing exception_reason column and formatting/escaping. Report writer currently writes as-is; ensure sorting by notice_id is done (it is) but still should be safe. Next: update jsonWriter.js, csvWriter.js, reportWriter.js. Then run extractor to /tmp/out and verify file contents and determinism across reruns.",
+  "plan": "1) Rewrite jsonWriter.js to write {items:[...]} envelopes for both transactions and exceptions, and to only include the required fields (transaction_id, owner, status, effective_date, amount_usd, exception_reason). 2) Rewrite csvWriter.js to output exact header with exception_reason, keep order same as items, format amount_usd with two decimals, and proper CSV escaping; empty cell when exception_reason is null. 3) Rewrite reportWriter.js to sort by notice_id and output JSONL lines with newline at end. 4) Run extractor twice into /tmp/out1 and /tmp/out2 and diff all four outputs.",
+  "commands": [
+    {
+      "keystrokes": "cat > audit-extractor/src/output/jsonWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction pickRow(row) {\n  return {\n    transaction_id: row.transaction_id,\n    owner: row.owner,\n    status: row.status,\n    effective_date: row.effective_date,\n    amount_usd: row.amount_usd,\n    exception_reason: row.exception_reason,\n  };\n}\n\nfunction writeTransactionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items: items.map(pickRow) }, null, 2));\n}\n\nfunction writeExceptionsJson(filePath, items) {\n  fs.writeFileSync(filePath, JSON.stringify({ items: items.map(pickRow) }, null, 2));\n}\n\nmodule.exports = { writeTransactionsJson, writeExceptionsJson };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction csvEscape(value) {\n  if (value === null || value === undefined) return \"\";\n  const s = String(value);\n  if (/[\",\\n]/.test(s)) {\n    return '\"' + s.replace(/\"/g, '\"\"') + '\"';\n  }\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n  const lines = items.map((row) => {\n    const amt = Number(row.amount_usd);\n    const amtStr = Number.isFinite(amt) ? amt.toFixed(2) : \"\";\n    return [\n      csvEscape(row.transaction_id),\n      csvEscape(row.owner),\n      csvEscape(row.status),\n      csvEscape(row.effective_date),\n      csvEscape(amtStr),\n      csvEscape(row.exception_reason === null ? \"\" : row.exception_reason),\n    ].join(\",\");\n  });\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\") + \"\\n\");\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > audit-extractor/src/output/reportWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\nconst { sortByNoticeId } = require(\"../utils/sort\");\n\nfunction writeReconciliationReport(filePath, report) {\n  const rows = Array.isArray(report) ? [...report] : [];\n  sortByNoticeId(rows);\n  const body = rows.map((row) => JSON.stringify(row)).join(\"\\n\");\n  fs.writeFileSync(filePath, body ? body + \"\\n\" : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c audit-extractor/src/output/jsonWriter.js && node -c audit-extractor/src/output/csvWriter.js && node -c audit-extractor/src/output/reportWriter.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/out1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/transactions.csv /tmp/out2/transactions.csv || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/exceptions.json /tmp/out2/exceptions.json || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/reconciliation_report.jsonl /tmp/out2/reconciliation_report.jsonl || true\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "head -n 5 /tmp/out1/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nfrom pathlib import Path\nobj=json.loads(Path('/tmp/out1/transactions.json').read_text())\nprint('transactions', len(obj['items']))\nprint('first', obj['items'][0])\nexc=json.loads(Path('/tmp/out1/exceptions.json').read_text())\nprint('exceptions', len(exc['items']))\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

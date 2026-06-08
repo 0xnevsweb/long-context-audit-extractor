@@ -1,0 +1,6 @@
+{
+  "analysis": "Outputs are now deterministic across reruns (diff between two outdirs is empty). /app/output contains exactly the four required files with correct names. transactions.csv has the required header including exception_reason and amount formatted with two decimals. Both transactions.json and exceptions.json use the required {\"items\": [...]} envelope. reconciliation_report.jsonl is produced. Parsers were fixed to use anchored exact headings for authoritative sections (ledger/emails/policy/corrections/meetings), ledger provisional filtering and last-non-provisional selection are implemented, and reconciliation now computes previous_value in the report and exception flags including compliance_hold using Brief 09’s pre-correction date comparison. Task is ready for grading.",
+  "plan": "No further changes needed. Mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

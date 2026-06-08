@@ -1,0 +1,39 @@
+{
+  "analysis": "Runtime error: sliceSectionByExactHeading is not a function when required from ./sections. This indicates our updated sections.js did not actually persist (or was overwritten) and still only exports parseArchive. We need to rewrite sections.js to include and export sliceSectionByExactHeading, then rerun parseArchive. Also corrections.js still uses indexOf and will pick draft occurrences; must be fixed similarly. Meeting Notes heading is `## Meeting Notes` at line ~1709; meetings parser should slice this section rather than scanning entire doc.",
+  "plan": "1) Overwrite sections.js with the version that exports sliceSectionByExactHeading and parseArchive. 2) Rerun a small Node snippet to ensure sliceSectionByExactHeading is exported and ledger parsing works. 3) Rewrite corrections.js to slice by exact `## Correction Notices` and parse notices. 4) Rewrite meetings.js to slice by exact `## Meeting Notes`, only include signed:true amendments. 5) After parsers fixed, run extractor once to ensure it runs, then proceed to reconcile/exception/report fixes.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/sections.js <<'EOF'\nconst { parseLedger } = require(\"./ledger\");\nconst { parseMeetings } = require(\"./meetings\");\nconst { parseEmails } = require(\"./emails\");\nconst { parseCorrections } = require(\"./corrections\");\nconst { parsePolicyExceptions } = require(\"./policy\");\n\nfunction escapeRegExp(s) {\n  return s.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n}\n\nfunction sliceSectionByExactHeading(markdown, headingLine) {\n  const headRe = new RegExp(`^${escapeRegExp(headingLine)}\\\\s*$`, \"m\");\n  const headMatch = markdown.match(headRe);\n  if (!headMatch || headMatch.index == null) return \"\";\n\n  const start = headMatch.index;\n  const afterStart = start + headMatch[0].length;\n  const rest = markdown.slice(afterStart);\n\n  const nextRe = /^##\\s+/m;\n  const nextMatch = rest.match(nextRe);\n  const end = nextMatch && nextMatch.index != null ? afterStart + nextMatch.index : markdown.length;\n\n  return markdown.slice(start, end);\n}\n\nfunction parseArchive(markdown) {\n  return {\n    ledger: parseLedger(markdown),\n    meetings: parseMeetings(markdown),\n    emails: parseEmails(markdown),\n    corrections: parseCorrections(markdown),\n    policyExceptions: parsePolicyExceptions(markdown),\n  };\n}\n\nmodule.exports = { parseArchive, sliceSectionByExactHeading };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst s = require('/app/audit-extractor/src/parser/sections');\nconsole.log(Object.keys(s));\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nconst { sliceSectionByExactHeading } = require(\"./sections\");\n\nfunction parseCorrections(markdown) {\n  const slice = sliceSectionByExactHeading(markdown, \"## Correction Notices\");\n  if (!slice) return [];\n\n  const notices = [];\n  const blocks = slice.split(/^###\\s+/m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!/^CORR-/.test(noticeId)) continue;\n\n    const entry = { notice_id: noticeId };\n    for (const line of lines.slice(1)) {\n      const trimmed = line.trim();\n      if (/^targets:\\s*/i.test(trimmed)) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (/^field:\\s*/i.test(trimmed)) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (/^value:\\s*/i.test(trimmed)) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (/^effective:\\s*/i.test(trimmed)) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.field && entry.value && entry.effective) {\n      notices.push(entry);\n    }\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'\nconst { sliceSectionByExactHeading } = require(\"./sections\");\n\nfunction parseMeetings(markdown) {\n  // Authoritative meeting amendments live under `## Meeting Notes`.\n  const slice = sliceSectionByExactHeading(markdown, \"## Meeting Notes\");\n  if (!slice) return [];\n\n  const meetings = [];\n  const re = /^####\\s+Amendment for\\s+(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(slice)) !== null) {\n    // Capture until next amendment heading or end of slice.\n    const rest = slice.slice(match.index + match[0].length);\n    const next = rest.search(/^####\\s+/m);\n    const block = next >= 0 ? rest.slice(0, next) : rest;\n\n    const ownerMatch = block.match(/^owner:\\s*(.+)\\s*$/im);\n    const signedMatch = block.match(/^signed:\\s*(.+)\\s*$/im);\n    const signed = signedMatch ? signedMatch[1].trim().toLowerCase() === \"true\" : false;\n    if (!signed) continue;\n\n    meetings.push({\n      transaction_id: match[1].trim().toUpperCase(),\n      owner: ownerMatch ? ownerMatch[1].trim() : \"\",\n      signed,\n    });\n  }\n\n  return meetings;\n}\n\nmodule.exports = { parseMeetings };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/corrections.js && node -c /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed = parseArchive(md);\nconsole.log('ledger', parsed.ledger.length);\nconsole.log('meetings', parsed.meetings.length);\nconsole.log('emails', parsed.emails.length);\nconsole.log('corrections', parsed.corrections.length);\nconsole.log('policyExceptions', parsed.policyExceptions.length);\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

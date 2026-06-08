@@ -1,0 +1,41 @@
+Current Terminal Screen:
+module.exports = { parseCorrections };
+root@de10d3a691f3:/app# sed -n '1,260p' audit-extractor/src/parser/policy.js
+function parsePolicyExceptions(markdown) {
+  const start = markdown.indexOf("## Policy Exceptions");
+  const end = markdown.indexOf("## Correction Notices");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const ids = new Set();
+  const re = /^transaction:\s*(TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(slice)) !== null) {
+    ids.add(match[1]);
+  }
+  return ids;
+}
+
+module.exports = { parsePolicyExceptions };
+root@de10d3a691f3:/app# python3 - <<'PY'
+> import re
+> from pathlib import Path
+> text=Path('/app/data/audit_archive.md').read_text('utf-8',errors='replace')
+> pattern=re.compile(r'(?ms)^#+\s*Investigation Brief\s*0?(\d+)\b(.*?)(?=^#+\s*Investigation Brief\s*0?\d+\b|\Z)')
+> briefs=[]
+> for num,body in pattern.findall(text):
+>     n=int(num)
+>     if 1<=n<=9:
+>         briefs.append((n, body.strip()))
+> briefs.sort()
+> out='\n\n'.join([f"## Investigation Brief {n:02d}\n{b}" for n,b in briefs])
+> Path('/tmp/briefs_01_09.md').write_text(out,'utf-8')
+> print('wrote', '/tmp/briefs_01_09.md', 'chars', len(out))
+> PY
+wrote /tmp/briefs_01_09.md chars 220444
+root@de10d3a691f3:/app# rg -n "hold|compliance|mail|correction|notice|precedence|effective" /tmp/briefs_01_09.md | head -n 80
+bash: rg: command not found
+root@de10d3a691f3:/app# rg -n "##" /app/data/audit_archive.md | tail -n 80
+bash: rg: command not found
+root@de10d3a691f3:/app# rg -n "Ledger|ledger|Correction|Corrections|Compliance Mail|Emails|Mail Excerpts" /app/data/audit_archive.md | tail -n 120
+bash: rg: command not found
+root@de10d3a691f3:/app#

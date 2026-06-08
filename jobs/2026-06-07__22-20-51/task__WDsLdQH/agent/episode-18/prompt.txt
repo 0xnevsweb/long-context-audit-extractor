@@ -1,0 +1,48 @@
+New Terminal Output:
+1464
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '11,25p'
+    11  ## Investigation Brief 01 — Ledger Sourcing
+    12
+    13  Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+    14  slice. For extractor output, treat only the markdown section whose heading
+    15  line is exactly `## Transaction Ledger` as authoritative. The archive also
+    16  contains a working-copy ledger and prose that mentions ledger headings; those
+    17  are investigative context only.
+    18
+    19  Ignore any ledger block that includes a line `provisional: true` (case
+    20  insensitive). When the same transaction id appears in multiple non-provisional
+    21  ledger blocks, the last such block in file order is the base row for that id.
+    22
+    23  Locate section boundaries with regular expressions anchored to whole heading
+    24  lines at line start. Do not locate sections with indexOf or substring search.
+    25
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '384,392p'
+   384  ## Investigation Brief 03 — Compliance Mail Timing
+   385
+   386  The March mail-room audit explained missing holds: agents applied compliance
+   387  messages without checking dispatch dates. When an excerpt includes
+   388  `sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+   389  equal to the ledger date for that transaction. When no `sent:` line is present,
+   390  apply the status change if precedence allows. Correction notices always apply
+   391  after ledger rows, meeting amendments, and mail excerpts have been merged.
+   392
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '555,563p'
+   555  ## Investigation Brief 04 — Correction Notice Precedence
+   556
+   557  The corrections desk ships multiple notices per field. When several notices
+   558  target the same transaction and field, the notice with the lexicographically
+   559  greatest `effective` date wins. For each winning notice, `previous_value` in
+   560  `reconciliation_report.jsonl` is the field value immediately before that notice
+   561  applies (after ledger, amendments, and emails). Owner corrections override
+   562  both ledger owners and signed meeting amendments when applied in this step.
+   563
+root@edd51c718576:/app# nl -ba /app/data/audit_archive.md | sed -n '672,679p'
+   672  ## Investigation Brief 05 — Meeting Amendments and Owners
+   673
+   674  Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+   675  default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+   676  owner when `signed: true` (case insensitive) and, when the amendment includes
+   677  `effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+   678  ledger date for the transaction.
+   679
+root@edd51c718576:/app#

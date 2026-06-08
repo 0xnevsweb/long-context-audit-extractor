@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> function buildExceptions(items, policyMap) {
+>   const normalized = items.map((row) => ({
+>     ...row,
+>     exception_reason: buildExceptionReason(row, policyMap),
+>   }));
+>   const exceptions = normalized.filter((row) => row.exception_reason !== null);
+>   return { items: normalized, exceptions };
+> }
+>
+> module.exports = { buildExceptions };
+> EOF
+root@de10d3a691f3:/app# cat > audit-extractor/src/index.js <<'EOF'
+> const fs = require("node:fs");
+> const path = require("node:path");
+> const { parseArchive } = require("./parser/sections");
+> const { reconcileTransactions } = require("./normalize/reconcile");
+> const { buildExceptions } = require("./normalize/exceptions");
+> const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+> const { writeTransactionsCsv } = require("./output/csvWriter");
+> const { writeReconciliationReport } = require("./output/reportWriter");
+> const { validateOutputs } = require("./schema/validate");
+>
+> async function runExtract(inputPath, outputDir) {
+>   const markdown = fs.readFileSync(inputPath, "utf8");
+>   const parsed = parseArchive(markdown);
+>   const { items: reconciled, report } = reconcileTransactions(parsed);
+>   const { items, exceptions } = buildExceptions(reconciled, parsed.policyExceptions);
+>
+>   fs.mkdirSync(outputDir, { recursive: true });
+>   writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+>   writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+>   writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+>   writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+>   validateOutputs(items, exceptions, report);
+> }
+>
+> module.exports = { runExtract };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/normalize/exceptions.js && node -c audit-extractor/src/index.js
+root@de10d3a691f3:/app#

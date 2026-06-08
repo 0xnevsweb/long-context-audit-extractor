@@ -1,0 +1,19 @@
+{
+  "analysis": "Ledger and email parsers are now less likely to hit decoy headings. Running extractor twice produced identical transactions.json (diff empty), so prior nondeterminism may have been due to bad sort comparator/equal cases or different data sources; still need to fix determinism fully (sort comparator should return 0 when equal; report sorting too). Output files still noncompliant: exceptions.json tiny and empty, report empty, CSV/header wrong, JSON envelope keys wrong. Reconciliation logic still wrong: ignores signed meeting rule, ignores correction precedence and previous_value computation, ignores exception flags, and doesn’t implement the briefs’ overlay/timing semantics.",
+  "plan": "1) Read and extract the authoritative rule statements from Investigation Briefs 01–09 (from /tmp/briefs_01_09.md) using grep for explicit 'Rule', 'Overlay order', 'Status', 'Hold', 'Exception flag', etc., then open those portions. 2) Based on those rules, implement reconcileTransactions: base ledger; apply signed meeting amendments; merge emails with proper timing/sender rules and hold logic per Brief 09; apply corrections in notice_id/effective precedence and compute previous_value; produce report sorted by notice_id. 3) Implement exception_reason generation and exceptions.json filtering. 4) Fix writers to exact required envelopes and CSV formatting, and fix sort comparator to be stable. Then run extractor to /app/output and validate outputs are deterministic.",
+  "commands": [
+    {
+      "keystrokes": "grep -nEi \"^\\s*(rules?|overlay|order of|precedence|correction|notice|mail|email|sender|hold|exception|flag)\" /tmp/briefs_01_09.md | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"Brief 09|amend\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nlines=Path('/tmp/briefs_01_09.md').read_text('utf-8',errors='replace').splitlines()\n# Find lines that look like authoritative rule bullet points\nimport re\npat=re.compile(r\"(?i)(overlay order|apply .* in this order|precedence|supersed|hold|exception flag|flag code|correction notices|mail merge|sender)\")\nidx=[i for i,l in enumerate(lines) if pat.search(l)]\nprint('rule-ish hits', len(idx))\nfor i in idx[:30]:\n    print('\\ncontext around', i+1)\n    for j in range(max(0,i-3), min(len(lines), i+15)):\n        print(f\"{j+1}: {lines[j]}\")\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

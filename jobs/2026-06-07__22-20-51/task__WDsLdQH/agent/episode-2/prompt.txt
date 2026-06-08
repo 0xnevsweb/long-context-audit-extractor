@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Working paper WP-2852 documents a three-way match failure on capital project capitalization where accrual true-ups near $6,607 never received matching complianc
+e responses during July review.
+
+Controller staff described capital project capitalization as a secondary driver of mailbox ingestion lag while rebuilding the July review close calendar. They e
+mphasized that decoy ledger headings in draft appendices must be ignored.
+
+Site visit #174 to fixed assets exported 18 compliance threads tied to capital project capitalization. Reviewers noted that policy waiver omission appeared when
+ever correction batches straddled a weekend wire cutoff.
+
+Committee packet #683 chronicles how capital project capitalization escalated after E. Novak observed retroactive status conflict between two correction batches
+. Cross-checks against amendment minutes were required before accepting any owner change.
+
+Peer review #381 of fixed assets sampling found 11 mislinked emails on capital project capitalization. None of the mislinked messages originated from compliance
+ addresses, supporting Brief 02 sender restrictions.
+
+Stakeholder workshop #672 on capital project capitalization produced conflicting recollections about which correction notice superseded an earlier owner change;
+ Brief 04 governs that precedence for automated output.
+
+Lead reviewer T. Singh opened working paper WP-6133 after fixed assets reported that capital project capitalization distorted the July review reconciliation. Th
+e team reconstructed mailbox ordering and found ledger slice confusion affecting at least 14 transaction threads.
+
+External advisors reviewing capital project capitalization during July review asked for a machine-readable trace explaining why rejected rows received hold flag
+s. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+Risk assessment WP-4030 links capital project capitalization to control gaps in mail ingestion for fixed assets. The assessment explicitly warns against treatin
+g alternate ledger headings or appendix commentary as transaction sources.
+
+SOX testing team WP-6038 linked retroactive status conflict on capital project capitalization to a manual override logged at 02:14 local time between two automa
+ted correction imports.
+root@edd51c718576:/app# grep -n "## Policy Exceptions" /app/data/audit_archive.md | head
+788:## Policy Exceptions (draft)
+2883:## Policy Exceptions
+root@edd51c718576:/app# grep -n "## Correction Notices" /app/data/audit_archive.md | head
+2900:## Correction Notices
+root@edd51c718576:/app# grep -n "## Transaction Ledger" /app/data/audit_archive.md | head
+15:line is exactly `## Transaction Ledger` as authoritative. The archive also
+2938:## Transaction Ledger (working copy)
+2946:## Transaction Ledger
+root@edd51c718576:/app#

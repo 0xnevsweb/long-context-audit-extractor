@@ -5,7 +5,6 @@ import csv
 import json
 import re
 import subprocess
-from dataclasses import dataclass
 from pathlib import Path
 
 import pytest
@@ -18,31 +17,13 @@ ARCHIVE_PATH = Path("/app/data/audit_archive.md")
 if not ARCHIVE_PATH.exists():
     ARCHIVE_PATH = Path(__file__).resolve().parent / "seeds" / "audit_archive.md"
 
+GOLDEN_DIR = Path(__file__).resolve().parent / "seeds" / "golden"
 OUTPUT_DIR = Path("/app/output")
 CLI = ["node", str(APP_DIR / "src" / "cli.js"), "extract"]
 
-STATUS_ORDER = {"pending": 0, "approved": 1, "rejected": 2, "reversed": 3}
 
-
-@dataclass(frozen=True)
-class TransactionRow:
-    transaction_id: str
-    owner: str
-    status: str
-    effective_date: str
-    amount_usd: float
-    exception_reason: str | None
-
-
-def _section_between(markdown: str, start_heading: str, end_heading: str) -> str:
-    """Return markdown from a line-anchored ## heading up to the next line-anchored ## heading."""
-    start = re.search(rf"^{re.escape(start_heading)}\s*$", markdown, re.M)
-    if not start:
-        return ""
-    rest = markdown[start.end() :]
-    end = re.search(rf"^{re.escape(end_heading)}\s*$", rest, re.M)
-    stop = start.end() + (end.start() if end else len(rest))
-    return markdown[start.start() : stop]
+def _load_golden(name: str):
+    return json.loads((GOLDEN_DIR / name).read_text(encoding="utf-8"))
 
 
 def _ledger_slice(markdown: str) -> str:
@@ -55,54 +36,13 @@ def _ledger_slice(markdown: str) -> str:
     return markdown[match.start() : stop]
 
 
-def _parse_ledger(markdown: str) -> dict[str, dict]:
-    """Parse ledger blocks; skip provisional rows; last non-provisional block wins."""
-    section = _ledger_slice(markdown)
-    by_id: dict[str, dict] = {}
-    for block in section.split("\n### ")[1:]:
-        lines = block.splitlines()
-        txn_id = lines[0].strip()
-        if not txn_id.startswith("TXN-"):
-            continue
-        if re.search(r"^provisional:\s*true\s*$", block, re.M | re.I):
-            continue
-        row = {"transaction_id": txn_id}
-        for line in lines:
-            trimmed = line.strip()
-            if trimmed.startswith("amount:"):
-                row["amount"] = float(trimmed.split(":", 1)[1].strip())
-            elif trimmed.startswith("owner:"):
-                row["owner"] = trimmed.split(":", 1)[1].strip()
-            elif trimmed.startswith("status:"):
-                row["status"] = trimmed.split(":", 1)[1].strip()
-            elif trimmed.startswith("date:"):
-                row["date"] = trimmed.split(":", 1)[1].strip()
-        by_id[txn_id] = row
-    return by_id
-
-
-def _parse_meetings(markdown: str) -> list[dict]:
-    meetings: list[dict] = []
-    for match in re.finditer(r"^#### Amendment for (TXN-[0-9a-f-]+)\s*$", markdown, re.M):
-        block = markdown[match.start() : match.start() + 500]
-        owner_m = re.search(r"^owner:\s*(.+)$", block, re.M)
-        signed_m = re.search(r"^signed:\s*(.+)$", block, re.M)
-        effective_m = re.search(r"^effective:\s*(\d{4}-\d{2}-\d{2})\s*$", block, re.M)
-        meetings.append(
-            {
-                "transaction_id": match.group(1),
-                "owner": owner_m.group(1).strip() if owner_m else "",
-                "signed": signed_m.group(1).strip().lower() == "true" if signed_m else False,
-                "effective": effective_m.group(1) if effective_m else None,
-            }
-        )
-    return meetings
-
-
 def _parse_emails(markdown: str) -> list[dict]:
-    slice_ = _section_between(markdown, "## Email Excerpts", "## Policy Exceptions")
-    if not slice_:
-        slice_ = markdown
+    """Parse transaction-scoped email excerpts from the authoritative mail section."""
+    start = re.search(r"^## Email Excerpts\s*$", markdown, re.M)
+    end = re.search(r"^## Policy Exceptions\s*$", markdown, re.M)
+    if not start or not end or end.start() <= start.start():
+        return []
+    slice_ = markdown[start.start() : end.start()]
     emails: list[dict] = []
     for block in slice_.split("\n\n"):
         from_m = re.search(r"^From:\s*(.+)$", block, re.M)
@@ -119,154 +59,6 @@ def _parse_emails(markdown: str) -> list[dict]:
                 }
             )
     return emails
-
-
-def _parse_corrections(markdown: str) -> list[dict]:
-    slice_ = _section_between(markdown, "## Correction Notices", "## Transaction Ledger")
-    notices: list[dict] = []
-    for block in slice_.split("\n### ")[1:]:
-        lines = block.splitlines()
-        notice_id = lines[0].strip()
-        if not notice_id.startswith("CORR-"):
-            continue
-        entry = {"notice_id": notice_id}
-        for line in lines:
-            trimmed = line.strip()
-            if trimmed.startswith("targets:"):
-                entry["transaction_id"] = trimmed.split(":", 1)[1].strip()
-            elif trimmed.startswith("field:"):
-                entry["field"] = trimmed.split(":", 1)[1].strip()
-            elif trimmed.startswith("value:"):
-                entry["value"] = trimmed.split(":", 1)[1].strip()
-            elif trimmed.startswith("effective:"):
-                entry["effective"] = trimmed.split(":", 1)[1].strip()
-        notices.append(entry)
-    return notices
-
-
-def _parse_policy_waiver_ids(markdown: str) -> set[str]:
-    slice_ = _section_between(markdown, "## Policy Exceptions", "## Correction Notices")
-    ids: set[str] = set()
-    for block in slice_.split("### Policy Exception"):
-        txn_m = re.search(r"^transaction:\s*(TXN-[0-9a-f-]+)\s*$", block, re.M)
-        appr_m = re.search(r"^approved_by:\s*(\S+)\s*$", block, re.M)
-        if txn_m and appr_m and appr_m.group(1).strip().lower() == "compliance":
-            ids.add(txn_m.group(1))
-    return ids
-
-
-def _build_expected(markdown: str) -> tuple[list[TransactionRow], list[dict]]:
-    by_id = _parse_ledger(markdown)
-    meetings = _parse_meetings(markdown)
-    emails = _parse_emails(markdown)
-    corrections = _parse_corrections(markdown)
-    policy_ok = _parse_policy_waiver_ids(markdown)
-
-    for meeting in meetings:
-        target = by_id.get(meeting["transaction_id"])
-        if not target or not meeting["signed"]:
-            continue
-        if meeting["effective"] and meeting["effective"] < target["date"]:
-            continue
-        target["owner"] = meeting["owner"]
-
-    for email in emails:
-        target = by_id.get(email["transaction_id"])
-        if not target:
-            continue
-        if "compliance@" not in email["from_addr"].lower():
-            continue
-        if email["sent"] and email["sent"] < target["date"]:
-            continue
-        cur = target["status"].lower()
-        nxt = email["status"]
-        if STATUS_ORDER.get(nxt, -1) > STATUS_ORDER.get(cur, -1):
-            target["status"] = nxt
-
-    pre_correction_dates = {tid: row["date"] for tid, row in by_id.items()}
-
-    report: list[dict] = []
-    corr_by_txn: dict[str, list[dict]] = {}
-    for notice in corrections:
-        corr_by_txn.setdefault(notice["transaction_id"], []).append(notice)
-
-    corr_eff_date: dict[str, str] = {}
-    status_corrected: set[str] = set()
-    for tid, notices in corr_by_txn.items():
-        target = by_id.get(tid)
-        if not target:
-            continue
-        by_field: dict[str, list[dict]] = {}
-        for notice in notices:
-            by_field.setdefault(notice["field"], []).append(notice)
-        effs: list[str] = []
-        for field, group in by_field.items():
-            winner = max(group, key=lambda x: x["effective"])
-            if field == "date":
-                prev = target["date"]
-            elif field == "owner":
-                prev = target["owner"]
-            else:
-                prev = target["status"]
-            new_val = winner["value"]
-            if field == "owner":
-                target["owner"] = new_val
-            elif field == "status":
-                target["status"] = new_val
-                status_corrected.add(tid)
-                effs.append(winner["effective"])
-            elif field == "date":
-                target["date"] = new_val
-                effs.append(winner["effective"])
-            report.append(
-                {
-                    "notice_id": winner["notice_id"],
-                    "transaction_id": tid,
-                    "field": field,
-                    "previous_value": str(prev),
-                    "new_value": str(new_val),
-                    "effective": winner["effective"],
-                }
-            )
-        if effs:
-            corr_eff_date[tid] = max(effs)
-
-    report.sort(key=lambda r: r["notice_id"])
-
-    rows: list[TransactionRow] = []
-    for tid in sorted(by_id.keys()):
-        row = by_id[tid]
-        amount = float(row["amount"])
-        status = row["status"].lower()
-        ledger_date = row["date"]
-        reasons: list[str] = []
-        if amount > 10000:
-            reasons.append("over_limit")
-        hold_compare_date = pre_correction_dates.get(tid, ledger_date)
-        if status == "rejected" and any(
-            "compliance@" in em["from_addr"].lower()
-            and em["transaction_id"] == tid
-            and em.get("sent")
-            and em["sent"] >= hold_compare_date
-            for em in emails
-        ):
-            reasons.append("compliance_hold")
-        if status == "approved" and amount > 10000 and tid in policy_ok:
-            reasons.append("policy_waiver")
-        if status == "reversed" and amount > 5000 and tid in status_corrected:
-            reasons.append("retroactive_review")
-        reasons.sort()
-        rows.append(
-            TransactionRow(
-                transaction_id=tid,
-                owner=row["owner"],
-                status=status,
-                effective_date=corr_eff_date.get(tid, ledger_date),
-                amount_usd=round(amount, 2),
-                exception_reason=";".join(reasons) if reasons else None,
-            )
-        )
-    return rows, report
 
 
 def _run_cli(archive: Path, outdir: Path) -> subprocess.CompletedProcess[str]:
@@ -290,9 +82,28 @@ def archive_text() -> str:
 
 
 @pytest.fixture(scope="module")
-def expected(archive_text: str) -> tuple[list[TransactionRow], list[dict]]:
-    """Compute handbook-correct expected rows from the archive."""
-    return _build_expected(archive_text)
+def golden_transactions() -> list[dict]:
+    """Load golden transaction rows derived from the archive."""
+    return _load_golden("transactions.json")["items"]
+
+
+@pytest.fixture(scope="module")
+def golden_exceptions() -> list[dict]:
+    """Load golden flagged transaction rows."""
+    return _load_golden("exceptions.json")["items"]
+
+
+@pytest.fixture(scope="module")
+def golden_report() -> list[dict]:
+    """Load golden reconciliation report lines."""
+    path = GOLDEN_DIR / "reconciliation_report.jsonl"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+@pytest.fixture(scope="module")
+def golden_meta() -> dict:
+    """Load golden metadata for targeted behavioral checks."""
+    return _load_golden("meta.json")
 
 
 @pytest.fixture(scope="module")
@@ -311,6 +122,9 @@ def test_archive_is_long_context(archive_text: str) -> None:
     assert len(archive_text) // 4 >= 50_000, (
         f"archive below ~50k token estimate: {len(archive_text) // 4}"
     )
+    lines = [line.strip() for line in archive_text.splitlines() if line.strip()]
+    unique_ratio = len(set(lines)) / len(lines)
+    assert unique_ratio >= 0.55, f"archive line repetition too high: {unique_ratio:.3f}"
     assert "Investigation Brief 01" in archive_text
     brief_09_heading = "## Investigation Brief 09 — Mid-Year Amendment"
     assert brief_09_heading in archive_text
@@ -320,14 +134,13 @@ def test_archive_is_long_context(archive_text: str) -> None:
 
 
 def test_archive_policy_is_distributed(archive_text: str) -> None:
-    """Binding rules use varied brief markers and structured sections, not one grep hook."""
-    markers = (
-        "Committee ruling (binding for extract):",
-        "Auditor directive (mandatory for extract):",
-        "Extract policy (authoritative):",
-        "Controller memo (binding reconciliation rule):",
-    )
-    assert sum(marker in archive_text for marker in markers) >= 3
+    """Binding rules are spread across nine briefs without single-hook grep markers."""
+    for idx in range(1, 10):
+        assert f"Investigation Brief {idx:02d}" in archive_text or (
+            idx == 9 and "Investigation Brief 09" in archive_text
+        )
+    assert "binding for extract" not in archive_text
+    assert "mandatory for extract" not in archive_text
     for section in (
         "## Email Excerpts",
         "## Policy Exceptions",
@@ -362,21 +175,20 @@ def test_output_files_exist(pipeline_output: Path) -> None:
 
 
 def test_transactions_json_schema(
-    pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, golden_transactions: list[dict]
 ) -> None:
-    """Verify transactions.json envelope and row fields match the handbook."""
-    expected_rows, _ = expected
+    """Verify transactions.json envelope and row fields match golden expectations."""
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     assert "items" in payload and isinstance(payload["items"], list)
-    assert len(payload["items"]) == len(expected_rows)
+    assert len(payload["items"]) == len(golden_transactions)
 
-    for actual, exp in zip(payload["items"], expected_rows, strict=True):
-        assert actual["transaction_id"] == exp.transaction_id
-        assert actual["owner"] == exp.owner
-        assert actual["status"] == exp.status
-        assert actual["effective_date"] == exp.effective_date
-        assert abs(actual["amount_usd"] - exp.amount_usd) < 0.001
-        assert actual.get("exception_reason") == exp.exception_reason
+    for actual, exp in zip(payload["items"], golden_transactions, strict=True):
+        assert actual["transaction_id"] == exp["transaction_id"]
+        assert actual["owner"] == exp["owner"]
+        assert actual["status"] == exp["status"]
+        assert actual["effective_date"] == exp["effective_date"]
+        assert abs(actual["amount_usd"] - exp["amount_usd"]) < 0.001
+        assert actual.get("exception_reason") == exp.get("exception_reason")
 
 
 def test_transactions_sorted(pipeline_output: Path) -> None:
@@ -387,10 +199,9 @@ def test_transactions_sorted(pipeline_output: Path) -> None:
 
 
 def test_transactions_csv_matches_json(
-    pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, golden_transactions: list[dict]
 ) -> None:
     """Verify transactions.csv header, ordering, and cell values mirror JSON rows."""
-    expected_rows, _ = expected
     with (pipeline_output / "transactions.csv").open(encoding="utf-8", newline="") as handle:
         reader = csv.DictReader(handle)
         assert reader.fieldnames == [
@@ -402,49 +213,55 @@ def test_transactions_csv_matches_json(
             "exception_reason",
         ]
         rows = list(reader)
-    assert len(rows) == len(expected_rows)
-    for actual, exp in zip(rows, expected_rows, strict=True):
-        assert actual["transaction_id"] == exp.transaction_id
-        assert actual["owner"] == exp.owner
-        assert actual["status"] == exp.status
-        assert actual["effective_date"] == exp.effective_date
-        assert float(actual["amount_usd"]) == pytest.approx(exp.amount_usd)
+    assert len(rows) == len(golden_transactions)
+    for actual, exp in zip(rows, golden_transactions, strict=True):
+        assert actual["transaction_id"] == exp["transaction_id"]
+        assert actual["owner"] == exp["owner"]
+        assert actual["status"] == exp["status"]
+        assert actual["effective_date"] == exp["effective_date"]
+        assert float(actual["amount_usd"]) == pytest.approx(exp["amount_usd"])
         exc_cell = actual["exception_reason"]
-        if exp.exception_reason is None:
+        if exp.get("exception_reason") is None:
             assert exc_cell == ""
         else:
-            assert exc_cell == exp.exception_reason
+            assert exc_cell == exp["exception_reason"]
 
 
 def test_exceptions_json_only_flagged(
-    pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, golden_exceptions: list[dict]
 ) -> None:
     """Verify exceptions.json contains only rows with non-null exception_reason."""
-    expected_rows, _ = expected
-    flagged = [row for row in expected_rows if row.exception_reason]
     payload = json.loads((pipeline_output / "exceptions.json").read_text(encoding="utf-8"))
     assert "items" in payload
-    assert len(payload["items"]) == len(flagged)
-    for actual, exp in zip(payload["items"], flagged, strict=True):
-        assert actual["transaction_id"] == exp.transaction_id
-        assert actual["exception_reason"] == exp.exception_reason
+    assert len(payload["items"]) == len(golden_exceptions)
+    for actual, exp in zip(payload["items"], golden_exceptions, strict=True):
+        assert actual["transaction_id"] == exp["transaction_id"]
+        assert actual["exception_reason"] == exp["exception_reason"]
+
+
+def test_exceptions_sorted_by_transaction_id(
+    pipeline_output: Path,
+) -> None:
+    """Verify exceptions.json items are sorted by transaction_id ascending."""
+    payload = json.loads((pipeline_output / "exceptions.json").read_text(encoding="utf-8"))
+    ids = [row["transaction_id"] for row in payload["items"]]
+    assert ids == sorted(ids)
 
 
 def test_reconciliation_report(
-    pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, golden_report: list[dict]
 ) -> None:
-    """Verify reconciliation_report.jsonl lines match winning correction notices."""
-    _, expected_report = expected
+    """Verify reconciliation_report.jsonl lines match golden correction notices."""
     lines = (pipeline_output / "reconciliation_report.jsonl").read_text(encoding="utf-8").splitlines()
-    assert len(lines) == len(expected_report)
+    assert len(lines) == len(golden_report)
     parsed = [json.loads(line) for line in lines if line.strip()]
-    assert [row["notice_id"] for row in parsed] == [row["notice_id"] for row in expected_report]
-    for actual, exp in zip(parsed, expected_report, strict=True):
+    assert [row["notice_id"] for row in parsed] == [row["notice_id"] for row in golden_report]
+    for actual, exp in zip(parsed, golden_report, strict=True):
         assert actual == exp
 
 
 def test_duplicate_ledger_last_wins(
-    pipeline_output: Path, archive_text: str, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, archive_text: str, golden_transactions: list[dict]
 ) -> None:
     """Verify duplicate ledger blocks use the last non-provisional occurrence in file order."""
     section = _ledger_slice(archive_text)
@@ -458,15 +275,33 @@ def test_duplicate_ledger_last_wins(
             dup_ids.append(txn_id)
         seen.add(txn_id)
     assert dup_ids, "fixture should include duplicate ledger rows"
-    exp_by_id = {r.transaction_id: r for r in expected[0]}
+    exp_by_id = {r["transaction_id"]: r for r in golden_transactions}
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     out_by_id = {r["transaction_id"]: r for r in payload["items"]}
     for tid in dup_ids:
-        assert out_by_id[tid]["owner"] == exp_by_id[tid].owner
+        assert out_by_id[tid]["owner"] == exp_by_id[tid]["owner"]
+
+
+def test_skips_provisional_ledger_rows(
+    pipeline_output: Path,
+    archive_text: str,
+    golden_meta: dict,
+    golden_transactions: list[dict],
+) -> None:
+    """Verify provisional: true ledger blocks are ignored per Brief 01."""
+    tid = golden_meta["provisional_txn"]
+    assert re.search(rf"^### {re.escape(tid)}\s*$[\s\S]*?^provisional:\s*true\s*$", archive_text, re.M | re.I)
+    section = _ledger_slice(archive_text)
+    assert section.count(f"### {tid}") >= 2
+    exp = next(r for r in golden_transactions if r["transaction_id"] == tid)
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    actual = next(r for r in payload["items"] if r["transaction_id"] == tid)
+    assert actual["owner"] == exp["owner"]
+    assert actual["owner"] != "stale"
 
 
 def test_ignores_decoy_ledger_section(
-    pipeline_output: Path, archive_text: str, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, archive_text: str
 ) -> None:
     """Verify output does not use the working-copy ledger section."""
     assert "## Transaction Ledger (working copy)" in archive_text
@@ -476,98 +311,132 @@ def test_ignores_decoy_ledger_section(
 
 def test_compliance_hold_uses_pre_correction_ledger_date(
     pipeline_output: Path,
-    archive_text: str,
-    expected: tuple[list[TransactionRow], list[dict]],
+    golden_meta: dict,
+    golden_transactions: list[dict],
 ) -> None:
     """Verify compliance_hold compares sent against ledger date before corrections adjust date."""
-    tid = "TXN-1b083448-63e3-5527-a20a-edd71416341c"
-    exp_by_id = {r.transaction_id: r for r in expected[0]}
-    assert "compliance_hold" in (exp_by_id[tid].exception_reason or "")
+    tid = golden_meta["compliance_hold_txn"]
+    exp = next(r for r in golden_transactions if r["transaction_id"] == tid)
+    assert "compliance_hold" in (exp.get("exception_reason") or "")
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
-    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
-    assert "compliance_hold" in (out_by_id[tid].get("exception_reason") or "")
-    corrections = _parse_corrections(archive_text)
-    assert any(c["transaction_id"] == tid and c["field"] == "date" for c in corrections)
-    emails = _parse_emails(archive_text)
-    hold_email = next(
-        e
-        for e in emails
-        if e["transaction_id"] == tid and "compliance@" in e["from_addr"].lower() and e.get("sent")
-    )
-    ledger = _parse_ledger(archive_text)
-    assert hold_email["sent"] >= ledger[tid]["date"]
-    assert hold_email["sent"] < "2024-09-01"
+    actual = next(r for r in payload["items"] if r["transaction_id"] == tid)
+    assert "compliance_hold" in (actual.get("exception_reason") or "")
 
 
 def test_compliance_hold_requires_sent_line(
     pipeline_output: Path,
     archive_text: str,
-    expected: tuple[list[TransactionRow], list[dict]],
 ) -> None:
     """Verify compliance_hold is not set from compliance@ emails lacking sent:."""
     emails = _parse_emails(archive_text)
-    ledger = _parse_ledger(archive_text)
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     out_by_id = {r["transaction_id"]: r for r in payload["items"]}
     for email in emails:
         if "compliance@" not in email["from_addr"].lower() or email.get("sent"):
             continue
         tid = email["transaction_id"]
-        if tid not in ledger:
-            continue
         exc = out_by_id[tid].get("exception_reason") or ""
         assert "compliance_hold" not in exc
 
 
+def test_non_compliance_email_does_not_change_status(
+    pipeline_output: Path,
+    archive_text: str,
+    golden_transactions: list[dict],
+) -> None:
+    """Verify non-compliance@ senders never change transaction status."""
+    emails = _parse_emails(archive_text)
+    exp_by_id = {r["transaction_id"]: r for r in golden_transactions}
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
+    for email in emails:
+        if "compliance@" in email["from_addr"].lower():
+            continue
+        tid = email["transaction_id"]
+        assert out_by_id[tid]["status"] == exp_by_id[tid]["status"]
+
+
 def test_retroactive_review_on_status_correction(
-    pipeline_output: Path, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, golden_transactions: list[dict]
 ) -> None:
     """Verify retroactive_review is set when status was corrected to reversed above threshold."""
-    flagged = [r for r in expected[0] if r.exception_reason and "retroactive_review" in r.exception_reason]
+    flagged = [
+        r for r in golden_transactions if r.get("exception_reason") and "retroactive_review" in r["exception_reason"]
+    ]
     assert flagged, "fixture must include at least one retroactive_review row"
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     out_by_id = {r["transaction_id"]: r for r in payload["items"]}
     for exp in flagged:
-        assert "retroactive_review" in (out_by_id[exp.transaction_id].get("exception_reason") or "")
-
-
-def test_compliance_email_without_sent_applies_status(
-    pipeline_output: Path,
-    archive_text: str,
-    expected: tuple[list[TransactionRow], list[dict]],
-) -> None:
-    """Verify compliance emails without sent: still apply status when precedence allows."""
-    emails = _parse_emails(archive_text)
-    exp_by_id = {r.transaction_id: r for r in expected[0]}
-    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
-    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
-    for email in emails:
-        if "compliance@" not in email["from_addr"].lower() or email.get("sent"):
-            continue
-        tid = email["transaction_id"]
-        assert out_by_id[tid]["status"] == exp_by_id[tid].status
+        assert "retroactive_review" in (out_by_id[exp["transaction_id"]].get("exception_reason") or "")
 
 
 def test_compliance_email_sent_date_gate(
     pipeline_output: Path,
     archive_text: str,
-    expected: tuple[list[TransactionRow], list[dict]],
+    golden_transactions: list[dict],
 ) -> None:
     """Verify compliance emails with sent before ledger date do not change status."""
     emails = _parse_emails(archive_text)
-    ledger = _parse_ledger(archive_text)
+    section = _ledger_slice(archive_text)
+    ledger_dates: dict[str, str] = {}
+    for block in section.split("\n### ")[1:]:
+        lines = block.splitlines()
+        txn_id = lines[0].strip()
+        if not txn_id.startswith("TXN-"):
+            continue
+        for line in lines:
+            if line.strip().startswith("date:"):
+                ledger_dates[txn_id] = line.split(":", 1)[1].strip()
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     out_by_id = {r["transaction_id"]: r for r in payload["items"]}
-    exp_by_id = {r.transaction_id: r for r in expected[0]}
+    exp_by_id = {r["transaction_id"]: r for r in golden_transactions}
     for email in emails:
-        if "compliance@" not in email["from_addr"].lower():
-            continue
-        if not email.get("sent"):
+        if "compliance@" not in email["from_addr"].lower() or not email.get("sent"):
             continue
         txn_id = email["transaction_id"]
-        if email["sent"] >= ledger[txn_id]["date"]:
+        if txn_id not in ledger_dates or email["sent"] >= ledger_dates[txn_id]:
             continue
-        assert out_by_id[txn_id]["status"] == exp_by_id[txn_id].status
+        assert out_by_id[txn_id]["status"] == exp_by_id[txn_id]["status"]
+
+
+def test_correction_effective_date_from_handbook(
+    pipeline_output: Path,
+    archive_text: str,
+    golden_transactions: list[dict],
+) -> None:
+    """Verify effective_date uses winning correction effective dates when status or date was corrected."""
+    corrected_ids = set()
+    slice_start = archive_text.find("## Correction Notices")
+    slice_end = archive_text.find("## Transaction Ledger", slice_start)
+    corr_slice = archive_text[slice_start:slice_end]
+    for block in corr_slice.split("\n### ")[1:]:
+        field_m = re.search(r"^field:\s*(\w+)", block, re.M)
+        target_m = re.search(r"^targets:\s*(TXN-[0-9a-f-]+)", block, re.M)
+        if field_m and target_m and field_m.group(1) in ("status", "date"):
+            corrected_ids.add(target_m.group(1))
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    by_id = {row["transaction_id"]: row for row in payload["items"]}
+    for exp in golden_transactions:
+        if exp["transaction_id"] not in corrected_ids:
+            continue
+        assert by_id[exp["transaction_id"]]["effective_date"] == exp["effective_date"]
+
+
+def test_compliance_email_without_sent_applies_status(
+    pipeline_output: Path,
+    archive_text: str,
+    golden_transactions: list[dict],
+) -> None:
+    """Verify compliance emails without sent: still apply status when precedence allows."""
+    emails = _parse_emails(archive_text)
+    exp_by_id = {r["transaction_id"]: r for r in golden_transactions}
+    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
+    out_by_id = {r["transaction_id"]: r for r in payload["items"]}
+    for email in emails:
+        if "compliance@" not in email["from_addr"].lower() or email.get("sent"):
+            continue
+        tid = email["transaction_id"]
+        assert out_by_id[tid]["status"] == exp_by_id[tid]["status"]
 
 
 def test_deterministic_rerun() -> None:
@@ -581,38 +450,20 @@ def test_deterministic_rerun() -> None:
     assert a == b
 
 
-def test_correction_effective_date_from_handbook(
-    pipeline_output: Path,
-    archive_text: str,
-    expected: tuple[list[TransactionRow], list[dict]],
-) -> None:
-    """Verify effective_date uses winning correction effective dates when status or date was corrected."""
-    expected_rows, _ = expected
-    corrections = _parse_corrections(archive_text)
-    date_or_status_corrected = {
-        c["transaction_id"] for c in corrections if c["field"] in ("status", "date")
-    }
-    payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
-    by_id = {row["transaction_id"]: row for row in payload["items"]}
-    for exp in expected_rows:
-        if exp.transaction_id not in date_or_status_corrected:
-            continue
-        assert by_id[exp.transaction_id]["effective_date"] == exp.effective_date
-
-
 def test_meeting_signed_owner_override(
-    pipeline_output: Path, archive_text: str, expected: tuple[list[TransactionRow], list[dict]]
+    pipeline_output: Path, archive_text: str, golden_transactions: list[dict]
 ) -> None:
     """Verify signed meeting amendments with valid effective dates change owner."""
-    meetings = _parse_meetings(archive_text)
-    ledger = _parse_ledger(archive_text)
+    exp_by_id = {r["transaction_id"]: r for r in golden_transactions}
     payload = json.loads((pipeline_output / "transactions.json").read_text(encoding="utf-8"))
     by_id = {row["transaction_id"]: row for row in payload["items"]}
-    exp_by_id = {r.transaction_id: r for r in expected[0]}
-
-    for meeting in meetings:
-        if not meeting["signed"]:
+    for match in re.finditer(r"^#### Amendment for (TXN-[0-9a-f-]+)\s*$", archive_text, re.M):
+        block = archive_text[match.start() : match.start() + 500]
+        signed_m = re.search(r"^signed:\s*(.+)$", block, re.M)
+        effective_m = re.search(r"^effective:\s*(\d{4}-\d{2}-\d{2})\s*$", block, re.M)
+        if not signed_m or signed_m.group(1).strip().lower() != "true":
             continue
-        if meeting["effective"] and meeting["effective"] < ledger[meeting["transaction_id"]]["date"]:
+        tid = match.group(1)
+        if effective_m and effective_m.group(1) < "2024-01-01":
             continue
-        assert by_id[meeting["transaction_id"]]["owner"] == exp_by_id[meeting["transaction_id"]].owner
+        assert by_id[tid]["owner"] == exp_by_id[tid]["owner"]

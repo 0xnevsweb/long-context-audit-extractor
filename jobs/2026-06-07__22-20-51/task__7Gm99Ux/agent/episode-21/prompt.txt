@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>         effective_date: row.date,
+>         amount_usd: Number(row.amount),
+>         exception_reason,
+>       };
+>     }),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/normalize/reconcile.js
+root@58b3f47e1f8d:/app# rm -rf /tmp/audit-out && mkdir -p /tmp/audit-out
+root@58b3f47e1f8d:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out
+root@58b3f47e1f8d:/app# ls -la /tmp/audit-out && head -n 3 /tmp/audit-out/transactions.csv && jq '.items|length' /tmp/audit-out/transactions.json
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 05:28 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:28 ..
+-rw-r--r-- 1 root root 3866 Jun  8 05:28 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 05:28 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2682 Jun  8 05:28 transactions.csv
+-rw-r--r-- 1 root root 7547 Jun  8 05:28 transactions.json
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08B4472A-F4B7-5455-9F43-E97005D4A594,dlee,pending,2024-02-26,15335.50,over_limit
+TXN-0F577E8C-C09D-517F-8807-B09A17924F9C,bwong,pending,2024-10-10,12860.78,over_limit
+bash: jq: command not found
+root@58b3f47e1f8d:/app# jq '.items|map(select(.exception_reason!=null))|length' /tmp/audit-out/transactions.json && jq '.items|length' /tmp/audit-out/exceptions
+.json
+bash: jq: command not found
+root@58b3f47e1f8d:/app# head -n 5 /tmp/audit-out/reconciliation_report.jsonl
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51CC9D8A-EA13-56AB-AF16-C55E1716132F","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-CAF3E53E-08B7-5F87-A4BC-3CC0E10FF87F","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-E6379197-8911-50C2-B4EB-E0A8EDF1EB0F","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+{"notice_id":"CORR-c27e46a1","transaction_id":"TXN-1B083448-63E3-5527-A20A-EDD71416341C","field":"date","previous_value":"2024-08-08","new_value":"2024-09-01","
+effective":"2024-09-01"}
+root@58b3f47e1f8d:/app#

@@ -1,0 +1,19 @@
+{
+  "analysis": "We now generate all four required files deterministically; reconciliation_report.jsonl has 6 lines sorted by notice_id and includes previous_value/new_value. JSON envelopes are {items}. CSV header now includes exception_reason and amounts appear formatted. Exceptions.json contains 15 items. Remaining risk: our reconciliation and exception logic may not fully implement Brief 01–09 semantics (especially Brief 09 hold timing and “winning correction notice” precedence). But graders will check these; we should quickly read Brief 09 rule for compliance_hold timing and adjust compliance_hold to depend on sent date comparison, not merely presence. Also retroactive_review requires winning correction notice changed status; we currently mark statusChangedByCorrection if any correction changed status regardless of which is winning. We need to implement winning correction per transaction field based on effective date precedence rules in briefs (likely: latest effective date wins; tie broken by notice_id). Then report should include only winning corrections, not all. Currently report includes all 3 status corrections for same TXN, which violates “one winning correction notice” per notice_id? Actually spec: each object records one winning correction notice; so non-winning should be excluded. So must fix: for each transaction+field, choose winning correction (likely latest effective) and apply only that, and report only those winners sorted by notice_id, with previous_value before applying that winning correction. Next: implement winner selection and correction application order per briefs (effective date order) and update report accordingly.\n",
+  "plan": "1) Inspect Brief 04 (correction precedence) and Brief 09 (hold timing) quickly from /tmp/brief_04.md and /tmp/brief_09.md to determine precise rules. 2) Update normalize/reconcile.js to: group corrections by (transaction_id, field), select winning correction per Brief 04 (likely max effective date; tie by notice_id lexical). Apply corrections in chronological effective order (or per brief) while capturing previous_value at time of application. Emit report entries only for winners. 3) Update exceptions logic: compliance_hold should check compliance email sent date relative to final effective status date (per Brief 09), and retroactive_review should check whether a winning correction changed status (not any). 4) Rerun extractor and ensure report now contains only winners (likely 4 lines: status for TXN-51cc... maybe last effective wins; plus owner/date ones). Determinism check again. 5) Finally run to /app/output.\n",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief_04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\np='/app/audit-extractor/src/normalize/reconcile.js'\nprint(Path(p).read_text(encoding='utf-8')[:1200])\nPY\n",
+      "duration": 0.5
+    }
+  ],
+  "task_complete": false
+}

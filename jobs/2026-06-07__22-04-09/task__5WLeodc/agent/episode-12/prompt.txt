@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@de10d3a691f3:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/emails.js
+> @@
+>  function parseEmails(markdown) {
+> -  const start = markdown.indexOf("## Email Excerpts");
+> -  const end = markdown.indexOf("## Policy Exceptions");
+> -  const slice =
+> -    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+> +  // The archive contains decoy headings like "## Policy Exceptions (draft)".
+> +  // We must stop at the authoritative "## Policy Exceptions" header line.
+> +  const start = markdown.indexOf("## Email Excerpts");
+> +  const endMatch = markdown.match(/^##\s+Policy Exceptions\s*$/m);
+> +  const end = endMatch ? endMatch.index : -1;
+> +  const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+>    const emails = [];
+>    const blocks = slice.split(/\n\n+/);
+>    for (const block of blocks) {
+>      const fromMatch = block.match(/^From:\s*(.+)$/im);
+>      const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>      const statusMatch = block.match(/^status:\s*(\w+)/im);
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@de10d3a691f3:/app# node -c audit-extractor/src/parser/emails.js
+root@de10d3a691f3:/app#

@@ -1,0 +1,27 @@
+{
+  "analysis": "We still don’t have the actual Brief 04/05/09 rule blocks; the output shown is around the Meeting Notes section and narrative lines referencing Brief 04. The python script output that should print entire brief windows didn’t appear (likely too large and got truncated to the tail). We need a more targeted approach: find the exact line numbers for Brief headings and then sed small slices around those line numbers, especially where rules are stated, avoiding huge output.",
+  "plan": "1) Use grep to get exact line numbers for the start of Brief 04/05/09 headings in /tmp/briefs_01_09.md. 2) Use sed to print ~120 lines from each start, then further narrow by searching within each brief for 'Rules:' / backticks / bullet lists. 3) Extract the precise semantics needed (correction precedence, signed amendment handling, hold timing amendment).",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 04\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 05\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nfrom pathlib import Path\nlines=Path('/tmp/briefs_01_09.md').read_text('utf-8',errors='replace').splitlines()\nstarts={}\nfor i,l in enumerate(lines, start=1):\n    m=re.match(r'^## Investigation Brief (\\d{2})\\b', l)\n    if m:\n        starts[int(m.group(1))]=i\nfor b in [4,5,9]:\n    print(b, starts.get(b))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,120p' /tmp/briefs_01_09.md | head\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

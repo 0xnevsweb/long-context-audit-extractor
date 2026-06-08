@@ -1,0 +1,25 @@
+# Rubric 1
+Agent inspects /app/audit-extractor source layout (for example find or ls under src/) before editing extractor code, +1
+Agent reads Investigation Brief sections from /app/data/audit_archive.md using targeted grep/sed/awk rather than only skimming the file start, +3
+Agent reads Investigation Brief 09 — Mid-Year Amendment content from the archive, +3
+Agent displays the authoritative structured tail sections (Email Excerpts, Policy Exceptions, Correction Notices, canonical Transaction Ledger) from the archive, +2
+Agent inspects src/normalize/reconcile.js before modifying merge overlay logic, +2
+Agent inspects one or more parser modules under src/parser/ (ledger, sections, emails, corrections, meetings, or policy) before patching, +2
+Agent patches ledger sourcing to use the canonical ## Transaction Ledger heading and ignore working-copy or decoy ledger sections, +3
+Agent implements or preserves filtering of provisional: true ledger blocks in parser or reconcile code, +2
+Agent gates mail-driven status changes to compliance@ senders only in reconcile or email parsing logic, +3
+Agent implements status precedence ordering (pending→approved→rejected→reversed) for compliance mail merges, +3
+Agent implements correction-notice winner selection by greatest effective date per transaction and field, +3
+Agent implements compliance_hold sent-date comparison against the pre-correction ledger date per Brief 09, +3
+Agent updates output writers so transactions.json and exceptions.json use a top-level items envelope, +2
+Agent updates csvWriter to emit header transaction_id,owner,status,effective_date,amount_usd,exception_reason with blank cells for null exception_reason, +2
+Agent runs node /app/audit-extractor/src/cli.js extract with --input /app/data/audit_archive.md and an --outdir path, +2
+Agent inspects generated transactions.json, transactions.csv, exceptions.json, or reconciliation_report.jsonl after a CLI run, +1
+Agent runs the extract CLI twice and compares transactions.json for byte-identical output, +2
+Agent invokes the extract CLI without --input or --outdir and observes stderr containing the word missing, +1
+Agent reads or modifies files under /tests/, -5
+Agent copies or manually fabricates output JSON/CSV/JSONL into --outdir without running the extract CLI, -5
+Agent uses indexOf or substring search to locate markdown section boundaries in final parser code, -3
+Agent treats decoy sections (archived email thread, draft policy exceptions, working-copy ledger) as authoritative merge inputs, -3
+Agent applies status changes from non-compliance@ email senders in merge logic, -3
+Agent repeats the same failing node extract command three or more times without changing source code, -1

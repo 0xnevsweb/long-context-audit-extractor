@@ -1,0 +1,27 @@
+{
+  "analysis": "We successfully rewrote sort.js, reportWriter.js, policy.js, and emails.js. However, sections.js currently only exports parseArchive and does not provide sliceSectionByExactHeading; policy.js and emails.js now require it, so runtime will fail until we implement it. Also, parseArchive currently calls parseLedger/parseMeetings/parseEmails/etc on the full markdown; we should refactor those parsers to slice authoritative sections themselves or enhance sections.js to provide helpers. Next: implement sliceSectionByExactHeading in sections.js (with anchored regex per Brief 01), update parseArchive to pass full markdown but parsers will slice internally (ledger already should), then fix meetings/corrections/ledger as needed. Then address reconcile.js/exceptions.js per spec and briefs.",
+  "plan": "1) Implement `sliceSectionByExactHeading(markdown, headingLine)` in sections.js using a multiline regex anchored at line start for exact heading line, and ending at the next `## ` heading (or EOF). Export it alongside parseArchive. 2) Run a quick node invocation to ensure parseArchive works. 3) Update meetings.js and corrections.js (and possibly ledger.js) to slice by exact authoritative headings to avoid draft/archived sections. 4) Run extractor to see what breaks next, then implement reconcile/exceptions logic and report previous_value.",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/sections.js <<'EOF'\nconst { parseLedger } = require(\"./ledger\");\nconst { parseMeetings } = require(\"./meetings\");\nconst { parseEmails } = require(\"./emails\");\nconst { parseCorrections } = require(\"./corrections\");\nconst { parsePolicyExceptions } = require(\"./policy\");\n\nfunction escapeRegExp(s) {\n  return s.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n}\n\n/**\n * Slice a top-level markdown section whose heading line matches exactly.\n * Heading detection is anchored to whole lines to avoid decoy substrings.\n */\nfunction sliceSectionByExactHeading(markdown, headingLine) {\n  const headRe = new RegExp(`^${escapeRegExp(headingLine)}\\\\s*$`, \"m\");\n  const headMatch = markdown.match(headRe);\n  if (!headMatch || headMatch.index == null) return \"\";\n\n  const start = headMatch.index;\n  const afterStart = start + headMatch[0].length;\n\n  // Next top-level heading starting at beginning of line.\n  const rest = markdown.slice(afterStart);\n  const nextRe = /^##\\s+/m;\n  const nextMatch = rest.match(nextRe);\n  const end = nextMatch && nextMatch.index != null ? afterStart + nextMatch.index : markdown.length;\n\n  return markdown.slice(start, end);\n}\n\nfunction parseArchive(markdown) {\n  return {\n    ledger: parseLedger(markdown),\n    meetings: parseMeetings(markdown),\n    emails: parseEmails(markdown),\n    corrections: parseCorrections(markdown),\n    policyExceptions: parsePolicyExceptions(markdown),\n  };\n}\n\nmodule.exports = { parseArchive, sliceSectionByExactHeading };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst parsed = parseArchive(md);\nconsole.log(Object.keys(parsed));\nconsole.log('ledger', parsed.ledger.length);\nconsole.log('meetings', parsed.meetings.length);\nconsole.log('emails', parsed.emails.length);\nconsole.log('corrections', parsed.corrections.length);\nconsole.log('policyExceptions', parsed.policyExceptions.length);\nNODE\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

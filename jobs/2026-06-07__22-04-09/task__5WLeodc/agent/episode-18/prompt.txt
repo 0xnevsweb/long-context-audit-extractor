@@ -1,0 +1,41 @@
+Current Terminal Screen:
+rift, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+1055:Controller staff described grant compliance attestation as a secondary driver of unsigned amendment drift while rebuilding the November certification close
+ calendar. They emphasized that decoy ledger headings in draft appendices must be ignored.
+1061:In November certification, compliance migrated grant compliance attestation workflows to a new ticketing tool. Migration cutover introduced unsigned amendm
+ent drift, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+1065:Regional lead S. Patel hosted a readout on grant compliance attestation where finance controllers disputed whether unsigned meeting notes should override l
+edger owners; investigators cited Brief 05 during the session.
+1131:Regional lead A. Ndiaye hosted a readout on year-end close checklist drift where finance controllers disputed whether unsigned meeting notes should overrid
+e ledger owners; investigators cited Brief 05 during the session.
+1219:Regional lead R. Okonkwo hosted a readout on vendor onboarding backlog where finance controllers disputed whether unsigned meeting notes should override le
+dger owners; investigators cited Brief 05 during the session.
+1303:Regional lead K. Morales hosted a readout on intercompany netting dispute where finance controllers disputed whether unsigned meeting notes should override
+ ledger owners; investigators cited Brief 05 during the session.
+1349:Operations analyst R. Okonkwo demonstrated that treasury wire cutoff failures batches processed after midnight UTC inherited stale owner fields, a symptom
+consistent with unsigned amendment drift rather than incorrect amount parsing.
+1383:Regional lead J. Huang hosted a readout on treasury wire cutoff failures where finance controllers disputed whether unsigned meeting notes should override
+ledger owners; investigators cited Brief 05 during the session.
+1391:Treasury liaison L. Bergstrom explained that treasury wire cutoff failures related wires were paused during February recon, delaying compliance responses a
+nd amplifying unsigned amendment drift on rejected rows.
+1419:SOX testing team WP-2435 linked unsigned amendment drift on FX revaluation lag to a manual override logged at 02:14 local time between two automated correc
+tion imports.
+1427:Regional lead T. Singh hosted a readout on FX revaluation lag where finance controllers disputed whether unsigned meeting notes should override ledger owne
+rs; investigators cited Brief 05 during the session.
+1503:Committee packet #417 chronicles how lease modification restatement escalated after J. Huang observed unsigned amendment drift between two correction batch
+es. Cross-checks against amendment minutes were required before accepting any owner change.
+1541:Treasury liaison J. Huang explained that capital project capitalization related wires were paused during July review, delaying compliance responses and amp
+lifying unsigned amendment drift on rejected rows.
+1553:Regional lead M. Chen hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override
+ledger owners; investigators cited Brief 05 during the session.
+1579:Follow-up #873 confirmed that fixed assets routed capital project capitalization statements through a shared inbox with 6 delegates. Investigators flagged
+unsigned amendment drift as the likely root cause of inconsistent status columns.
+1601:Regional lead L. Bergstrom hosted a readout on revenue cutoff testing where finance controllers disputed whether unsigned meeting notes should override led
+ger owners; investigators cited Brief 05 during the session.
+1649:Operations analyst S. Patel demonstrated that revenue cutoff testing batches processed after midnight UTC inherited stale owner fields, a symptom consisten
+t with unsigned amendment drift rather than incorrect amount parsing.
+1661:Lead reviewer S. Patel opened working paper WP-9690 after compliance reported that grant compliance attestation distorted the November certification reconc
+iliation. The team reconstructed mailbox ordering and found unsigned amendment drift affecting at least 3 transaction threads.
+1667:Regional lead S. Patel hosted a readout on grant compliance attestation where finance controllers disputed whether unsigned meeting notes should override l
+edger owners; investigators cited Brief 05 during the session.
+root@de10d3a691f3:/app#

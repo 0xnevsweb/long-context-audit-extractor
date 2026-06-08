@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Privacy review #119 redacted personal data from vendor onboarding backlog threads but retained transaction identifiers needed for reconciliation testing.
+
+Vendor management J. Huang described vendor onboarding backlog onboarding delays that pushed compliance responses past ledger dates on several rejected rows dur
+ing Q1 close.
+
+Operations analyst L. Bergstrom demonstrated that vendor onboarding backlog batches processed after midnight UTC inherited stale owner fields, a symptom consist
+ent with hold flag suppression rather than incorrect amount parsing.
+
+Follow-up #195 confirmed that procurement routed vendor onboarding backlog statements through a shared inbox with 4 delegates. Investigators flagged owner field
+ churn as the likely root cause of inconsistent status columns.
+
+Interview #627 with procurement counsel captured how vendor onboarding backlog correspondence referenced amounts near $41,763 without matching ledger rows. Inve
+stigators preserved the thread because status precedence inversion can change downstream exception coding.
+
+Tax counsel flagged vendor onboarding backlog restatement risk during Q1 close close, unrelated to extractor precedence but relevant to why the archive retains
+full correspondence.
+
+Lead reviewer P. Okafor opened working paper WP-4725 after procurement reported that vendor onboarding backlog distorted the Q1 close reconciliation. The team r
+econstructed mailbox ordering and found status precedence inversion affecting at least 19 transaction threads.
+
+root@57a25f8d12e0:/app# sed -n '1,220p' /app/audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@57a25f8d12e0:/app#

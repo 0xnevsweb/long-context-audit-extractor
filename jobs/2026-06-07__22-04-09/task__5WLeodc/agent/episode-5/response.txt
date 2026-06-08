@@ -1,0 +1,59 @@
+{
+  "analysis": "Parser/policy.js is visible; ripgrep (rg) is not installed, so prior searches failed. We successfully extracted Investigation Briefs 01–09 into /tmp/briefs_01_09.md. Next we must use grep/sed/awk to find the authoritative rule statements (hold timing, compliance mail merge, correction precedence, overlay order, exception codes). Also need to review remaining parser code (sections/ledger/meetings/emails/corrections) since only the tail of corrections was shown.",
+  "plan": "1) Use sed to view the remaining parser files fully (sections/ledger/meetings/emails/corrections). 2) Use grep to locate key rule phrases within /tmp/briefs_01_09.md, then open the relevant brief sections around those lines. 3) Use grep to locate structured tail sections in the archive (Ledger Rows, Compliance Mail, Correction Notices, Policy Exceptions) and inspect formats so we can implement robust parsing and reconciliation.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"hold|compliance|mail|correction|notice|precedence|effective|overlay|merge|supersed\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" -n /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"Investigation Brief 09\" /tmp/briefs_01_09.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nfrom pathlib import Path\np=Path('/tmp/briefs_01_09.md')\nlines=p.read_text('utf-8',errors='replace').splitlines()\n# find likely rules blocks by keywords and print context\nkeys=re.compile(r\"hold|compliance|mail|correction|notice|precedence|overlay|merge|effective\", re.I)\nhits=[i for i,l in enumerate(lines) if keys.search(l)]\nprint('hits',len(hits))\nfor i in hits[:25]:\n    print('\\n-- context starting line', i+1)\n    for j in range(i, min(i+18, len(lines))):\n        print(f\"{j+1}: {lines[j]}\")\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Ledger\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Correction\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Compliance\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Policy Exceptions\" /app/data/audit_archive.md | head -n 20\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

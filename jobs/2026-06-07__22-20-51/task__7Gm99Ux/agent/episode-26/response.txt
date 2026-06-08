@@ -1,0 +1,15 @@
+{
+  "analysis": "We now have the line numbers for Brief 03 and Brief 07 in the main archive: Brief 03 starts at 384, Brief 07 starts at 973. Our /tmp/brief03.txt and /tmp/brief07.txt views didn’t show due to snapshot issues, but we can directly `sed` those line ranges from /app/data/audit_archive.md to read authoritative text. Next: print the ranges around 384–392 (brief 03) and 973–982 (brief 07) and parse their rules. Then update reconcile.js compliance_hold logic: compare qualifying compliance email sent date against the transaction's pre-correction ledger date (as amended by Brief 09). Also implement mail-driven status changes per Brief 03 before corrections. We'll then rerun extractor and verify determinism.",
+  "plan": "1) View Brief 03 (lines ~384-392) and Brief 07 (973-982) from the archive using sed with those line numbers. 2) Update reconcile.js accordingly:\n   - Mail merge: determine how email status impacts transaction status per Brief 03.\n   - Compliance hold: determine comparison direction per Brief 07 and use pre-correction date (Brief 09).\n3) Re-run extractor twice and diff; then run to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '360,430p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '940,1035p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

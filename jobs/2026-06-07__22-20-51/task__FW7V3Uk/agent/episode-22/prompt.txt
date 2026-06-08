@@ -1,0 +1,90 @@
+New Terminal Output:
+tory
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> from pathlib import Path
+> Path('/app/audit-extractor/src/parser/corrections.js').write_text('''function parseCorrections(markdown) {
+>   const NL = String.fromCharCode(10);
+>
+>   const start = markdown.indexOf("## Correction Notices");
+>   if (start < 0) return [];
+>
+>   // Corrections appear immediately before the ledger tail.
+>   // Prefer ending at the working-copy ledger heading if present.
+>   const end1 = markdown.indexOf("## Transaction Ledger (working copy)", start);
+>   const end2 = markdown.indexOf("## Transaction Ledger", start);
+>   const end = end1 >= 0 ? end1 : end2;
+>
+>   const slice = end >= 0 && end > start ? markdown.slice(start, end) : markdown.slice(start);
+>
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>
+>   for (const block of blocks) {
+>     const lines = block.split(NL);
+>     const noticeId = (lines[0] || "").trim();
+>     if (!noticeId.startsWith("CORR-")) continue;
+>
+>     const entry = { notice_id: noticeId };
+>
+>     for (const line of lines) {
+>       const trimmed = String(line || "").trim();
+>       if (trimmed.startsWith("targets:")) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("field:")) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("value:")) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("effective:")) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {
+>       notices.push(entry);
+>     }
+>   }
+>
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> ''', encoding='utf-8')
+> print('corrections.js fixed w/ NL')
+> PY
+corrections.js fixed w/ NL
+root@c97f4e7457e4:/app# rm -rf /tmp/audit_out_fix1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fi
+x1
+root@c97f4e7457e4:/app# ls -la /tmp/audit_out_fix1 && wc -l /tmp/audit_out_fix1/reconciliation_report.jsonl && head -n 20 /tmp/audit_out_fix1/reconciliation_rep
+ort.jsonl
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 05:29 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:29 ..
+-rw-r--r-- 1 root root 3865 Jun  8 05:29 exceptions.json
+-rw-r--r-- 1 root root 1094 Jun  8 05:29 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2682 Jun  8 05:29 transactions.csv
+-rw-r--r-- 1 root root 7547 Jun  8 05:29 transactions.json
+6 /tmp/audit_out_fix1/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"reversed","new_value":"approved","ef
+fective":"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+{"notice_id":"CORR-a05d24ef","transaction_id":"TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f","field":"owner","previous_value":"evans","new_value":"dlee","effective"
+:"2024-04-20"}
+{"notice_id":"CORR-b16e35f0","transaction_id":"TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f","field":"date","previous_value":"2024-04-16","new_value":"2024-08-01","
+effective":"2024-08-01"}
+{"notice_id":"CORR-c27e46a1","transaction_id":"TXN-1b083448-63e3-5527-a20a-edd71416341c","field":"date","previous_value":"2024-08-08","new_value":"2024-09-01","
+effective":"2024-09-01"}
+root@c97f4e7457e4:/app# mkdir -p /tmp/audit_out_fix2 && rm -rf /tmp/audit_out_fix2/* && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_arc
+hive.md --outdir /tmp/audit_out_fix2
+root@c97f4e7457e4:/app# sha256sum /tmp/audit_out_fix1/* /tmp/audit_out_fix2/* | sed 's#/tmp/audit_out_fix[12]/##g' | sort
+03e258fcfc61dfc35d9492cd58ce9cd88401cf8847bf1b9cd921ee9c87a01c73  reconciliation_report.jsonl
+03e258fcfc61dfc35d9492cd58ce9cd88401cf8847bf1b9cd921ee9c87a01c73  reconciliation_report.jsonl
+24f5eac2584147d07894cc1be165dd421cb1c8b02e70420982111a54feed3e83  exceptions.json
+24f5eac2584147d07894cc1be165dd421cb1c8b02e70420982111a54feed3e83  exceptions.json
+ad302991cc18f8aa3a9c34408deb385b91d40e4990fb4bf3071552c9553752e9  transactions.csv
+ad302991cc18f8aa3a9c34408deb385b91d40e4990fb4bf3071552c9553752e9  transactions.csv
+e4065fc434ad207cd7b8bc9ceaacab4a3674fad47d3701ec6d26349887c2813e  transactions.json
+e4065fc434ad207cd7b8bc9ceaacab4a3674fad47d3701ec6d26349887c2813e  transactions.json
+root@c97f4e7457e4:/app#

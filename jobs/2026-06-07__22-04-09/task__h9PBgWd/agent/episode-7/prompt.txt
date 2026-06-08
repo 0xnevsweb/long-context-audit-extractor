@@ -1,0 +1,289 @@
+Current terminal state:
+New Terminal Output:
+
+root@8eb6883b8e1c:/app# node -e "require('/app/audit-extractor/src/normalize/reconcile'); console.log('reconcile.js loaded')"
+reconcile.js loaded
+root@8eb6883b8e1c:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function gteDate(a, b) {
+  // YYYY-MM-DD lexical compare works
+  if (!a || !b) return false;
+  return String(a) >= String(b);
+}
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+
+  // Base ledger load
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  // Meeting amendments (owner only)
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (!target) continue;
+    if (!meeting.signed) continue;
+    if (meeting.effective && !gteDate(meeting.effective, target.date)) continue;
+    if (meeting.owner) target.owner = meeting.owner;
+  }
+
+  // Compliance emails (status only, precedence + optional sent gating)
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (!target) continue;
+    if (!String(email.from_addr || "").includes("compliance@")) continue;
+
+    if (email.sent && !gteDate(email.sent, target.date)) {
+      continue;
+    }
+
+    const current = String(target.status || "").toLowerCase();
+    const proposed = String(email.status || "").toLowerCase();
+    if (!(proposed in STATUS_ORDER) || !(current in STATUS_ORDER)) continue;
+    if (STATUS_ORDER[proposed] >= STATUS_ORDER[current]) {
+      target.status = proposed;
+    }
+
+    // Keep evidence of qualifying email on the transaction for later exception flagging.
+    target.__qualifying_emails = target.__qualifying_emails || [];
+    target.__qualifying_emails.push({ sent: email.sent, from_addr: email.from_addr });
+  }
+
+  // Snapshot pre-correction values for Brief 09 compliance_hold timing.
+  const preCorrection = new Map();
+  for (const [id, row] of byId.entries()) {
+    preCorrection.set(id, { date: row.date, status: String(row.status || "").toLowerCase(), owner: row.owner });
+  }
+
+  // Pick winning corrections by (transaction_id, field): greatest effective lexicographically
+  const winnersByKey = new Map();
+  for (const notice of parsed.corrections) {
+    if (!notice || !notice.transaction_id || !notice.field || !notice.effective) continue;
+    const key = `${notice.transaction_id}::${notice.field}`;
+    const prev = winnersByKey.get(key);
+    if (!prev || String(notice.effective) > String(prev.effective)) {
+      winnersByKey.set(key, notice);
+    }
+  }
+
+  // Apply winners; build report with previous_value just before applying.
+  // Apply in notice_id order for determinism (application order shouldn't matter across different fields,
+  // but this keeps behavior stable).
+  const winners = [...winnersByKey.values()].sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+  const report = [];
+
+  // Track if status was changed by a winning correction for retroactive_review
+  const statusChangedByCorrection = new Set();
+  // Track effective_date override if correction changes status or date
+  const effectiveOverride = new Map();
+
+  for (const notice of winners) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) continue;
+
+    let prevVal = "";
+    if (notice.field === "owner") prevVal = String(target.owner ?? "");
+    else if (notice.field === "status") prevVal = String(target.status ?? "");
+    else if (notice.field === "date") prevVal = String(target.date ?? "");
+    else prevVal = String(target[notice.field] ?? "");
+
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      const before = String(target.status ?? "");
+      target.status = String(notice.value || "").toLowerCase();
+      if (String(before).toLowerCase() !== String(target.status).toLowerCase()) {
+        statusChangedByCorrection.add(notice.transaction_id);
+      }
+      effectiveOverride.set(notice.transaction_id, notice.effective);
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+      effectiveOverride.set(notice.transaction_id, notice.effective);
+    }
+
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: prevVal,
+      new_value: String(notice.value ?? ""),
+      effective: notice.effective,
+    });
+  }
+
+  // Build final items (exception_reason computed later in exceptions.js currently; keep placeholder)
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => {
+      const txnId = row.transaction_id;
+      const ledgerDate = preCorrection.get(txnId)?.date || row.date;
+      const effective_date = effectiveOverride.get(txnId) || ledgerDate;
+      return {
+        transaction_id: txnId,
+        owner: row.owner,
+        status: S
+[... output limited to 10000 bytes; 2663 interior bytes omitted ...]
+":"2024-09-01","
+effective":"2024-09-01"}
+root@8eb6883b8e1c:/app# cat /tmp/audit-out4/exceptions.json
+{
+  "exceptions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+      "owner": "jdoe",
+      "status": "rejected",
+      "effective_date": "2024-09-01",
+      "amount_usd": 10113.94,
+      "exception_reason": "compliance_hold;over_limit"
+    },
+    {
+      "transaction_id": "TXN-20cd5f27-165a-55cf-90db-b472725bb03b",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-12-24",
+      "amount_usd": 12588.66,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-33c930a7-114e-50c1-b790-e26c53e5f025",
+      "owner": "ckim",
+      "status": "pending",
+      "effective_date": "2024-11-11",
+      "amount_usd": 14234.2,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-378cf202-0cc9-578e-91ea-d8d008c534e9",
+      "owner": "jdoe",
+      "status": "pending",
+      "effective_date": "2024-03-15",
+      "amount_usd": 19727.88,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f",
+      "owner": "asmith",
+      "status": "reversed",
+      "effective_date": "2024-06-15",
+      "amount_usd": 7500,
+      "exception_reason": "retroactive_review"
+    },
+    {
+      "transaction_id": "TXN-53e38083-cc01-56a8-be81-f412d80c5f5d",
+      "owner": "frost",
+      "status": "approved",
+      "effective_date": "2024-02-14",
+      "amount_usd": 18354.46,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1",
+      "owner": "jdoe",
+      "status": "approved",
+      "effective_date": "2024-05-02",
+      "amount_usd": 19455.76,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-6a290cff-b5f2-5992-9a90-1f22dedca980",
+      "owner": "evans",
+      "status": "approved",
+      "effective_date": "2024-03-27",
+      "amount_usd": 16708.92,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a",
+      "owner": "ckim",
+      "status": "pending",
+      "effective_date": "2024-01-25",
+      "amount_usd": 13962.08,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f",
+      "owner": "evans",
+      "status": "rejected",
+      "effective_date": "2024-01-13",
+      "amount_usd": 16981.04,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8",
+      "owner": "frost",
+      "status": "rejected",
+      "effective_date": "2024-04-01",
+      "amount_usd": 18082.34,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-c7416874-b91b-5c2d-92de-0098b1224d18",
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-09-09",
+      "amount_usd": 11487.36,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-05-05",
+      "amount_usd": 5993.68,
+      "exception_reason": "compliance_hold"
+    }
+  ]
+}root@8eb6883b8e1c:/app# rm -rf /app/output && mkdir -p /app/output
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output
+root@8eb6883b8e1c:/app# ls -la /app/output && wc -c /app/output/*
+total 36
+drwxr-xr-x 2 root root 4096 Jun  8 05:08 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:08 ..
+-rw-r--r-- 1 root root 4114 Jun  8 05:08 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 05:08 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2439 Jun  8 05:08 transactions.csv
+-rw-r--r-- 1 root root 7569 Jun  8 05:08 transactions.json
+ 4114 /app/output/exceptions.json
+  728 /app/output/reconciliation_report.jsonl
+ 2439 /app/output/transactions.csv
+ 7569 /app/output/transactions.json
+14850 total
+root@8eb6883b8e1c:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

@@ -1,0 +1,47 @@
+{
+  "analysis": "Current implementation is clearly incorrect vs required contract and described bugs: JSON envelopes use {transactions:…}/{exceptions:…} instead of {items:…}; CSV header missing exception_reason and amount formatting; exceptions builder never sets exception_reason so always empty; reconciliation blindly overwrites owner/status with meetings/emails without applying Brief-defined timing/precedence, ignores status precedence rules, ignores compliance sender restriction, and corrections report previous_value is always empty and report not sorted by notice_id. sortByTransactionId comparator is unstable for equality (never returns 0) which can cause drift between runs. We still need to read Investigation Briefs 01–09 (esp 09) and tail structured data to implement correct merge rules, hold timing, correction precedence, and exception flags.",
+  "plan": "1) Read the rest of the archive to capture all authoritative rules: scan for Briefs 01–09 sections and extract the explicit reconciliation semantics (ledger sourcing, meeting amendments, compliance email merge rules, correction precedence, exception flag definitions, hold timing amendment in Brief 09). 2) Inspect parsers (ledger/meetings/emails/corrections/policy) to understand structured data extraction and what fields are available (timestamps, effective dates, notice ordering, etc.). 3) Fix determinism: stable sorting for transactions and report; ensure comparator returns 0 on equality; ensure any merges iterate in deterministic order (sort inputs by their ids/timestamps). 4) Implement correct output writers: envelopes {items}, CSV column order with exception_reason, amount formatting to 2 decimals, empty cell for null, newline conventions. 5) Implement reconciliation pipeline per briefs (base ledger -> meeting amendments -> compliance mail merges (with sender filter, timing, dedupe) -> corrections with precedence and previous_value tracking) and compute exception_reason codes in lexical order; build exceptions.json with only flagged rows. 6) Run extractor twice and diff/hash outputs to confirm byte-identical transactions.json and overall contract compliance.",
+  "commands": [
+    {
+      "keystrokes": "rg -n \"## Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\ntext=open(p,'r',encoding='utf-8').read().splitlines()\nidx=[(i,l) for i,l in enumerate(text) if re.match(r'^## Investigation Brief 0[1-9]\\b',l)]\nfor j,(i,l) in enumerate(idx):\n  end=idx[j+1][0] if j+1<len(idx) else min(len(text), i+220)\n  print('\\n'.join([f'--- {i+1}:{l} ---']+text[i:end][:180]))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 220 /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,300p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

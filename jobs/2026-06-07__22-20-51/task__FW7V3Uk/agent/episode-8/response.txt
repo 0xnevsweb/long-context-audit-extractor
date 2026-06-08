@@ -1,0 +1,43 @@
+{
+  "analysis": "We inspected parser/emails.js: it parses Email Excerpts but ignores the required 'sent:' line entirely, and it does not filter to compliance@ explicitly. This explains compliance_hold drift/misses. We also saw parser/corrections.js earlier: it parses correction notices fields but our current output has empty reconciliation_report.jsonl, suggesting corrections aren’t applied or report generation is missing. We need to inspect remaining source files (main reconciliation pipeline) and then modify: incorporate sent date parsing and Brief 09 timing rule, apply emails as a merge layer, apply corrections with precedence and generate reconciliation_report.jsonl (one per winning correction notice). Also need to compute exception flags and populate exceptions.json (currently empty).",
+  "plan": "1) Inspect remaining parser modules and the main extraction/reconciliation logic to see how ledger, meeting amendments, policy exceptions, and corrections are combined. 2) Identify why reconciliation_report.jsonl is empty and why exceptions.json has no items. 3) Implement required semantics: parse sent dates; enforce compliance@ qualifier; compute hold timing per Brief 09; apply meeting amendments (signed only, effective dates) and mail merges and corrections in correct order; generate deterministic outputs sorted correctly. 4) Update CLI for missing flags requirement if needed.",
+  "commands": [
+    {
+      "keystrokes": "find /app/audit-extractor/src -type f -maxdepth 4 -name '*.js' -print\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/extract.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/reconcile.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/main.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/writer.js 2>/dev/null || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

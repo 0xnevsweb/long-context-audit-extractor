@@ -1,0 +1,41 @@
+Current Terminal Screen:
+   395  Privacy review #424 redacted personal data from treasury wire cutoff failures threads but retained transaction identifiers needed for reconciliation tes
+ting.
+   396
+   397  Grant compliance WP-5555 tied treasury wire cutoff failures attestation gaps to hold flag suppression visible only when hold flags used corrected rather
+ than pre-correction ledger dates.
+   398
+   399  Fixed-assets specialist T. Singh argued that treasury wire cutoff failures capitalization memos should not alter ledger status; investigators agreed whi
+le noting those memos still inform exception coding narratives.
+   400
+   401  Peer review #343 of treasury sampling found 23 mislinked emails on treasury wire cutoff failures. None of the mislinked messages originated from complia
+nce addresses, supporting Brief 02 sender restrictions.
+   402
+   403  Counsel memo WP-8935 advises retaining full treasury wire cutoff failures threads because litigation hold scope may extend beyond the transactions named
+ in formal notices.
+   404
+   405  Working paper WP-5928 documents a three-way match failure on treasury wire cutoff failures where accrual true-ups near $31,981 never received matching c
+ompliance responses during February recon.
+   406
+   407  Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging hold
+s. Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+   408
+   409  Risk assessment WP-3912 links treasury wire cutoff failures to control gaps in mail ingestion for treasury. The assessment explicitly warns against trea
+ting alternate ledger headings or appendix commentary as transaction sources.
+   410
+   411  Operations analyst E. Novak demonstrated that treasury wire cutoff failures batches processed after midnight UTC inherited stale owner fields, a symptom
+ consistent with policy waiver omission rather than incorrect amount parsing.
+   412
+   413  Controller staff described treasury wire cutoff failures as a secondary driver of ledger slice confusion while rebuilding the February recon close calen
+dar. They emphasized that decoy ledger headings in draft appendices must be ignored.
+   414
+   415  External advisors reviewing treasury wire cutoff failures during February recon asked for a machine-readable trace explaining why rejected rows received
+ hold flags. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+   416
+   417  During February recon, A. Ndiaye compared two cold extractor runs and documented owner field churn on treasury wire cutoff failures. Operations initiall
+y attributed the drift to cache state; QA disproved that hypothesis the following morning.
+   418
+   419  Internal audit follow-up #466 tracked how treasury wire cutoff failures exceptions were closed without matching policy waiver paperwork, a separate issu
+e from extractor merge ordering.
+   420
+root@edd51c718576:/app#

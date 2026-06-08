@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  3114  date: 2024-04-01
+  3115
+  3116  ### TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1
+  3117  amount: 19455.76
+  3118  owner: jdoe
+  3119  status: approved
+  3120  date: 2024-05-02
+  3121
+  3122  ### TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9
+  3123  amount: 1329.18
+  3124  owner: asmith
+  3125  status: pending
+  3126  date: 2024-06-03
+  3127
+  3128  ### TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a
+  3129  amount: 2702.60
+  3130  owner: bwong
+  3131  status: pending
+  3132  date: 2024-07-04
+  3133
+  3134  ### TXN-6b005945-fb10-584b-91bf-629e2cfe98a3
+  3135  amount: 4076.02
+  3136  owner: ckim
+  3137  status: approved
+  3138  date: 2024-08-05
+  3139
+  3140  ### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+  3141  amount: 4620.26
+  3142  owner: stale
+  3143  status: pending
+  3144  date: 2024-04-04
+  3145  provisional: true
+  3146
+  3147  ### TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb
+  3148  amount: 4620.26
+  3149  owner: finalowner
+  3150  status: approved
+  3151  date: 2024-04-04
+  3152
+root@edd51c718576:/app#

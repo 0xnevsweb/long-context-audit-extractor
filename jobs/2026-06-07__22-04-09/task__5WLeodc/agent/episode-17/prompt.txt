@@ -1,0 +1,41 @@
+Current Terminal Screen:
+peared whenever correction batches straddled a weekend wire cutoff.
+1527:Controller staff described lease modification restatement as a secondary driver of correction batch ordering while rebuilding the August memo close calenda
+r. They emphasized that decoy ledger headings in draft appendices must be ignored.
+1559:Site visit #174 to fixed assets exported 18 compliance threads tied to capital project capitalization. Reviewers noted that policy waiver omission appeared
+ whenever correction batches straddled a weekend wire cutoff.
+1561:Committee packet #683 chronicles how capital project capitalization escalated after E. Novak observed retroactive status conflict between two correction ba
+tches. Cross-checks against amendment minutes were required before accepting any owner change.
+1589:During July review, E. Novak compared two cold extractor runs and documented correction batch ordering on capital project capitalization. Operations initia
+lly attributed the drift to cache state; QA disproved that hypothesis the following morning.
+1617:Lead reviewer L. Bergstrom opened working paper WP-5773 after external audit reported that revenue cutoff testing distorted the September fieldwork reconci
+liation. The team reconstructed mailbox ordering and found correction batch ordering affecting at least 24 transaction threads.
+1623:Site visit #907 to external audit exported 18 compliance threads tied to revenue cutoff testing. Reviewers noted that policy waiver omission appeared whene
+ver correction batches straddled a weekend wire cutoff.
+1643:Committee packet #312 chronicles how revenue cutoff testing escalated after L. Bergstrom observed retroactive status conflict between two correction batche
+s. Cross-checks against amendment minutes were required before accepting any owner change.
+1663:Committee packet #952 chronicles how grant compliance attestation escalated after E. Novak observed retroactive status conflict between two correction batc
+hes. Cross-checks against amendment minutes were required before accepting any owner change.
+1713:Site visit #202 to compliance exported 13 compliance threads tied to grant compliance attestation. Reviewers noted that retroactive status conflict appeare
+d whenever correction batches straddled a weekend wire cutoff.
+2910:### CORR-7f2a91bc
+2916:### CORR-8e3b02cd
+2922:### CORR-9f4c13de
+2928:### CORR-a05d24ef
+2934:### CORR-b16e35f0
+2940:### CORR-c27e46a1
+root@de10d3a691f3:/app# grep -nEi "flag code|exception_reason|compliance_hold|policy_waiver|policy exception" /tmp/briefs_01_09.md | head -n 200
+788:## Policy Exceptions (draft)
+792:### Policy Exception
+797:### Policy Exception
+978:Exception coding review: `exception_reason` is null unless a code applies. Set
+979:`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+982:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1152:Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+1153:`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+1465:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+2891:## Policy Exceptions
+2893:### Policy Exception
+2898:### Policy Exception
+2903:### Policy Exception
+root@de10d3a691f3:/app#

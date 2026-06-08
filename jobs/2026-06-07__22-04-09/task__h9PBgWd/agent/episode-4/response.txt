@@ -1,0 +1,47 @@
+{
+  "analysis": "The environment does not have the helper `apply_patch`, so none of the intended code changes were applied. We must edit files using available tools (e.g., heredocs with cat > file, perl -0777 -pe, sed, or use python to rewrite). Next step is to confirm available editors (likely `sed`, `perl`, `python3`, maybe `ed`/`vi`) and then perform file rewrites safely. We'll rewrite the affected JS files by overwriting their full contents using cat <<'EOF' to ensure correctness.",
+  "plan": "1) Verify we can use standard CLI tools (python3, perl) and check if an editor like `vim` exists (optional). 2) Overwrite each modified source file with corrected content via heredoc redirection: parser/ledger.js, parser/emails.js, parser/policy.js, parser/corrections.js, parser/meetings.js, parser/sections.js, and add new parser/sectionUtil.js. 3) After rewriting, run node extractor to /tmp and ensure it still runs (even before reconcile/exceptions changes), confirming parsers now target authoritative sections. Then proceed to reconcile/exceptions fixes in next step.",
+  "commands": [
+    {
+      "keystrokes": "command -v python3 && command -v perl && command -v vim || true\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/sectionUtil.js <<'EOF'\nfunction escapeRegExp(str) {\n  return str.replace(/[.*+?^${}()|[\\]\\\\]/g, \"\\\\$&\");\n}\n\n// Find markdown section body for an exact H2 heading line, e.g.\n// headingLine = \"## Transaction Ledger\".\n// Boundaries are determined by whole-line anchored heading matches.\nfunction extractSection(markdown, headingLine) {\n  const h = escapeRegExp(headingLine);\n  const re = new RegExp(`^${h}\\\\s*$`, \"gm\");\n  const match = re.exec(markdown);\n  if (!match) return \"\";\n\n  const startIdx = match.index + match[0].length;\n  const rest = markdown.slice(startIdx);\n  const nextHeading = rest.match(/^##\\s+.+$/m);\n  const endIdx = nextHeading ? startIdx + nextHeading.index : markdown.length;\n  return markdown.slice(startIdx, endIdx);\n}\n\nmodule.exports = { extractSection };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  // Caller provides only the authoritative ledger section.\n  // Brief 01: ignore any ledger block that contains `provisional: true`\n  // (case-insensitive). When a transaction appears multiple times in\n  // non-provisional blocks, the last such block in file order wins.\n\n  const byId = new Map();\n  const blocks = markdown.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    if (/^provisional\\s*:\\s*true\\s*$/gim.test(block)) {\n      continue;\n    }\n\n    const lines = block.split(\"\\n\");\n    const transactionId = (lines[0] || \"\").trim();\n    if (!transactionId.startsWith(\"TXN-\")) continue;\n\n    const row = { transaction_id: transactionId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (/^amount\\s*:/i.test(trimmed)) {\n        row.amount = Number(trimmed.split(\":\")[1].trim());\n      } else if (/^owner\\s*:/i.test(trimmed)) {\n        row.owner = trimmed.split(\":\")[1].trim();\n      } else if (/^status\\s*:/i.test(trimmed)) {\n        row.status = trimmed.split(\":\")[1].trim();\n      } else if (/^date\\s*:/i.test(trimmed)) {\n        row.date = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    // last one wins\n    byId.set(transactionId, row);\n  }\n  return [...byId.values()];\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // Caller provides only the authoritative Email Excerpts section.\n  const slice = markdown;\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n    if (!fromMatch || !subjectMatch || !statusMatch) {\n      continue;\n    }\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      status: statusMatch[1].trim().toLowerCase(),\n      sent: sentMatch ? sentMatch[1] : null,\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  // Caller provides only the authoritative Policy Exceptions section.\n  const slice = markdown;\n  const items = [];\n\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const txn = (lines[0] || \"\").trim();\n    if (!txn.startsWith(\"TXN-\")) continue;\n    const approvedByMatch = block.match(/^approved_by:\\s*(.+)\\s*$/im);\n    items.push({\n      transaction_id: txn,\n      approved_by: approvedByMatch ? approvedByMatch[1].trim().toLowerCase() : \"\",\n    });\n  }\n  return items;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'\nfunction parseCorrections(markdown) {\n  // Caller provides only the authoritative Correction Notices section.\n  const slice = markdown;\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) {\n      continue;\n    }\n    const entry = { notice_id: noticeId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (/^targets\\s*:/i.test(trimmed)) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (/^field\\s*:/i.test(trimmed)) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (/^value\\s*:/i.test(trimmed)) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (/^effective\\s*:/i.test(trimmed)) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n    notices.push(entry);\n  }\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'\nfunction parseMeetings(markdown) {\n  const meetings = [];\n  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(markdown)) !== null) {\n    const after = markdown.slice(match.index);\n    const next = after.slice(1).match(/^#### Amendment for TXN-[0-9a-f-]+\\s*$/im);\n    const block = next ? after.slice(0, next.index + 1) : after;\n\n    const ownerMatch = block.match(/^owner:\\s*(.+)$/im);\n    const signedMatch = block.match(/^signed:\\s*(.+)$/im);\n    const effectiveMatch = block.match(/^effective:\\s*(\\d{4}-\\d{2}-\\d{2})\\s*$/im);\n\n    meetings.push({\n      transaction_id: match[1],\n      owner: ownerMatch ? ownerMatch[1].trim() : \"\",\n      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === \"true\" : false,\n      effective: effectiveMatch ? effectiveMatch[1] : null,\n    });\n  }\n  return meetings;\n}\n\nmodule.exports = { parseMeetings };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/sections.js <<'EOF'\nconst { parseLedger } = require(\"./ledger\");\nconst { parseMeetings } = require(\"./meetings\");\nconst { parseEmails } = require(\"./emails\");\nconst { parseCorrections } = require(\"./corrections\");\nconst { parsePolicyExceptions } = require(\"./policy\");\nconst { extractSection } = require(\"./sectionUtil\");\n\nfunction parseArchive(markdown) {\n  return {\n    ledger: parseLedger(extractSection(markdown, \"## Transaction Ledger\")),\n    meetings: parseMeetings(markdown),\n    emails: parseEmails(extractSection(markdown, \"## Email Excerpts\")),\n    corrections: parseCorrections(extractSection(markdown, \"## Correction Notices\")),\n    policyExceptions: parsePolicyExceptions(extractSection(markdown, \"## Policy Exceptions\")),\n  };\n}\n\nmodule.exports = { parseArchive };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out3\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit-out3 && wc -c /tmp/audit-out3/*\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

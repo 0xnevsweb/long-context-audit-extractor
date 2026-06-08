@@ -1,0 +1,43 @@
+{
+  "analysis": "We now have precise line numbers for all Investigation Briefs. Next we must read the authoritative (non-supporting-chronology) parts for Briefs 01–09: 01 (ledger sourcing incl provisional/duplicates), 03 (mail timing), 04 (correction precedence), 05 (meeting amendments and owner changes), 06 (effective dates on output), 07/08 (exception flag conditions), and 09 (mid-year amendment overriding hold timing rules). With these rules we can implement correct reconciliation and exceptions. Then patch parsers to select authoritative sections and include sent dates, parse policy exceptions approved_by, parse corrections correctly, and update writers to required output schema and deterministic ordering.",
+  "plan": "1) Print the authoritative portions: from each brief heading to just before its supporting chronology heading (or next brief). We'll use `nl` slices based on the known line numbers.\n2) After capturing rules, implement code changes:\n- Add helper to extract exact heading blocks.\n- Fix ledger/emails/policy/corrections to use exact headings and parse needed fields (sent, provisional, approved_by).\n- Update reconcile to apply overlays and compute report.\n- Update exceptions to compute exception_reason.\n- Update writers to required output schema.\n3) Run extractor twice and diff outputs; then run on /app/output as graders do.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,25p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '214,221p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,392p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '555,563p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '672,679p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '856,864p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '973,982p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1145,1152p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1455,1464p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,39 @@
+{
+  "analysis": "The implementation is far from spec: transactions.json/exceptions.json envelopes use wrong keys (transactions/exceptions vs required items). CSV header missing exception_reason and amount formatting; also no escaping. Exceptions builder never sets exception_reason and filters by truthy, so always empty. Reconciliation report sets previous_value to empty and doesn’t sort by notice_id. Reconcile logic is naive: meetings overwrite owner, emails overwrite status with no timing/precedence; corrections apply blindly without computing previous_value or correct field names (uses date vs effective_date). Also sort comparator is unstable/incorrect when equal, which can cause nondeterministic drift. We must read audit_archive briefs 01-09 to implement correct overlay semantics (especially hold timing from Brief 09), parse structured sections, apply in correct order with deterministic sorting, generate exception_reason codes, and output exact required formats.",
+  "plan": "1) Inspect parsers (sections/ledger/meetings/emails/corrections/policy) to understand current extraction of structured data and what fields are available (timestamps/effective dates, notice ids, etc.). 2) Read authoritative rules in /app/data/audit_archive.md Investigation Briefs 01–09 (and locate the structured data near end) to implement correct reconciliation ordering, mail timing, and correction precedence. 3) After rules are known, update normalize/reconcile.js, normalize/exceptions.js, output writers, and sorting to meet spec and determinism. For now, gather the necessary inputs by viewing parser code and briefs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nfrom pathlib import Path\ntext=Path('/app/data/audit_archive.md').read_text('utf-8',errors='replace')\n# extract Investigation Brief 01-09 sections\npattern=re.compile(r'(?ms)^#+\\s*Investigation Brief\\s*0?(\\d+)\\b(.*?)(?=^#+\\s*Investigation Brief\\s*0?\\d+\\b|\\Z)')\nfor num,body in pattern.findall(text):\n    if 1 <= int(num) <= 9:\n        print('\\n'+'='*18+f' BRIEF {int(num):02d} '+'='*18)\n        lines=body.strip().splitlines()\n        for line in lines[:260]:\n            print(line)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

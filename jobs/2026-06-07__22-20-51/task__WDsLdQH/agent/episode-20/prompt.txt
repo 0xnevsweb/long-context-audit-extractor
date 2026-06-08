@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>         exception_reason: null,
+>       };
+>
+>       outRow.exception_reason = buildExceptionReason({
+>         row: outRow,
+>         policyByTxn,
+>         hasWinningStatusCorrection: winningStatusCorrectionTxn.has(outRow.transaction_id),
+>         hasQualifyingComplianceHoldEmail:
+>           qualifyingHoldEmailByTxn.get(outRow.transaction_id) === true,
+>       });
+>
+>       return outRow;
+>     }),
+>   );
+>
+>   report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@edd51c718576:/app# mkdir -p /tmp/audit-out1 /tmp/audit-out2 && rm -f /tmp/audit-out1/* /tmp/audit-out2/*
+root@edd51c718576:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+sortById is not a function
+root@edd51c718576:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+sortById is not a function
+root@edd51c718576:/app# diff -u /tmp/audit-out1/transactions.json /tmp/audit-out2/transactions.json || true
+diff: /tmp/audit-out1/transactions.json: No such file or directory
+diff: /tmp/audit-out2/transactions.json: No such file or directory
+root@edd51c718576:/app# diff -u /tmp/audit-out1/reconciliation_report.jsonl /tmp/audit-out2/reconciliation_report.jsonl || true
+diff: /tmp/audit-out1/reconciliation_report.jsonl: No such file or directory
+diff: /tmp/audit-out2/reconciliation_report.jsonl: No such file or directory
+root@edd51c718576:/app# ls -la /tmp/audit-out1 && echo '---' && head -n 2 /tmp/audit-out1/transactions.csv && echo '---' && head -n 5 /tmp/audit-out1/transactio
+ns.json && echo '---' && head -n 5 /tmp/audit-out1/exceptions.json && echo '---' && head -n 5 /tmp/audit-out1/reconciliation_report.jsonl
+total 8
+drwxr-xr-x 2 root root 4096 Jun  8 05:30 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:28 ..
+---
+head: cannot open '/tmp/audit-out1/transactions.csv' for reading: No such file or directory
+root@edd51c718576:/app#

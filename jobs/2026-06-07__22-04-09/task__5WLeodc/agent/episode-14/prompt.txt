@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     if (!transactionId.startsWith("TXN-")) {
+>       continue;
+>     }
+>     if (rows.some((row) => row.transaction_id === transactionId)) {
+>       continue;
+>     }
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     rows.push(row);
+>   }
+>   return rows;
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/parser/ledger.js
+root@de10d3a691f3:/app# rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2
+root@de10d3a691f3:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1
+root@de10d3a691f3:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2
+root@de10d3a691f3:/app# ls -la /tmp/out1
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:08 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:08 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:08 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:08 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2441 Jun  8 05:08 transactions.csv
+-rw-r--r-- 1 root root 7406 Jun  8 05:08 transactions.json
+root@de10d3a691f3:/app# diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json || true
+root@de10d3a691f3:/app#

@@ -1,0 +1,31 @@
+{
+  "analysis": "parseArchive just passes full markdown to each parser; parsers then do naive indexOf slicing. emails.js slices from '## Email Excerpts' to '## Policy Exceptions' and parses From/Subject/status but does not parse sent date, and will include the non-authoritative '## Email Excerpts (archived thread)' section (and miss any authoritative email section if named differently). This is directly causing compliance_hold timing drift and missing later mail. We need: authoritative email section parsing (likely distinct heading near end), include sent date, and dedupe rules per briefs.\n\nWe still need ledger.js and corrections.js code (not shown yet here, but likely also uses indexOf). Next step: implement a shared helper to extract exact heading blocks and refactor parsers to use it and parse needed fields. Then adjust reconcile/exceptions/writers.",
+  "plan": "1) Open ledger.js and corrections.js to confirm they incorrectly pick working copy/draft sections; then refactor.\n2) Find the authoritative email section heading near the end (grep for '## Emails' or similar) and update emails parser to use that exact heading and include sent date.\n3) Implement helper in new file (e.g., src/parser/block.js) or inside each parser: findExactHeading(markdown, '## Transaction Ledger') and slice until next '## ' heading.\n4) Patch policy parser to parse approved_by.\n5) Patch reconcile/exceptions and writers, then run extractor twice and diff.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Email\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"compliance@\" /app/data/audit_archive.md | tail -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"sent:\" /app/data/audit_archive.md | tail -n 30\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"## Email\" /app/data/audit_archive.md | tail -n 20\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

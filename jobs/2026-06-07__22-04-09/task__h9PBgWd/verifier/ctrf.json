@@ -1,0 +1,221 @@
+{
+    "results": {
+        "tool": {
+            "name": "pytest",
+            "version": "8.4.1"
+        },
+        "summary": {
+            "tests": 22,
+            "passed": 21,
+            "failed": 1,
+            "skipped": 0,
+            "pending": 0,
+            "other": 0,
+            "start": 1780895337.9687617,
+            "stop": 1780895338.724983
+        },
+        "tests": [
+            {
+                "name": "test_outputs.py::test_archive_is_long_context",
+                "status": "passed",
+                "duration": 0.003959094000492769,
+                "start": 1780895337.986448,
+                "stop": 1780895337.991011,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_archive_policy_is_distributed",
+                "status": "passed",
+                "duration": 0.0024541169996155077,
+                "start": 1780895337.9914503,
+                "stop": 1780895337.994545,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_cli_requires_arguments",
+                "status": "passed",
+                "duration": 0.10215854600028251,
+                "start": 1780895337.9948268,
+                "stop": 1780895338.0977063,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_output_files_exist",
+                "status": "passed",
+                "duration": 0.14573715000005905,
+                "start": 1780895338.0988834,
+                "stop": 1780895338.245586,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_json_schema",
+                "status": "passed",
+                "duration": 0.00368709500071418,
+                "start": 1780895338.2459612,
+                "stop": 1780895338.2503617,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_sorted",
+                "status": "passed",
+                "duration": 0.004077525000866444,
+                "start": 1780895338.2506988,
+                "stop": 1780895338.2554047,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_transactions_csv_matches_json",
+                "status": "failed",
+                "raw_status": "call_failed",
+                "duration": 0.0034717910011750064,
+                "start": 1780895338.255755,
+                "stop": 1780895338.2972379,
+                "retries": 0,
+                "file_path": "test_outputs.py",
+                "trace": "pipeline_output = PosixPath('/app/output')\ngolden_transactions = [{'amount_usd': 15335.5, 'effective_date': '2024-02-26', 'exception_reason': 'over_limit', 'owner': 'dlee', ...}, {'am...g', ...}, {'amount_usd': 8468.4, 'effective_date': '2024-09-21', 'exception_reason': None, 'owner': 'frost', ...}, ...]\n\n    def test_transactions_csv_matches_json(\n        pipeline_output: Path, golden_transactions: list[dict]\n    ) -> None:\n        \"\"\"Verify transactions.csv header, ordering, and cell values mirror JSON rows.\"\"\"\n        with (pipeline_output / \"transactions.csv\").open(encoding=\"utf-8\", newline=\"\") as handle:\n            reader = csv.DictReader(handle)\n>           assert reader.fieldnames == [\n                \"transaction_id\",\n                \"owner\",\n                \"status\",\n                \"effective_date\",\n                \"amount_usd\",\n                \"exception_reason\",\n            ]\nE           AssertionError: assert ['transaction... 'amount_usd'] == ['transaction...ption_reason']\nE             \nE             Right contains one more item: 'exception_reason'\nE             Use -v to get more diff\n\n/tests/test_outputs.py:207: AssertionError",
+                "message": "The test failed in the call phase due to an assertion error"
+            },
+            {
+                "name": "test_outputs.py::test_exceptions_json_only_flagged",
+                "status": "passed",
+                "duration": 0.0026185460010310635,
+                "start": 1780895338.2977645,
+                "stop": 1780895338.3009317,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_exceptions_sorted_by_transaction_id",
+                "status": "passed",
+                "duration": 0.0022164120000525145,
+                "start": 1780895338.3011873,
+                "stop": 1780895338.3039923,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_reconciliation_report",
+                "status": "passed",
+                "duration": 0.002994348999891372,
+                "start": 1780895338.3044386,
+                "stop": 1780895338.308145,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_duplicate_ledger_last_wins",
+                "status": "passed",
+                "duration": 0.004041195000354492,
+                "start": 1780895338.3085961,
+                "stop": 1780895338.313056,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_skips_provisional_ledger_rows",
+                "status": "passed",
+                "duration": 0.0065914180004256195,
+                "start": 1780895338.3134701,
+                "stop": 1780895338.320669,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_ignores_decoy_ledger_section",
+                "status": "passed",
+                "duration": 0.0026418319994263584,
+                "start": 1780895338.3215306,
+                "stop": 1780895338.3246732,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_uses_pre_correction_ledger_date",
+                "status": "passed",
+                "duration": 0.0029793129997415235,
+                "start": 1780895338.3249762,
+                "stop": 1780895338.3286967,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_hold_requires_sent_line",
+                "status": "passed",
+                "duration": 0.009140644000581233,
+                "start": 1780895338.3289995,
+                "stop": 1780895338.3387475,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_non_compliance_email_does_not_change_status",
+                "status": "passed",
+                "duration": 0.008111691000522114,
+                "start": 1780895338.3390074,
+                "stop": 1780895338.3477776,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_retroactive_review_on_status_correction",
+                "status": "passed",
+                "duration": 0.0029010500002186745,
+                "start": 1780895338.34805,
+                "stop": 1780895338.3514965,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_sent_date_gate",
+                "status": "passed",
+                "duration": 0.009282687999984773,
+                "start": 1780895338.3518066,
+                "stop": 1780895338.3616123,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_correction_effective_date_from_handbook",
+                "status": "passed",
+                "duration": 0.0023384300011457526,
+                "start": 1780895338.361879,
+                "stop": 1780895338.3646753,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_compliance_email_without_sent_applies_status",
+                "status": "passed",
+                "duration": 0.006720297000356368,
+                "start": 1780895338.3648818,
+                "stop": 1780895338.3721275,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_deterministic_rerun",
+                "status": "passed",
+                "duration": 0.29750633999901765,
+                "start": 1780895338.3725374,
+                "stop": 1780895338.6878254,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            },
+            {
+                "name": "test_outputs.py::test_meeting_signed_owner_override",
+                "status": "passed",
+                "duration": 0.03306492200044886,
+                "start": 1780895338.6881542,
+                "stop": 1780895338.722421,
+                "retries": 0,
+                "file_path": "test_outputs.py"
+            }
+        ]
+    }
+}

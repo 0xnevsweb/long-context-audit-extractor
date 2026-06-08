@@ -1,0 +1,43 @@
+{
+  "analysis": "Keyword grep context shown is mostly narrative (non-authoritative) around line ~84-101 in briefs file; we need the actual rule bullet sections, likely in Brief 01-09 with explicit 'Rules:' or similar. In the archive, '## Correction Notices' starts at line 2900; '## Policy Exceptions' at 2883, and there's a draft at 788 (to ignore). '## Ledger' and '## Compliance' headings aren’t found with those exact strings, so structured sections may be named differently (e.g., '## Ledger Rows', '## Compliance Mail', '## Mail Excerpts', etc.). Next step is to inspect around the authoritative structured sections near the end (around 2800+), and find where ledger and email sections are labeled. Also need to view parser implementations (sections/ledger/meetings/emails/corrections) to know what headings they look for.",
+  "plan": "1) Print the parser files that define section header markers (sections.js) and each structured parser to discover expected headings/regexes. 2) Inspect /app/data/audit_archive.md around lines 2850-3100 to view Policy Exceptions, Correction Notices, and subsequent structured data (likely ledger/emails). 3) Use grep for 'Ledger Rows', 'Ledger Entries', '### TXN-' etc to locate ledger section start. 4) Once we see rule statements in briefs, we’ll codify reconciliation order and fix normalize + writers.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2860,3060p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '3060,3260p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Ledger|Ledger Rows|Transactions|Transaction Ledger|Mail|Compliance|Emails)\" /app/data/audit_archive.md | tail -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"TXN-[0-9a-f-]{8,}\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Ledger|Ledger Rows|Transaction Ledger|Ledger Entries)\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

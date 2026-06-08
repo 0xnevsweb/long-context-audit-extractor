@@ -1,0 +1,38 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# grep -n "^## Investigation Brief 04" /tmp/briefs_01_09.md
+551:## Investigation Brief 04
+561:## Investigation Brief 04
+root@de10d3a691f3:/app# grep -n "^## Investigation Brief 05" /tmp/briefs_01_09.md
+670:## Investigation Brief 05
+679:## Investigation Brief 05
+root@de10d3a691f3:/app# grep -n "^## Investigation Brief 09" /tmp/briefs_01_09.md
+1461:## Investigation Brief 09
+1472:## Investigation Brief 09
+root@de10d3a691f3:/app# python3 - <<'PY'
+> import re
+> from pathlib import Path
+> lines=Path('/tmp/briefs_01_09.md').read_text('utf-8',errors='replace').splitlines()
+> starts={}
+> for i,l in enumerate(lines, start=1):
+>     m=re.match(r'^## Investigation Brief (\d{2})\b', l)
+>     if m:
+>         starts[int(m.group(1))]=i
+> for b in [4,5,9]:
+>     print(b, starts.get(b))
+> PY
+4 561
+5 679
+9 1472
+root@de10d3a691f3:/app# sed -n '1,120p' /tmp/briefs_01_09.md | head
+## Investigation Brief 01
+— Ledger Sourcing
+
+Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+slice. For extractor output, treat only the markdown section whose heading
+line is exactly `## Transaction Ledger` as authoritative. The archive also
+contains a working-copy ledger and prose that mentions ledger headings; those
+are investigative context only.
+
+Ignore any ledger block that includes a line `provisional: true` (case
+root@de10d3a691f3:/app#

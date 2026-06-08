@@ -1,0 +1,48 @@
+Current terminal state:
+New Terminal Output:
+
+root@57a25f8d12e0:/app# cat /tmp/run1.err; cat /tmp/run2.err
+root@57a25f8d12e0:/app# python3 - <<'PY'
+> import json
+> p=json.load(open('/app/output/transactions.json'))
+> e=json.load(open('/app/output/exceptions.json'))
+> print('transactions items', len(p['items']))
+> print('exceptions items', len(e['items']))
+> # check sorted
+> ids=[r['transaction_id'] for r in p['items']]
+> print('sorted', ids==sorted(ids))
+> # check exceptions all non-null
+> print('all exceptions flagged', all(r['exception_reason'] is not None for r in e['items']))
+> # show first 5 exceptions
+> print('sample exceptions:')
+> for r in e['items'][:5]:
+>   print(r['transaction_id'], r['exception_reason'])
+> PY
+transactions items 32
+exceptions items 6
+sorted True
+all exceptions flagged True
+sample exceptions:
+TXN-1b083448-63e3-5527-a20a-edd71416341c compliance_hold
+TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0 policy_exception
+TXN-68b5423c-1abb-59e6-947e-7e56011cec58 policy_exception
+TXN-c7416874-b91b-5c2d-92de-0098b1224d18 policy_exception
+TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f compliance_hold
+root@57a25f8d12e0:/app# awk 'NR==1||NR==2{print}' /app/output/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+root@57a25f8d12e0:/app# python3 - <<'PY'
+> import csv
+> with open('/app/output/transactions.csv',newline='') as f:
+>   r=csv.DictReader(f)
+>   rows=list(r)
+> print('csv rows',len(rows))
+> # confirm empty cell when exception_reason null for first row
+> print('first row exception_reason repr:',repr(rows[0]['exception_reason']))
+> PY
+csv rows 32
+first row exception_reason repr: ''
+root@57a25f8d12e0:/app#
+
+
+Are you sure you want to mark the task as complete? This will trigger your solution to be graded and you won't be able to make any further corrections. If so, include "task_complete": true in your JSON response again.

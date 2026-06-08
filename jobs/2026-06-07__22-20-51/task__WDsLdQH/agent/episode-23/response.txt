@@ -1,0 +1,6 @@
+{
+  "analysis": "/app/output contains exactly the required four files. transactions.json and exceptions.json are sorted by transaction_id ascending; reconciliation_report.jsonl has 4 lines; repeated runs were byte-identical in /tmp diffs. CSV includes the required header order, amount_usd is formatted to two decimals, and exception_reason is empty when null (15 rows). CLI behavior for missing flags already matches requirements (stderr includes 'missing' and exit code 1). One minor typo command `ls -لا` produced an error but did not affect outputs. Implementation now respects Brief 01 authoritative section matching, ignores provisional ledger rows, applies mail timing and hold timing amendment, parses policy exceptions approved_by compliance, applies corrections with precedence and generates report. Ready to grade.",
+  "plan": "No further changes needed; mark task complete.",
+  "commands": [],
+  "task_complete": true
+}

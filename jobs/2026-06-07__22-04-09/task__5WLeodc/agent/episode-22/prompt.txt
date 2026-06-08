@@ -1,0 +1,41 @@
+Current Terminal Screen:
+95:
+96:External advisors reviewing lease modification restatement during August memo asked for a machine-readable trace explaining why rejected rows received hold f
+lags. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+97:
+98:Platform engineer R. Okonkwo noted that lease modification restatement webhook retries duplicated compliance messages in the investigative export, requiring
+deduplication by subject and sent timestamp during human review.
+99:
+100:Data governance WP-7983 catalogs legacy technical accounting folders still containing lease modification restatement spreadsheets. Those folders are evident
+iary only; extractor output must come from canonical structured sections.
+101:
+102:Vendor management R. Okonkwo described lease modification restatement onboarding delays that pushed compliance responses past ledger dates on several reject
+ed rows during August memo.
+103:
+104:Committee packet #613 chronicles how lease modification restatement escalated after S. Patel observed unsigned amendment drift between two correction batche
+s. Cross-checks against amendment minutes were required before accepting any owner change.
+105:
+106:Lead reviewer J. Huang opened working paper WP-3996 after technical accounting reported that lease modification restatement distorted the August memo reconc
+iliation. The team reconstructed mailbox ordering and found policy waiver omission affecting at least 22 transaction threads.
+107:
+108:Follow-up #560 confirmed that technical accounting routed lease modification restatement statements through a shared inbox with 3 delegates. Investigators f
+lagged policy waiver omission as the likely root cause of inconsistent status columns.
+109:
+110:## Policy Exceptions (draft)
+111:
+112:Draft waiver log — not authoritative for extract output.
+113:
+114:### Policy Exception
+115:transaction: TXN-de3b42d7-919c-5839-a490-b039d9c97092
+116:approved_by: compliance
+117:reason: draft waiver (superseded)
+118:
+119:### Policy Exception
+120:transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+121:approved_by: finance
+122:reason: draft waiver (superseded)
+root@de10d3a691f3:/app# grep -nE "For extractor output|Rule|Apply|order|precedence|winning|supersed|effective|`|compliance_hold" /tmp/brief09.md
+> sed -n '1,140p' /tmp/brief04.md
+> sed -n '1,160p' /tmp/brief05.md
+> sed -n '1,160p' /tmp/brief09.md
+>

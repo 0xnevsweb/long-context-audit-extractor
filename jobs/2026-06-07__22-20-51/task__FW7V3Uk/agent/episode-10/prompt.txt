@@ -1,0 +1,41 @@
+Current Terminal Screen:
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@c97f4e7457e4:/app# ls -la /app/audit-extractor/src && ls -la /app/audit-extractor/src/parser
+total 40
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root  942 Jun  5 09:03 cli.js
+-rw-r--r-- 1 root root 1254 Jun  5 09:03 index.js
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 lib
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 normalize
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 output
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 parser
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 schema
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 utils
+total 32
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 ..
+-rw-r--r-- 1 root root 1137 Jun  5 09:03 corrections.js
+-rw-r--r-- 1 root root  828 Jun  5 09:03 emails.js
+-rw-r--r-- 1 root root 1149 Jun  5 09:03 ledger.js
+-rw-r--r-- 1 root root  639 Jun  5 09:03 meetings.js
+-rw-r--r-- 1 root root  482 Jun  5 09:03 policy.js
+-rw-r--r-- 1 root root  564 Jun  5 09:03 sections.js
+root@c97f4e7457e4:/app# sed -n '1,260p' /app/audit-extractor/src/extractor.js 2>/dev/null || true
+root@c97f4e7457e4:/app# sed -n '1,260p' /app/audit-extractor/src/run.js 2>/dev/null || true
+root@c97f4e7457e4:/app# sed -n '1,260p' /app/audit-extractor/src/lib.js 2>/dev/null || true
+root@c97f4e7457e4:/app# sed -n '1,260p' /app/audit-extractor/src/command/extract.js 2>/dev/null || true
+root@c97f4e7457e4:/app#

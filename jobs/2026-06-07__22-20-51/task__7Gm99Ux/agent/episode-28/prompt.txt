@@ -1,0 +1,41 @@
+Current Terminal Screen:
+   406
+   407  Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging hold
+s. Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+   408
+   409  Risk assessment WP-3912 links treasury wire cutoff failures to control gaps in mail ingestion for treasury. The assessment explicitly warns against trea
+ting alternate ledger headings or appendix commentary as transaction sources.
+   410
+root@58b3f47e1f8d:/app# nl -ba /app/data/audit_archive.md | sed -n '968,992p'
+   968
+   969  Lead reviewer R. Okonkwo opened working paper WP-3462 after operations finance reported that inventory obsolescence reserve distorted the October count
+reconciliation. The team reconstructed mailbox ordering and found correction batch ordering affecting at least 21 transaction threads.
+   970
+   971  Grant compliance WP-3449 tied inventory obsolescence reserve attestation gaps to effective-date mismatch visible only when hold flags used corrected rat
+her than pre-correction ledger dates.
+   972
+   973  ## Investigation Brief 07 — Exception Flags (Part I)
+   974
+   975  Exception coding review: `exception_reason` is null unless a code applies. Set
+   976  `over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+   977  when final status is `rejected`, a qualifying `compliance@` email referenced
+   978  that transaction, and that email block includes a `sent:` line. The sent-date
+   979  comparison used for `compliance_hold` is defined in Investigation Brief 09
+   980  (Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+   981  lexical order of the reason codes.
+   982
+   983  ## Investigation Brief 07 — Exception Flags (Part I) — supporting chronology
+   984
+   985  Stakeholder workshop #199 on revenue cutoff testing produced conflicting recollections about which correction notice superseded an earlier owner change;
+ Brief 04 governs that precedence for automated output.
+   986
+   987  During September fieldwork, R. Okonkwo compared two cold extractor runs and documented correction batch ordering on revenue cutoff testing. Operations i
+nitially attributed the drift to cache state; QA disproved that hypothesis the following morning.
+   988
+   989  Fixed-assets specialist L. Bergstrom argued that revenue cutoff testing capitalization memos should not alter ledger status; investigators agreed while
+noting those memos still inform exception coding narratives.
+   990
+   991  Lead reviewer P. Okafor opened working paper WP-6447 after external audit reported that revenue cutoff testing distorted the September fieldwork reconci
+liation. The team reconstructed mailbox ordering and found correction batch ordering affecting at least 15 transaction threads.
+   992
+root@58b3f47e1f8d:/app#

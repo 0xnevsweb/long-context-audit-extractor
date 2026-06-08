@@ -1,0 +1,23 @@
+{
+  "analysis": "We can see authoritative Policy Exceptions blocks (transaction ids) and Correction Notices with notice_id, targets, field, value, effective. This confirms structured formats. The key remaining issues: parsers likely mis-slice due to draft headings and working copy ledger; emails parser definitely stops at draft. We still need sections.js and ledger.js to confirm similar bugs. Then we must implement full reconciliation semantics from briefs 01–09, plus output writers and determinism fixes.",
+  "plan": "1) Patch parseEmails to slice from '## Email Excerpts' to the authoritative '## Policy Exceptions' section header line (exact match), not the draft; similarly ensure parseLedger uses authoritative '## Transaction Ledger' not working copy. 2) Patch parseSections/parseArchive if needed to use these improved parsers. 3) Implement reconciliation overlay order and correction application including previous_value and report sorting by notice_id. 4) Fix writers to match required envelopes/columns; ensure stable sort comparator handles equality. 5) Run extractor twice and diff outputs for determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "apply_patch <<'PATCH'\n*** Begin Patch\n*** Update File: audit-extractor/src/parser/emails.js\n@@\n function parseEmails(markdown) {\n-  const start = markdown.indexOf(\"## Email Excerpts\");\n-  const end = markdown.indexOf(\"## Policy Exceptions\");\n-  const slice =\n-    start >= 0 && end > start ? markdown.slice(start, end) : markdown;\n+  // The archive contains decoy headings like \"## Policy Exceptions (draft)\".\n+  // We must stop at the authoritative \"## Policy Exceptions\" header line.\n+  const start = markdown.indexOf(\"## Email Excerpts\");\n+  const endMatch = markdown.match(/^##\\s+Policy Exceptions\\s*$/m);\n+  const end = endMatch ? endMatch.index : -1;\n+  const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;\n   const emails = [];\n   const blocks = slice.split(/\\n\\n+/);\n   for (const block of blocks) {\n     const fromMatch = block.match(/^From:\\s*(.+)$/im);\n     const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n     const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n*** End Patch\nPATCH\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -c audit-extractor/src/parser/emails.js\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

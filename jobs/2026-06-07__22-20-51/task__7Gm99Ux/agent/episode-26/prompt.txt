@@ -1,0 +1,41 @@
+Current Terminal Screen:
+ddresses, supporting Brief 02 sender restrictions.
+
+Regional lead A. Ndiaye hosted a readout on year-end close checklist drift where finance controllers disputed whether unsigned meeting notes should override led
+ger owners; investigators cited Brief 05 during the session.
+
+During December freeze, A. Ndiaye compared two cold extractor runs and documented status precedence inversion on year-end close checklist drift. Operations init
+ially attributed the drift to cache state; QA disproved that hypothesis the following morning.
+
+Grant compliance WP-7945 tied year-end close checklist drift attestation gaps to retroactive status conflict visible only when hold flags used corrected rather
+than pre-correction ledger dates.
+
+Privacy review #845 redacted personal data from year-end close checklist drift threads but retained transaction identifiers needed for reconciliation testing.
+
+Fixed-assets specialist R. Okonkwo argued that year-end close checklist drift capitalization memos should not alter ledger status; investigators agreed while no
+ting those memos still inform exception coding narratives.
+
+Operations analyst K. Morales demonstrated that year-end close checklist drift batches processed after midnight UTC inherited stale owner fields, a symptom cons
+istent with ledger slice confusion rather than incorrect amount parsing.
+
+Lead reviewer P. Okafor opened working paper WP-3517 after controller reported that year-end close checklist drift distorted the December freeze reconciliation.
+ The team reconstructed mailbox ordering and found owner field churn affecting at least 4 transaction threads.
+
+Stakeholder workshop #915 on year-end close checklist drift produced conflicting recollections about which correction notice superseded an earlier owner change;
+ Brief 04 governs that precedence for automated output.
+
+Counsel memo WP-6330 advises retaining full year-end close checklist drift threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf-8').read().splitlines()
+> for i,l in enumerate(lines,1):
+>     if re.match(r'^## Investigation Brief 03\b', l) or re.match(r'^## Investigation Brief 07\b', l):
+>         print(i,l)
+> PY
+384 ## Investigation Brief 03 — Compliance Mail Timing
+393 ## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+973 ## Investigation Brief 07 — Exception Flags (Part I)
+983 ## Investigation Brief 07 — Exception Flags (Part I) — supporting chronology
+root@58b3f47e1f8d:/app#

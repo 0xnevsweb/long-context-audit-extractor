@@ -1,0 +1,260 @@
+{
+  "items": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+      "status": "pending",
+      "effective_date": "2024-02-26",
+      "amount_usd": 15335.5,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-0f577e8c-c09d-517f-8807-b09a17924f9c",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-10-10",
+      "amount_usd": 12860.78,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-16df04da-aef5-5537-ae87-993fc75b7be3",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-07-19",
+      "amount_usd": 5721.56,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-1b083448-63e3-5527-a20a-edd71416341c",
+      "owner": "jdoe",
+      "status": "rejected",
+      "effective_date": "2024-09-01",
+      "amount_usd": 10113.94,
+      "exception_reason": "compliance_hold;over_limit"
+    },
+    {
+      "transaction_id": "TXN-20cd5f27-165a-55cf-90db-b472725bb03b",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-12-24",
+      "amount_usd": 12588.66,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0",
+      "owner": "frost",
+      "status": "pending",
+      "effective_date": "2024-09-21",
+      "amount_usd": 8468.4,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-33c930a7-114e-50c1-b790-e26c53e5f025",
+      "owner": "ckim",
+      "status": "pending",
+      "effective_date": "2024-11-11",
+      "amount_usd": 14234.2,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-36d4fdbe-3be1-54ab-9023-dda438c2b25a",
+      "owner": "ckim",
+      "status": "rejected",
+      "effective_date": "2024-06-18",
+      "amount_usd": 4348.14,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-378cf202-0cc9-578e-91ea-d8d008c534e9",
+      "owner": "jdoe",
+      "status": "pending",
+      "effective_date": "2024-03-15",
+      "amount_usd": 19727.88,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f",
+      "owner": "asmith",
+      "status": "reversed",
+      "effective_date": "2024-06-15",
+      "amount_usd": 7500.0,
+      "exception_reason": "retroactive_review"
+    },
+    {
+      "transaction_id": "TXN-53e38083-cc01-56a8-be81-f412d80c5f5d",
+      "owner": "frost",
+      "status": "approved",
+      "effective_date": "2024-02-14",
+      "amount_usd": 18354.46,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-5ec29c5b-5b2d-5a19-88af-ed46090db8d1",
+      "owner": "jdoe",
+      "status": "approved",
+      "effective_date": "2024-05-02",
+      "amount_usd": 19455.76,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-68b5423c-1abb-59e6-947e-7e56011cec58",
+      "owner": "frost",
+      "status": "approved",
+      "effective_date": "2024-07-07",
+      "amount_usd": 8740.52,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-6a290cff-b5f2-5992-9a90-1f22dedca980",
+      "owner": "evans",
+      "status": "approved",
+      "effective_date": "2024-03-27",
+      "amount_usd": 16708.92,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-6b005945-fb10-584b-91bf-629e2cfe98a3",
+      "owner": "ckim",
+      "status": "approved",
+      "effective_date": "2024-08-05",
+      "amount_usd": 4076.02,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-6bfa43be-6dd7-5460-9f47-24258c5d400f",
+      "owner": "jdoe",
+      "status": "approved",
+      "effective_date": "2024-10-22",
+      "amount_usd": 9841.82,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-7096e296-6315-5a4f-a6b9-907aa2893b8a",
+      "owner": "bwong",
+      "status": "pending",
+      "effective_date": "2024-07-04",
+      "amount_usd": 2702.6,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-88519dfd-79ff-5de0-ae59-862ab932bc25",
+      "owner": "jdoe",
+      "status": "pending",
+      "effective_date": "2024-01-01",
+      "amount_usd": 500.0,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-8b12c2e5-aa51-56b4-8d88-55960b96f966",
+      "owner": "evans",
+      "status": "pending",
+      "effective_date": "2024-08-20",
+      "amount_usd": 7094.98,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-95eb9be1-7793-5e4e-a02e-4603b4047d1a",
+      "owner": "ckim",
+      "status": "pending",
+      "effective_date": "2024-01-25",
+      "amount_usd": 13962.08,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-9ed28e5d-b453-5580-bf81-a75bad4f244f",
+      "owner": "evans",
+      "status": "rejected",
+      "effective_date": "2024-01-13",
+      "amount_usd": 16981.04,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-a4dc6038-0c06-5338-9a45-fccff83a6194",
+      "owner": "evans",
+      "status": "pending",
+      "effective_date": "2024-06-06",
+      "amount_usd": 7367.1,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-b9168e33-01d4-5be8-b55f-2d6ae4f5bdc8",
+      "owner": "frost",
+      "status": "rejected",
+      "effective_date": "2024-04-01",
+      "amount_usd": 18082.34,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-ba9e6ade-67ce-5a61-b097-ab0d34f8e6bb",
+      "owner": "finalowner",
+      "status": "approved",
+      "effective_date": "2024-04-04",
+      "amount_usd": 4620.26,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-bb6114bb-5393-5c83-843c-0d9acc971ab9",
+      "owner": "asmith",
+      "status": "pending",
+      "effective_date": "2024-06-03",
+      "amount_usd": 1329.18,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-c4523d54-1ba5-5ec4-bfa5-4488edf1cf7c",
+      "owner": "bwong",
+      "status": "approved",
+      "effective_date": "2024-05-17",
+      "amount_usd": 2974.72,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-c7416874-b91b-5c2d-92de-0098b1224d18",
+      "owner": "asmith",
+      "status": "rejected",
+      "effective_date": "2024-11-23",
+      "amount_usd": 11215.24,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-09-09",
+      "amount_usd": 11487.36,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15",
+      "owner": "bwong",
+      "status": "rejected",
+      "effective_date": "2024-03-03",
+      "amount_usd": 3246.84,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f",
+      "owner": "asmith",
+      "status": "reversed",
+      "effective_date": "2024-08-01",
+      "amount_usd": 1601.3,
+      "exception_reason": null
+    },
+    {
+      "transaction_id": "TXN-f4d0252e-d346-5489-a8f3-ac035ce359c4",
+      "owner": "dlee",
+      "status": "rejected",
+      "effective_date": "2024-05-05",
+      "amount_usd": 5993.68,
+      "exception_reason": "compliance_hold"
+    }
+  ]
+}

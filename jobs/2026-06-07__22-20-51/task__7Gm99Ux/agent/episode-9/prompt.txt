@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> -      from_addr: fromMatch[1].trim(),
+> -      transaction_id: subjectMatch[1],
+> -      status: statusMatch[1].trim().toLowerCase(),
+> -    });
+> -  }
+> -  return emails;
+> -}
+> +const { sliceSectionByExactHeading } = require("./sections");
+> +
+> +function parseEmails(markdown) {
+> +  // Authoritative section heading is exactly `## Email Excerpts`.
+> +  const slice = sliceSectionByExactHeading(markdown, "## Email Excerpts");
+> +  const emails = [];
+> +
+> +  // Each email starts with a `From:` line.
+> +  const blocks = slice.split(/^From:\s*/gim).slice(1);
+> +  for (const b of blocks) {
+> +    const block = `From: ${b}`;
+> +    const fromMatch = block.match(/^From:\s*(.+)\s*$/im);
+> +    const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+> +    const txnMatch = block.match(/\b(TXN-[0-9a-f-]+)\b/i);
+> +    const statusMatch = block.match(/^status:\s*(pending|approved|rejected|reversed)\s*$/im);
+> +    if (!fromMatch || !sentMatch || !txnMatch || !statusMatch) continue;
+> +    emails.push({
+> +      from_addr: fromMatch[1].trim().toLowerCase(),
+> +      sent: sentMatch[1],
+> +      transaction_id: txnMatch[1].toUpperCase(),
+> +      status: statusMatch[1].trim().toLowerCase(),
+> +    });
+> +  }
+> +
+> +  return emails;
+> +}
+>
+>  module.exports = { parseEmails };
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/parser/emails.js
+root@58b3f47e1f8d:/app#

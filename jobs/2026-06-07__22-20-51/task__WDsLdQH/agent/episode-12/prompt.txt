@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  2872
+  2873  From: compliance@corp.internal
+  2874  Subject: Re: TXN-1b083448-63e3-5527-a20a-edd71416341c
+  2875  sent: 2024-08-10
+  2876  status: rejected
+  2877
+  2878  From: compliance@corp.internal
+  2879  Subject: Re: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+  2880  sent: 2024-09-01
+  2881  status: reversed
+  2882
+  2883  ## Policy Exceptions
+  2884
+  2885  ### Policy Exception
+  2886  transaction: TXN-68b5423c-1abb-59e6-947e-7e56011cec58
+  2887  approved_by: compliance
+  2888  reason: executive waiver
+  2889
+  2890  ### Policy Exception
+  2891  transaction: TXN-2adfa85c-206d-5124-9040-bcb05d88d3e0
+  2892  approved_by: finance
+  2893  reason: executive waiver
+  2894
+  2895  ### Policy Exception
+  2896  transaction: TXN-c7416874-b91b-5c2d-92de-0098b1224d18
+  2897  approved_by: compliance
+  2898  reason: executive waiver
+  2899
+  2900  ## Correction Notices
+  2901
+  2902  ### CORR-7f2a91bc
+  2903  targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+  2904  field: status
+  2905  value: reversed
+  2906  effective: 2024-05-10
+  2907
+  2908  ### CORR-8e3b02cd
+  2909  targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+  2910  field: status
+root@edd51c718576:/app#

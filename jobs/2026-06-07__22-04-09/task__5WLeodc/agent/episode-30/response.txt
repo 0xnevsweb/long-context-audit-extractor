@@ -1,0 +1,19 @@
+{
+  "analysis": "policy.js currently returns only a Set of transaction IDs; but Brief 08 requires checking approved_by: compliance, so we must parse approved_by per transaction (and possibly other fields). meetings.js parses owner and signed but not effective date, and reconcile currently applies even unsigned amendments; Brief 05 likely restricts to signed and may incorporate effective dates. We still haven't successfully displayed the correction precedence rules from Brief 04 due to earlier scroll; need to re-run targeted sed around known line 556 and inspect. Also need to update emails parser to capture sent: dates (required for compliance_hold).",
+  "plan": "1) Display the authoritative correction precedence rule around line ~556 in /tmp/briefs_01_09.md and any additional correction application details around ~860. 2) Display Brief 05 section around ~679-710 to capture signed/effective rules. 3) Update parsers: policy.js to return a map of transaction_id -> approved_by, meetings.js to include effective date, emails.js to parse sent date and enforce compliance@ sender filter. 4) Update normalize/reconcile.js and normalize/exceptions.js and writers to meet the exact output spec and determinism requirements, then re-run extractor and diff repeated runs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '545,570p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '852,875p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '679,715p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

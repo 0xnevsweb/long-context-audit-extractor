@@ -1,0 +1,157 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# cat > audit-extractor/src/normalize/reconcile.js <<'EOF'
+> const { sortByTransactionId, sortByNoticeId } = require("../utils/sort");
+>
+> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+>
+> function maxStatus(a, b) {
+>   const sa = String(a || "").toLowerCase();
+>   const sb = String(b || "").toLowerCase();
+>   if (!(sa in STATUS_ORDER)) return sb;
+>   if (!(sb in STATUS_ORDER)) return sa;
+>   return STATUS_ORDER[sa] >= STATUS_ORDER[sb] ? sa : sb;
+> }
+>
+> function reconcileTransactions(parsed) {
+>   const byId = new Map();
+>
+>   for (const row of parsed.ledger) {
+>     byId.set(row.transaction_id, {
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       ledger_date: row.date,
+>       current_date: row.date,
+>       amount: Number(row.amount),
+>       // tracking
+>       preCorrectionDate: row.date,
+>       hadStatusCorrection: false,
+>     });
+>   }
+>
+>   // Meeting amendments: signed only
+>   for (const meeting of parsed.meetings) {
+>     if (!meeting || !meeting.transaction_id) continue;
+>     if (!meeting.signed) continue;
+>     const target = byId.get(meeting.transaction_id);
+>     if (target && meeting.owner) {
+>       target.owner = meeting.owner;
+>     }
+>   }
+>
+>   // Emails: only compliance@ sender; apply by status precedence (max)
+>   const qualifyingEmailsByTxn = new Map();
+>   for (const email of parsed.emails) {
+>     if (!email || !email.transaction_id) continue;
+>     if (!email.qualifying) continue;
+>
+>     const target = byId.get(email.transaction_id);
+>     if (target && email.status) {
+>       target.status = maxStatus(target.status, email.status);
+>     }
+>
+>     if (!qualifyingEmailsByTxn.has(email.transaction_id)) {
+>       qualifyingEmailsByTxn.set(email.transaction_id, []);
+>     }
+>     qualifyingEmailsByTxn.get(email.transaction_id).push(email);
+>   }
+>
+>   // Brief 09: pre-correction date snapshot (after ledger+meetings+emails)
+>   for (const t of byId.values()) {
+>     t.preCorrectionDate = t.current_date;
+>   }
+>
+>   // Pick winning correction per txn+field by lexicographically greatest effective date
+>   const winnerByKey = new Map();
+>   for (const notice of parsed.corrections) {
+>     if (!notice || !notice.transaction_id || !notice.field || !notice.effective) continue;
+>     if (!byId.has(notice.transaction_id)) continue;
+>
+>     const field = notice.field.trim();
+>     const key = `${notice.transaction_id}::${field}`;
+>     const prev = winnerByKey.get(key);
+>     if (!prev) {
+>       winnerByKey.set(key, notice);
+>       continue;
+>     }
+>     if (notice.effective > prev.effective) {
+>       winnerByKey.set(key, notice);
+>     } else if (notice.effective === prev.effective) {
+>       if (String(notice.notice_id) > String(prev.notice_id)) {
+>         winnerByKey.set(key, notice);
+>       }
+>     }
+>   }
+>
+>   const winners = Array.from(winnerByKey.values());
+>   winners.sort((a, b) => {
+>     if (a.effective === b.effective) {
+>       if (a.notice_id === b.notice_id) return 0;
+>       return a.notice_id < b.notice_id ? -1 : 1;
+>     }
+>     return a.effective < b.effective ? -1 : 1;
+>   });
+>
+>   const report = [];
+>   // For Brief 06 effective_date logic: track last correction (by effective ordering)
+>   // that modified status or date.
+>   const effectiveDateOverride = new Map();
+>
+>   for (const notice of winners) {
+>     const target = byId.get(notice.transaction_id);
+>     if (!target) continue;
+>
+>     let previousValue;
+>     if (notice.field === "owner") previousValue = String(target.owner ?? "");
+>     else if (notice.field === "status") previousValue = String(target.status ?? "");
+>     else if (notice.field === "date") previousValue = String(target.current_date ?? "");
+>     else previousValue = "";
+>
+>     if (notice.field === "owner") {
+>       target.owner = notice.value;
+>     } else if (notice.field === "status") {
+>       if (String(target.status).toLowerCase() !== String(notice.value).toLowerCase()) {
+>         target.hadStatusCorrection = true;
+>       }
+>       target.status = String(notice.value).toLowerCase();
+>       effectiveDateOverride.set(target.transaction_id, notice.effective);
+>     } else if (notice.field === "date") {
+>       target.current_date = String(notice.value);
+>       effectiveDateOverride.set(target.transaction_id, notice.effective);
+>     }
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: previousValue,
+>       new_value: String(notice.value),
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   sortByNoticeId(report);
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => ({
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       effective_date: effectiveDateOverride.get(row.transaction_id) || row.ledger_date,
+>       amount_usd: Number(row.amount),
+>       exception_reason: null,
+>       // internal metadata for exception evaluation
+>       _preCorrectionDate: row.preCorrectionDate,
+>       _qualifyingEmails: qualifyingEmailsByTxn.get(row.transaction_id) || [],
+>       _hadStatusCorrection: row.hadStatusCorrection,
+>     })),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/normalize/reconcile.js
+root@de10d3a691f3:/app#

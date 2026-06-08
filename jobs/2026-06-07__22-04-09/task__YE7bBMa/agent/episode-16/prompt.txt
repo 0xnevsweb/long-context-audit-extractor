@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+
+root@57a25f8d12e0:/app# python3 - <<'PY'
+> import re, pathlib
+> p=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')
+> t=p.read_text(encoding='utf-8')
+> # replace first indexOf with lastIndexOf safely
+> nt=re.sub(r'markdown\.indexOf\("## Correction Notices"\)', 'markdown.lastIndexOf("## Correction Notices")', t, count=1)
+> p.write_text(nt,encoding='utf-8')
+> print('updated corrections.js')
+> PY
+updated corrections.js
+root@57a25f8d12e0:/app# node -e "require('/app/audit-extractor/src/parser/ledger');require('/app/audit-extractor/src/parser/emails');require('/app/audit-extract
+or/src/parser/policy');require('/app/audit-extractor/src/parser/corrections');console.log('parsers ok')"
+parsers ok
+root@57a25f8d12e0:/app#

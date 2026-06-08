@@ -1,0 +1,41 @@
+Current Terminal Screen:
+freeze was elevated but no compliance decisions are recorded in this message.
+
+From: hr-payroll@corp.internal
+Subject: close calendar revision — coordination 34
+
+Controller office moved the Q1 close close checklist because of vendor
+onboarding backlog staffing gaps. This email does not reference compliance@
+senders or transaction ids.
+
+From: treasury-ops@corp.internal
+Subject: wire desk weekend coverage — coordination 35
+
+Controller office moved the June rates close checklist because of FX
+revaluation lag staffing gaps. This email does not reference compliance@
+senders or transaction ids.
+
+From: audit-lead@corp.internal
+Subject: FY24 sampling plan draft — coordination 36
+
+Data platform ticket #9798 tracks an ingestion delay that affected corporate
+accounting exports. The delay is explanatory background, not a reconciliation
+input.
+
+From: hr-payroll@corp.internal
+Subject: wire desk weekend coverage — coordination 37
+
+Risk committee excerpt: capital project capitalization exposure in July review
+was elevated but no compliance decisions are recorded in this message.
+
+From: treasury-ops@corp.internal
+Subject: accrual true-up schedule — coordination 38
+root@c97f4e7457e4:/app# rg -n "Compliance|hold|sent:" /tmp/brief_0*.md
+bash: rg: command not found
+root@c97f4e7457e4:/app# rg -n "Correction Notice|notice_id|winning correction|supersed|precedence|targets:" /app/data/audit_archive.md
+bash: rg: command not found
+root@c97f4e7457e4:/app# rg -n "Policy Exception|approved_by:" /app/data/audit_archive.md
+bash: rg: command not found
+root@c97f4e7457e4:/app# rg -n "Transaction Ledger\b(?! \(working copy\))|Transaction Ledger \(working copy\)|provisional:" /app/data/audit_archive.md
+bash: rg: command not found
+root@c97f4e7457e4:/app#

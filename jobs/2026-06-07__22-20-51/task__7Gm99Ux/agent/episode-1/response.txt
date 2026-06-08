@@ -1,0 +1,59 @@
+{
+  "analysis": "We confirmed the project structure and that the CLI already enforces `extract` and required flags with a stderr message containing `missing` and exit code 1. We saw from the archive tail that there is a working-copy ledger section that must be ignored, and the authoritative ledger is under heading exactly `## Transaction Ledger`, with provisional blocks (containing `provisional: true`, case-insensitive) to be ignored. There are duplicate TXN blocks, including a provisional and a final block at the end, implying ledger parser must pick the last non-provisional block per Brief 01. Next we must read Investigation Briefs 02–09 (especially 07–09 and 09 amendment) plus structured sections for Emails, Policy Exceptions, Correction Notices, Meetings. Then inspect current parser/normalize code to identify drift sources (likely unstable iteration order, incorrect section boundary detection, or incorrect overlay order / mail timing) and fix accordingly.",
+  "plan": "1) Locate and read the Investigation Briefs 02–09 text from the archive, paying special attention to Brief 07–09 and the hold-timing override in Brief 09. 2) Find and read the structured data headings for Email Excerpts, Policy Exceptions, Correction Notices, Meetings, and understand their formats. 3) Inspect current extractor implementation files: section parser, ledger parser, emails, corrections, meetings, policy, and reconcile/exception normalizers. 4) Run extractor twice into two temp outdirs and diff outputs to reproduce non-determinism. Based on discrepancies and policy text, adjust parsing/merge logic and ensure deterministic sorting before writing outputs and report lines.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"## Investigation Brief\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '520,920p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '920,1320p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Email Excerpts\\|## Policy Exceptions\\|## Correction Notices\\|## Committee Minutes\\|## Meeting\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | sed -n '1,200p'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

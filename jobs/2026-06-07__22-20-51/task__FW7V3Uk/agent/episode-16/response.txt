@@ -1,0 +1,19 @@
+{
+  "analysis": "emails.js still contains a broken regex literal: even `/\\r\\n/g` is being written with an actual newline after the first slash, so regex literals are unsafe in this environment due to how the terminal/python heredoc is being transmitted (likely CR handling). We must eliminate all regex literals from emails.js (and potentially other rewritten files) by using RegExp constructors with escaped strings, or by using pure string operations. We'll rewrite emails.js with no regex literals at all: use splitlines and manual parsing with startsWith checks.",
+  "plan": "1) Overwrite emails.js using only string operations (no /.../ regex literals, and minimal `.match` usage). 2) Also check ledger.js is valid now. 3) Rerun extractor; if other files have regex literal issues (meetings.js uses regex literal), we may need to rewrite those too using RegExp constructor. We'll handle errors iteratively.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/parser/emails.js').write_text('''function parseEmails(markdown) {\n  const start = markdown.indexOf(\"## Email Excerpts\");\n  const end = markdown.indexOf(\"## Policy Exceptions\");\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;\n\n  const normalized = slice.split(\"\\r\\n\").join(\"\\n\");\n  const blocks = normalized.split(\"\\n\\n\");\n\n  const emails = [];\n\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\").map((l) => l.trim()).filter(Boolean);\n\n    let from = null;\n    let txn = null;\n    let sent = null;\n    let status = null;\n\n    for (const line of lines) {\n      const lower = line.toLowerCase();\n      if (lower.startsWith(\"from:\")) {\n        from = line.slice(5).trim();\n      } else if (lower.startsWith(\"subject:\")) {\n        // Expect: Subject: Re: TXN-...\n        const m = line.match(/TXN-[0-9a-f-]+/i);\n        if (m) txn = m[0];\n      } else if (lower.startsWith(\"sent:\")) {\n        sent = line.slice(5).trim();\n      } else if (lower.startsWith(\"status:\")) {\n        status = line.slice(7).trim().toLowerCase();\n      }\n    }\n\n    if (!from || !txn || !sent || !status) continue;\n    if (!from.toLowerCase().startsWith(\"compliance@\")) continue;\n\n    emails.push({\n      from_addr: from,\n      transaction_id: txn,\n      sent,\n      status,\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\n''', encoding='utf-8')\nprint('emails.js rewritten without regex literals (except a safe match)')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "nl -ba /app/audit-extractor/src/parser/emails.js | sed -n '1,120p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1\n",
+      "duration": 2.0
+    }
+  ],
+  "task_complete": false
+}

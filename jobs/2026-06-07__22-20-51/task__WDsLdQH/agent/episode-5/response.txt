@@ -1,0 +1,43 @@
+{
+  "analysis": "We can see several concrete issues in the current implementation: normalize/exceptions.js only filters flagged rows, but exception_reason is likely never computed. jsonWriter writes envelopes {transactions: [...]} and {exceptions: [...]} instead of required {items:[...]}. csvWriter writes a header missing exception_reason and does not format amount to two decimals or handle empty exception_reason cell for null. reportWriter outputs JSONL with newline at end (fine) but report is currently empty, likely because reconciliation/corrections logic does not produce it. Next we need to inspect reconcile.js, index.js, and the parsers to see how data is built and why corrections/mail/policy are not merged, and to ensure the parser targets authoritative tail sections.",
+  "plan": "1) Inspect src/index.js to see pipeline: read file, parse sections, reconcile, compute exceptions, write outputs. 2) Inspect reconcile.js and parsers (sections/ledger/emails/policy/corrections/meetings) to see how overlay order is applied and how corrections are selected. 3) Inspect the authoritative tail section formats in the archive so we can adjust parsers to ignore draft/working-copy headings. Then we can implement: correct envelopes, CSV schema/formatting, exception_reason computation per rules, deterministic sorting, and reconciliation_report.jsonl content.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2865,3152p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

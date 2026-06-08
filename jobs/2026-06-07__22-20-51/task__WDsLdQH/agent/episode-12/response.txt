@@ -1,0 +1,39 @@
+{
+  "analysis": "We now see authoritative Email Excerpts include compliance emails right before Policy Exceptions; so the authoritative Email Excerpts section likely runs up to '## Policy Exceptions' at 2883. We also see authoritative Policy Exceptions block format with transaction and approved_by fields, and Correction Notices start at 2900 with CORR ids and fields/values/effective. This gives concrete parsing targets.\n\nWe still need to read the Investigation Brief rule text (01–09) for overlay order, correction precedence, and especially Brief 09 hold timing. Then we can implement parser fixes and reconciliation logic updates.",
+  "plan": "1) Print the Investigation Briefs (01,03,04,05,07,08,09) rule paragraphs to capture authoritative semantics.\n2) Implement exact-heading section extraction and update parsers (emails, policy, ledger, corrections) to use correct slices.\n3) Update exceptions and reconcile logic accordingly, then fix writers.\nWe'll start by extracting the brief text now.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,70p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '72,120p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,430p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '555,610p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '672,720p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '820,980p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1100,1220p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1455,1495p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,35 @@
+{
+  "analysis": "emails.js is now updated in-place (good). ledger.js uses indexOf(\"## Transaction Ledger\"), which will match the earlier decoy '## Transaction Ledger (working copy)' at line 2938, so it may parse working copy and then skip duplicates, potentially missing authoritative values or creating drift. Need to adjust ledger parser to match exact '## Transaction Ledger' line (not with suffix). sections.js simply calls each parser. Next: update ledger.js similarly with exact heading match. Then implement reconciliation logic and writers per spec; but we still must read briefs for rules (hold timing, correction precedence, exception codes).",
+  "plan": "1) Patch ledger.js to locate the authoritative heading using /^##\\s+Transaction Ledger\\s*$/m and slice from there. 2) Run extractor twice on the archive into /tmp and diff outputs to see remaining issues and confirm parsers now include later emails and authoritative ledger. 3) Then fix normalize/reconcile.js and writers to conform to spec, and implement rules from briefs (we still need to extract those rule clauses using grep on /tmp/briefs_01_09.md once keywords are identified).",
+  "commands": [
+    {
+      "keystrokes": "cat > audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  // Ignore decoy headings like \"## Transaction Ledger (working copy)\".\n  // Use the authoritative header line exactly.\n  const startMatch = markdown.match(/^##\\s+Transaction Ledger\\s*$/m);\n  const start = startMatch ? startMatch.index : -1;\n  if (start < 0) {\n    return [];\n  }\n  const slice = markdown.slice(start);\n\n  const rows = [];\n  const blocks = slice.split(/^### /m).slice(1);\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const transactionId = lines[0].trim();\n    if (!transactionId.startsWith(\"TXN-\")) {\n      continue;\n    }\n    if (rows.some((row) => row.transaction_id === transactionId)) {\n      continue;\n    }\n    const row = { transaction_id: transactionId };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"amount:\")) {\n        row.amount = Number(trimmed.split(\":\")[1].trim());\n      } else if (trimmed.startsWith(\"owner:\")) {\n        row.owner = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"status:\")) {\n        row.status = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"date:\")) {\n        row.date = trimmed.split(\":\")[1].trim();\n      }\n    }\n    rows.push(row);\n  }\n  return rows;\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c audit-extractor/src/parser/ledger.js\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/out1 /tmp/out2 && mkdir -p /tmp/out1 /tmp/out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/out1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "diff -u /tmp/out1/transactions.json /tmp/out2/transactions.json || true\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

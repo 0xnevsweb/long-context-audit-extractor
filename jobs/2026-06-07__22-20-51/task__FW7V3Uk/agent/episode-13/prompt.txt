@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> """)
+>
+> print('updated')
+> PY
+updated
+root@c97f4e7457e4:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1
+/app/audit-extractor/src/parser/ledger.js:4
+  const heading = "## Transaction Ledger
+                  ^^^^^^^^^^^^^^^^^^^^^^
+
+SyntaxError: Invalid or unexpected token
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/parser/sections.js:1:25)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@c97f4e7457e4:/app# ls -la /tmp/audit_out_fix1
+ls: cannot access '/tmp/audit_out_fix1': No such file or directory
+root@c97f4e7457e4:/app# head -n 5 /tmp/audit_out_fix1/transactions.json && head -n 3 /tmp/audit_out_fix1/transactions.csv && head -n 5 /tmp/audit_out_fix1/recon
+ciliation_report.jsonl
+head: cannot open '/tmp/audit_out_fix1/transactions.json' for reading: No such file or directory
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> import json
+> obj=json.load(open('/tmp/audit_out_fix1/transactions.json'))
+> print('items', len(obj['items']))
+> print('exceptions non-null', sum(1 for r in obj['items'] if r['exception_reason'] is not None))
+> ex=json.load(open('/tmp/audit_out_fix1/exceptions.json'))
+> print('exceptions items', len(ex['items']))
+> PY
+Traceback (most recent call last):
+  File "<stdin>", line 2, in <module>
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/audit_out_fix1/transactions.json'
+root@c97f4e7457e4:/app#

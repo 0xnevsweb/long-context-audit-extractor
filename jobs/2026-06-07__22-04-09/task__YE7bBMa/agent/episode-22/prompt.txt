@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>           nt)
+> # insert applyExceptionReasons before buildExceptions
+> nt=re.sub(r"const exceptions = buildExceptions\(items\);",
+>           "applyExceptionReasons(items, {\n    policyExceptions: parsed.policyExceptions,\n    preCorrectionDate,\n    lastComplianceSent,\n  });\n  const exc
+eptions = buildExceptions(items);",
+>           nt)
+> p.write_text(nt,encoding='utf-8')
+> print('updated index.js')
+> PY
+updated index.js
+root@57a25f8d12e0:/app# rm -rf /app/output && mkdir -p /app/output
+root@57a25f8d12e0:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output 2>/tmp/run1.err; echo run1:$?
+run1:0
+root@57a25f8d12e0:/app# sha256sum /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconciliation_report.jsonl
+ | tee /tmp/out.sha
+34e910973965decd5dfeb4b3179cdd047961c1154b102014183443de7f7c1333  /app/output/transactions.json
+c2ff17a627ef5b5a27b95161550c1fc617cfa30437ceb7b58e6bb7e708488d58  /app/output/transactions.csv
+a81ccb89b2b8225b12917a6368b612f99898ca19b65a7c6281632e1d2077ed4f  /app/output/exceptions.json
+03e258fcfc61dfc35d9492cd58ce9cd88401cf8847bf1b9cd921ee9c87a01c73  /app/output/reconciliation_report.jsonl
+root@57a25f8d12e0:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /app/output 2>/tmp/run2.err; echo run2:$?
+run2:0
+root@57a25f8d12e0:/app# sha256sum /app/output/transactions.json /app/output/transactions.csv /app/output/exceptions.json /app/output/reconciliation_report.jsonl
+ | diff -u /tmp/out.sha - || true
+root@57a25f8d12e0:/app# head -n 3 /app/output/transactions.json; echo '---'; head -n 2 /app/output/transactions.csv; echo '---'; wc -l /app/output/reconciliatio
+n_report.jsonl; head -n 3 /app/output/reconciliation_report.jsonl
+{
+  "items": [
+    {
+---
+transaction_id,owner,status,effective_date,amount_usd,exception_reason
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.50,
+---
+6 /app/output/reconciliation_report.jsonl
+{"notice_id":"CORR-7f2a91bc","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-05-10"}
+{"notice_id":"CORR-8e3b02cd","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"reversed","new_value":"approved","ef
+fective":"2024-06-01"}
+{"notice_id":"CORR-9f4c13de","transaction_id":"TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f","field":"status","previous_value":"approved","new_value":"reversed","ef
+fective":"2024-06-15"}
+root@57a25f8d12e0:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+73:Fixed-assets specialist E. Novak argued that payroll accrual true-up capitalization memos should not alter ledger status; investigators agreed while noting t
+hose memos still inform exception coding narratives.
+75:Follow-up #175 confirmed that HR finance routed payroll accrual true-up statements through a shared inbox with 13 delegates. Investigators flagged hold flag
+suppression as the likely root cause of inconsistent status columns.
+77:Operations analyst A. Ndiaye demonstrated that payroll accrual true-up batches processed after midnight UTC inherited stale owner fields, a symptom consisten
+t with retroactive status conflict rather than incorrect amount parsing.
+81:Site visit #462 to HR finance exported 17 compliance threads tied to payroll accrual true-up. Reviewers noted that status precedence inversion appeared whene
+ver correction batches straddled a weekend wire cutoff.
+83:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Br
+ief 09 later in this archive supersedes that draft practice for production reconciliation.
+85:Treasury liaison M. Chen explained that payroll accrual true-up related wires were paused during May journal, delaying compliance responses and amplifying st
+atus precedence inversion on rejected rows.
+89:Lead reviewer S. Patel opened working paper WP-1463 after HR finance reported that payroll accrual true-up distorted the May journal reconciliation. The team
+ reconstructed mailbox ordering and found mailbox ingestion lag affecting at least 24 transaction threads.
+97:During May journal, S. Patel compared two cold extractor runs and documented mailbox ingestion lag on payroll accrual true-up. Operations initially attribute
+d the drift to cache state; QA disproved that hypothesis the following morning.
+105:Audit technologist M. Chen replayed FY24 mailbox snapshots and showed how payroll accrual true-up threads arrived out of order relative to correction notice
+s, surfacing status precedence inversion on four high-balance rows.
+113:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+115:Fixed-assets specialist M. Chen argued that FX revaluation lag capitalization memos should not alter ledger status; investigators agreed while noting those
+memos still inform exception coding narratives.
+121:Grant compliance WP-8086 tied FX revaluation lag attestation gaps to retroactive status conflict visible only when hold flags used corrected rather than pre
+-correction ledger dates.
+125:Risk assessment WP-9016 links FX revaluation lag to control gaps in mail ingestion for treasury. The assessment explicitly warns against treating alternate
+ledger headings or appendix commentary as transaction sources.
+133:Quality review #838 sampled 11 FX revaluation lag tickets and found effective-date mismatch whenever provisional ledger rows were not filtered before merge.
+139:Tax counsel flagged FX revaluation lag restatement risk during June rates close, unrelated to extractor precedence but relevant to why the archive retains f
+ull correspondence.
+143:Lead reviewer M. Chen opened working paper WP-9624 after treasury reported that FX revaluation lag distorted the June rates reconciliation. The team reconst
+ructed mailbox ordering and found correction batch ordering affecting at least 20 transaction threads.
+145:Internal audit follow-up #480 tracked how FX revaluation lag exceptions were closed without matching policy waiver paperwork, a separate issue from extracto
+r merge ordering.
+151:Audit technologist S. Patel replayed FY24 mailbox snapshots and showed how FX revaluation lag threads arrived out of order relative to correction notices, s
+urfacing retroactive status conflict on four high-balance rows.
+157:Controller staff described FX revaluation lag as a secondary driver of mailbox ingestion lag while rebuilding the June rates close calendar. They emphasized
+ that decoy ledger headings in draft appendices must be ignored.
+161:Follow-up #552 confirmed that treasury routed FX revaluation lag statements through a shared inbox with 21 delegates. Investigators flagged retroactive stat
+us conflict as the likely root cause of inconsistent status columns.
+root@58b3f47e1f8d:/app#

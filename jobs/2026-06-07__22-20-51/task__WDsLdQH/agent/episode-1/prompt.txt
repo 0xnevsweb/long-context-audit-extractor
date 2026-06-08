@@ -1,0 +1,210 @@
+New Terminal Output:
+root@edd51c718576:/app# ls -la /app
+total 16
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:21 ..
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 audit-extractor
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+root@edd51c718576:/app# ls -la /app/audit-extractor
+total 28
+drwxr-xr-x 6 root root 4096 Jun  5 09:03 .
+drwxr-xr-x 1 root root 4096 Jun  8 05:00 ..
+drwxr-xr-x 2 root root 4096 Jun  5 09:03 config
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 data
+drwxr-xr-x 2 root root 4096 Jun  8 05:00 docs
+-rw-r--r-- 1 root root  245 Jun  5 09:03 package.json
+drwxr-xr-x 8 root root 4096 Jun  5 09:03 src
+root@edd51c718576:/app# find /app/audit-extractor/src -maxdepth 3 -type f -print
+/app/audit-extractor/src/lib/handbook.js
+/app/audit-extractor/src/lib/constants.js
+/app/audit-extractor/src/schema/validate.js
+/app/audit-extractor/src/cli.js
+/app/audit-extractor/src/output/jsonWriter.js
+/app/audit-extractor/src/output/csvWriter.js
+/app/audit-extractor/src/output/reportWriter.js
+/app/audit-extractor/src/utils/sort.js
+/app/audit-extractor/src/utils/date.js
+/app/audit-extractor/src/normalize/exceptions.js
+/app/audit-extractor/src/normalize/reconcile.js
+/app/audit-extractor/src/index.js
+/app/audit-extractor/src/parser/ledger.js
+/app/audit-extractor/src/parser/meetings.js
+/app/audit-extractor/src/parser/policy.js
+/app/audit-extractor/src/parser/sections.js
+/app/audit-extractor/src/parser/corrections.js
+/app/audit-extractor/src/parser/emails.js
+root@edd51c718576:/app# sed -n '1,200p' /app/audit-extractor/src/cli.js
+#!/usr/bin/env node
+const { runExtract } = require("./index");
+
+function parseArgs(argv) {
+  const args = { input: null, outdir: null };
+  for (let i = 0; i < argv.length; i += 1) {
+    if (argv[i] === "--input" && argv[i + 1]) {
+      args.input = argv[++i];
+    } else if (argv[i] === "--outdir" && argv[i + 1]) {
+      args.outdir = argv[++i];
+    }
+  }
+  return args;
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command !== "extract") {
+    process.stderr.write("usage: node src/cli.js extract --input <path> --outdir <dir>\n");
+    process.exit(1);
+  }
+  const opts = parseArgs(rest);
+  if (!opts.input || !opts.outdir) {
+    process.stderr.write("missing --input or --outdir\n");
+    process.exit(1);
+  }
+  try {
+    await runExtract(opts.input, opts.outdir);
+  } catch (err) {
+    process.stderr.write(`${err.message}\n`);
+    process.exit(1);
+  }
+}
+
+main();
+root@edd51c718576:/app# sed -n '1,200p' /app/audit-extractor/package.json
+{
+  "name": "audit-extractor",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "src/index.js",
+  "bin": {
+    "audit-extract": "src/cli.js"
+  },
+  "scripts": {
+    "extract": "node src/cli.js extract"
+  }
+}
+root@edd51c718576:/app# ls -la /app/data
+total 228
+drwxr-xr-x 2 root root   4096 Jun  8 05:00 .
+drwxr-xr-x 1 root root   4096 Jun  8 05:00 ..
+-rw-r--r-- 1 root root 221677 Jun  8 04:59 audit_archive.md
+root@edd51c718576:/app# wc -l /app/data/audit_archive.md
+3152 /app/data/audit_archive.md
+root@edd51c718576:/app# grep -n "Investigation Brief" -n /app/data/audit_archive.md | head
+7:This index orients readers only. Reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy
+sections, and archived threads are not authoritative. Structured source data appears near the file end under Email Excerpts, Policy Exceptions, Correction Notic
+es, and the canonical Transaction Ledger heading.
+11:## Investigation Brief 01 — Ledger Sourcing
+26:## Investigation Brief 01 — Ledger Sourcing — supporting chronology
+214:## Investigation Brief 02 — Status Precedence
+222:## Investigation Brief 02 — Status Precedence — supporting chronology
+384:## Investigation Brief 03 — Compliance Mail Timing
+393:## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+555:## Investigation Brief 04 — Correction Notice Precedence
+564:## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+672:## Investigation Brief 05 — Meeting Amendments and Owners
+root@edd51c718576:/app# grep -n "Investigation Brief 09" -n /app/data/audit_archive.md | head -n 20
+979:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1455:## Investigation Brief 09 — Mid-Year Amendment
+1465:## Investigation Brief 09 — Mid-Year Amendment — supporting chronology
+root@edd51c718576:/app# sed -n '1,240p' /app/data/audit_archive.md
+# FY24 Internal Audit Archive
+
+Mixed investigation briefs, committee minutes, mail excerpts, policy exceptions, correction notices, and ledger rows. Extractor policy is distributed across the
+ file.
+
+## Reconciliation and Exception Policy (FY24 Audit Handbook)
+
+This index orients readers only. Reconciliation rules appear inside Investigation Briefs 01–08 and the Mid-Year Amendment in Brief 09. Draft narrative, decoy se
+ctions, and archived threads are not authoritative. S
+[... output limited to 10000 bytes; 71 interior bytes omitted ...]
+box ingestion lag visible only when hold flags used corrected rather than pr
+e-correction ledger dates.
+
+During February recon, S. Patel compared two cold extractor runs and documented ledger slice confusion on treasury wire cutoff failures. Operations initially at
+tributed the drift to cache state; QA disproved that hypothesis the following morning.
+
+Platform engineer S. Patel noted that treasury wire cutoff failures webhook retries duplicated compliance messages in the investigative export, requiring dedupl
+ication by subject and sent timestamp during human review.
+
+Stakeholder workshop #778 on treasury wire cutoff failures produced conflicting recollections about which correction notice superseded an earlier owner change;
+Brief 04 governs that precedence for automated output.
+
+## Email Excerpts (archived thread)
+
+Non-authoritative mailbox export kept for chronology; do not merge these rows.
+
+From: compliance@corp.internal
+Subject: Re: TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+sent: 2020-01-01
+status: reversed
+
+From: compliance@corp.internal
+Subject: Re: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+sent: 2024-01-01
+status: approved
+
+## Investigation Brief 02 — Status Precedence
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+## Investigation Brief 02 — Status Precedence — supporting chronology
+
+Regional lead E. Novak hosted a readout on capital project capitalization where finance controllers disputed whether unsigned meeting notes should override ledg
+er owners; investigators cited Brief 05 during the session.
+
+Site visit #525 to fixed assets exported 19 compliance threads tied to capital project capitalization. Reviewers noted that owner field churn appeared whenever
+correction batches straddled a weekend wire cutoff.
+
+Grant compliance WP-9559 tied capital project capitalization attestation gaps to ledger slice confusion visible only when hold flags used corrected rather than
+pre-correction ledger dates.
+
+Peer review #804 of fixed assets sampling found 19 mislinked emails on capital project capitalization. None of the mislinked messages originated from compliance
+ addresses, supporting Brief 02 sender restrictions.
+
+Committee packet #320 chronicles how capital project capitalization escalated after R. Okonkwo observed retroactive status conflict between two correction batch
+es. Cross-checks against amendment minutes were required before accepting any owner change.
+
+External advisors reviewing capital project capitalization during July review asked for a machine-readable trace explaining why rejected rows received hold flag
+s. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+SOX testing team WP-4584 linked mailbox ingestion lag on capital project capitalization to a manual override logged at 02:14 local time between two automated co
+rrection imports.
+
+Data governance WP-7874 catalogs legacy fixed assets folders still containing capital project capitalization spreadsheets. Those folders are evidentiary only; e
+xtractor output must come from canonical structured sections.
+
+Memo WP-5125 summarizes a panel on capital project capitalization chaired by A. Ndiaye. Participants debated whether informal spreadsheets should ever override
+ledger owners; Brief 05 closes that debate for the FY24 extractor.
+root@edd51c718576:/app# mkdir -p /tmp/audit-out && rm -f /tmp/audit-out/* && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --o
+utdir /tmp/audit-out || echo "exit=$?"
+root@edd51c718576:/app# ls -la /tmp/audit-out
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:21 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:21 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:21 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:21 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 05:21 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 05:21 transactions.json
+root@edd51c718576:/app# for f in /tmp/audit-out/*; do echo "---- $f"; head -n 5 "$f"; done
+---- /tmp/audit-out/exceptions.json
+{
+  "exceptions": []
+}---- /tmp/audit-out/reconciliation_report.jsonl
+---- /tmp/audit-out/transactions.csv
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78
+TXN-16df04da-aef5-5537-ae87-993fc75b7be3,dlee,approved,2024-07-19,5721.56
+TXN-1b083448-63e3-5527-a20a-edd71416341c,jdoe,rejected,2024-08-08,10113.94
+---- /tmp/audit-out/transactions.json
+{
+  "transactions": [
+    {
+      "transaction_id": "TXN-08b4472a-f4b7-5455-9f43-e97005d4a594",
+      "owner": "dlee",
+root@edd51c718576:/app#

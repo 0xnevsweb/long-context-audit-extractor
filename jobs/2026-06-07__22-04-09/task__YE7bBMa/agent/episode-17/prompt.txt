@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> function writeTransactionsCsv(filePath, items) {
+>   const header =
+>     "transaction_id,owner,status,effective_date,amount_usd,exception_reason";
+>   const lines = items.map((row) => {
+>     const amount = Number(row.amount_usd);
+>     const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : "";
+>     return [
+>       row.transaction_id,
+>       row.owner,
+>       row.status,
+>       row.effective_date,
+>       amountStr,
+>       row.exception_reason ?? "",
+>     ]
+>       .map(escapeCsvCell)
+>       .join(",");
+>   });
+>   fs.writeFileSync(filePath, [header, ...lines].join("\n") + "\n");
+> }
+>
+> module.exports = { writeTransactionsCsv };
+> EOF
+root@57a25f8d12e0:/app# cat > /app/audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@57a25f8d12e0:/app#

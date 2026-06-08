@@ -1,0 +1,19 @@
+{
+  "analysis": "We now have reliable start line numbers: Brief 04 at 561, Brief 05 at 679, Brief 09 at 1472 (duplicate headings earlier are likely decoys). Brief 01 contains an authoritative rule we already fixed: use heading exactly '## Transaction Ledger' and ignore working copy; also ignore ledger blocks with 'provisional: true'. Our ledger parser currently ignores working copy but does not check for provisional: true—may be needed. Next we should inspect Brief 04/05/09 sections via sed around those line numbers to capture specific rules for corrections precedence, signed amendments, and compliance_hold timing.",
+  "plan": "Use sed to print concise windows from the authoritative start lines: 561-669 for Brief 04, 679-760 for Brief 05, 1472-1560 for Brief 09. Then implement the missing rules: correction precedence and ordering, signed amendment effective dates, compliance_hold comparison and timing, provisional ledger exclusion, and then update reconciliation + writers accordingly.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '561,669p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '679,800p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1472,1565p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

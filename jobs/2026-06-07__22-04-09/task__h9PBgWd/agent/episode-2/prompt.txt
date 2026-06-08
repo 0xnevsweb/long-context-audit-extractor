@@ -1,0 +1,151 @@
+New Terminal Output:
+
+root@8eb6883b8e1c:/app# sed -n '11,25p' /app/data/audit_archive.md
+## Investigation Brief 01 — Ledger Sourcing
+
+Finance QA traced rerun drift to parsers that latched onto the wrong ledger
+slice. For extractor output, treat only the markdown section whose heading
+line is exactly `## Transaction Ledger` as authoritative. The archive also
+contains a working-copy ledger and prose that mentions ledger headings; those
+are investigative context only.
+
+Ignore any ledger block that includes a line `provisional: true` (case
+insensitive). When the same transaction id appears in multiple non-provisional
+ledger blocks, the last such block in file order is the base row for that id.
+
+Locate section boundaries with regular expressions anchored to whole heading
+lines at line start. Do not locate sections with indexOf or substring search.
+
+root@8eb6883b8e1c:/app# sed -n '214,221p' /app/data/audit_archive.md
+## Investigation Brief 02 — Status Precedence
+
+Interview notes with the compliance desk confirmed status fights between mail,
+amendments, and corrections. Ledger rows provide the base status (lowercase on
+output). Status precedence from lowest to highest is: pending, approved,
+rejected, reversed. Email excerpts may change status only when the From line
+contains `compliance@` anywhere in the address; ignore all other senders.
+
+root@8eb6883b8e1c:/app# sed -n '384,392p' /app/data/audit_archive.md
+## Investigation Brief 03 — Compliance Mail Timing
+
+The March mail-room audit explained missing holds: agents applied compliance
+messages without checking dispatch dates. When an excerpt includes
+`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+equal to the ledger date for that transaction. When no `sent:` line is present,
+apply the status change if precedence allows. Correction notices always apply
+after ledger rows, meeting amendments, and mail excerpts have been merged.
+
+root@8eb6883b8e1c:/app# sed -n '555,563p' /app/data/audit_archive.md
+## Investigation Brief 04 — Correction Notice Precedence
+
+The corrections desk ships multiple notices per field. When several notices
+target the same transaction and field, the notice with the lexicographically
+greatest `effective` date wins. For each winning notice, `previous_value` in
+`reconciliation_report.jsonl` is the field value immediately before that notice
+applies (after ledger, amendments, and emails). Owner corrections override
+both ledger owners and signed meeting amendments when applied in this step.
+
+root@8eb6883b8e1c:/app# sed -n '672,679p' /app/data/audit_archive.md
+## Investigation Brief 05 — Meeting Amendments and Owners
+
+Committee minutes show owner churn from unsigned drafts. Ledger owner is the
+default. Meeting note amendments under `#### Amendment for TXN-<uuid>` replace
+owner when `signed: true` (case insensitive) and, when the amendment includes
+`effective: YYYY-MM-DD`, only if that date is greater than or equal to the
+ledger date for the transaction.
+
+root@8eb6883b8e1c:/app# sed -n '856,864p' /app/data/audit_archive.md
+## Investigation Brief 06 — Effective Dates on Output
+
+Auditors compared effective_date columns to correction paperwork. Start from the
+ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+sets field `date` or `status`, use that notice's `effective` date as
+`effective_date` only if that correction modified status or date; otherwise
+keep the ledger date. `amount_usd` is numeric from the ledger with two decimal
+places in CSV and as a JSON number.
+
+root@8eb6883b8e1c:/app# sed -n '973,982p' /app/data/audit_archive.md
+## Investigation Brief 07 — Exception Flags (Part I)
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+root@8eb6883b8e1c:/app# sed -n '1145,1152p' /app/data/audit_archive.md
+## Investigation Brief 08 — Exception Flags (Part II)
+
+Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+`amount_usd` > 10000, and a Policy Exception block exists for that transaction
+with `approved_by: compliance` on its own line. Set `retroactive_review` when
+final status is `reversed`, `amount_usd` > 5000, and a winning correction
+notice changed status for that transaction.
+
+root@8eb6883b8e1c:/app# sed -n '1455,1464p' /app/data/audit_archive.md
+## Investigation Brief 09 — Mid-Year Amendment
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+root@8eb6883b8e1c:/app# grep -nE "^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)" /app/data/audit_archive.md | head -n 50
+200:## Email Excerpts (archived thread)
+788:## Policy Exceptions (draft)
+1732:## Email Excerpts
+2883:## Policy Exceptions
+2900:## Correction Notices
+2938:## Transaction Ledger (working copy)
+2946:## Transaction Ledger
+root@8eb6883b8e1c:/app# sed -n '1,260p' /app/audit-extractor/src/index.js
+const fs = require("node:fs");
+const path = require("node:path");
+const { parseArchive } = require("./parser/sections");
+const { reconcileTransactions } = require("./normalize/reconcile");
+const { buildExceptions } = require("./normalize/exceptions");
+const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+const { writeTransactionsCsv } = require("./output/csvWriter");
+const { writeReconciliationReport } = require("./output/reportWriter");
+const { validateOutputs } = require("./schema/validate");
+
+async function runExtract(inputPath, outputDir) {
+  const markdown = fs.readFileSync(inputPath, "utf8");
+  const parsed = parseArchive(markdown);
+  const { items, report } = reconcileTransactions(parsed);
+  const exceptions = buildExceptions(items);
+
+  fs.mkdirSync(outputDir, { recursive: true });
+  writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+  writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+  writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+  writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+  validateOutputs(items, exceptions, report);
+}
+
+module.exports = { runExtract };
+root@8eb6883b8e1c:/app# find /app/audit-extractor/src -maxdepth 3 -type f | sed 's#/app/audit-extractor/src/##' | sort
+cli.js
+index.js
+lib/constants.js
+lib/handbook.js
+normalize/exceptions.js
+normalize/reconcile.js
+output/csvWriter.js
+output/jsonWriter.js
+output/reportWriter.js
+parser/corrections.js
+parser/emails.js
+parser/ledger.js
+parser/meetings.js
+parser/policy.js
+parser/sections.js
+schema/validate.js
+utils/date.js
+utils/sort.js
+root@8eb6883b8e1c:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+Peer review #804 of fixed assets sampling found 19 mislinked emails on capital project capitalization. None of the mislinked messages originated from compliance
+ addresses, supporting Brief 02 sender restrictions.
+
+Committee packet #320 chronicles how capital project capitalization escalated after R. Okonkwo observed retroactive status conflict between two correction batch
+es. Cross-checks against amendment minutes were required before accepting any owner change.
+
+External advisors reviewing capital project capitalization during July review asked for a machine-readable trace explaining why rejected rows received hold flag
+s. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+SOX testing team WP-4584 linked mailbox ingestion lag on capital project capitalization to a manual override logged at 02:14 local time between two automated co
+rrection imports.
+
+Data governance WP-7874 catalogs legacy fixed assets folders still containing capital project capitalization spreadsheets. Those folders are evidentiary only; e
+xtractor output must come from canonical structured sections.
+
+Memo WP-5125 summarizes a panel on capital project capitalization chaired by A. Ndiaye. Participants debated whether informal spreadsheets should ever override
+ledger owners; Brief 05 closes that debate for the FY24 extractor.
+
+Treasury liaison T. Singh explained that capital project capitalization related wires were paused during July review, delaying compliance responses and amplifyi
+ng effective-date mismatch on rejected rows.
+
+In July review, fixed assets migrated capital project capitalization workflows to a new ticketing tool. Migration cutover introduced ledger slice confusion, whi
+ch did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Audit technologist K. Morales replayed FY24 mailbox snapshots and showed how capital project capitalization threads arrived out of order relative to correction
+notices, surfacing unsigned amendment drift on four high-balance rows.
+
+Counsel memo WP-2194 advises retaining full capital project capitalization threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+
+Fixed-assets specialist P. Okafor argued that capital project capitalization capitalization memos should not alter ledger status; investigators agreed while not
+ing those memos still inform exception coding narratives.
+
+Lead reviewer E. Novak opened working paper WP-2468 after fixed assets reported that capital project capitalization distorted the July review reconciliation. Th
+e team reconstructed mailbox ordering and found unsigned amendment drift affecting at least 4 transaction threads.
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+root@de10d3a691f3:/app#

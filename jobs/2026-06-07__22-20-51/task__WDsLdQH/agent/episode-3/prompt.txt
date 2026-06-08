@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Memo WP-1481 summarizes a panel on lease modification restatement chaired by A. Ndiaye. Participants debated whether informal spreadsheets should ever override
+ledger owners; Brief 05 closes that debate for the FY24 extractor.
+
+Privacy review #659 redacted personal data from lease modification restatement threads but retained transaction identifiers needed for reconciliation testing.
+
+Interview #665 with technical accounting counsel captured how lease modification restatement correspondence referenced amounts near $18,534 without matching led
+ger rows. Investigators preserved the thread because status precedence inversion can change downstream exception coding.
+
+Quality review #159 sampled 14 lease modification restatement tickets and found owner field churn whenever provisional ledger rows were not filtered before merg
+e.
+
+Vendor management J. Huang described lease modification restatement onboarding delays that pushed compliance responses past ledger dates on several rejected row
+s during August memo.
+
+Treasury liaison A. Ndiaye explained that lease modification restatement related wires were paused during August memo, delaying compliance responses and amplify
+ing correction batch ordering on rejected rows.
+
+Operations analyst P. Okafor demonstrated that lease modification restatement batches processed after midnight UTC inherited stale owner fields, a symptom consi
+stent with correction batch ordering rather than incorrect amount parsing.
+
+Lead reviewer J. Huang opened working paper WP-7682 after technical accounting reported that lease modification restatement distorted the August memo reconcilia
+tion. The team reconstructed mailbox ordering and found effective-date mismatch affecting at least 6 transaction threads.
+
+Site visit #358 to technical accounting exported 6 compliance threads tied to lease modification restatement. Reviewers noted that mailbox ingestion lag appeare
+d whenever correction batches straddled a weekend wire cutoff.
+
+Fixed-assets specialist T. Singh argued that lease modification restatement capitalization memos should not alter ledger status; investigators agreed while noti
+ng those memos still inform exception coding narratives.
+
+Controller staff described lease modification restatement as a secondary driver of correction batch ordering while rebuilding the August memo close calendar. Th
+ey emphasized that decoy ledger headings in draft appendices must be ignored.
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+
+## Case Study 07 — Capital Project Capitalization
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+root@edd51c718576:/app#

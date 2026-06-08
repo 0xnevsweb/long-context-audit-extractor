@@ -1,0 +1,31 @@
+{
+  "analysis": "Our grep/context approach is still surfacing narrative, not the explicit rule bullets; likely the brief slices (561-669 etc) cover mostly narrative and the actual rule statements are earlier within each brief (or duplicated headings mean the authoritative content starts at the earlier occurrence, not the later). We saw duplicate headings for Brief 04/05/09; our chosen start lines (561, 679, 1472) might point to a second occurrence that is narrative-heavy. We should instead locate within the full /tmp/briefs_01_09.md the specific rule strings we already know exist: `compliance_hold` definition, correction precedence, signed amendments. Then open around those absolute line numbers, not the brief start guesses.",
+  "plan": "1) Use grep -n on the full /tmp/briefs_01_09.md for `compliance_hold` and print surrounding lines with sed. 2) Similarly grep for 'For extractor output' and 'Correction Notices' and 'winning correction' and open around those hits. 3) Grep for 'signed: true' or 'signed amendments' rule line within briefs (not meeting notes) and open around that. This will get the actual authoritative rule paragraphs.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"compliance_hold\" /tmp/briefs_01_09.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"winning correction\" /tmp/briefs_01_09.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"Correction Notices|notice_id|previous_value\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"For extractor output\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"signed amendments|unsigned meeting|Committee minutes\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport subprocess, re\n\ndef show_around(pattern, before=12, after=30, max_hits=4):\n    out=subprocess.check_output(['grep','-n',pattern,'/tmp/briefs_01_09.md'], text=True, errors='replace')\n    lines=out.strip().splitlines() if out.strip() else []\n    for h in lines[:max_hits]:\n        ln=int(h.split(':',1)[0])\n        start=max(1, ln-before)\n        end=ln+after\n        print('\\n'+'='*10, pattern, 'hit', ln, '='*10)\n        subprocess.run(['sed','-n',f'{start},{end}p','/tmp/briefs_01_09.md'])\n\nfor pat in ['compliance_hold','winning correction','previous_value','For extractor output','signed','unsigned meeting']:\n    show_around(pat)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

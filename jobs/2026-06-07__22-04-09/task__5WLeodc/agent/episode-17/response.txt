@@ -1,0 +1,35 @@
+{
+  "analysis": "We now have key exception flag rules: exception_reason null unless codes apply; `over_limit` when amount_usd > 10000; `compliance_hold` comparison defined in Brief 09; `policy_waiver` when final status is approved, amount_usd > 10000, and Policy Exception exists. We also saw a line in Brief 09 about hold timing amendment superseding earlier wording. Need to read the surrounding text for lines ~970-990 (exception coding) and around ~1455-1485 (Brief 09 hold rule details). Also need correction notice precedence rules and signed meeting amendment rules (probably Brief 05) and the overall overlay order, plus how to compute previous_value for report.",
+  "plan": "1) Use sed to display around 960-1005 to capture full exception coding instructions. 2) Display around 1125-1165 for policy_waiver details. 3) Display around 1445-1495 for Brief 09 compliance_hold timing comparison rule. 4) Search for 'correction' rules (how to order corrections and what wins) and 'previous_value' definitions; open those contexts. 5) Once rules are fully captured, implement: build exception_reason with sorted codes; implement compliance_hold logic; reconcile overlay order; correction application with previous_value; update writers and schema.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '960,1015p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1115,1165p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1435,1505p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"apply.*correction|winning correction|correction notice.*(wins|supersed)|sort.*notice|tie\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"previous_value|immediately before\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"overlay order|apply in order|merge order\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"signed.*override|unsigned\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

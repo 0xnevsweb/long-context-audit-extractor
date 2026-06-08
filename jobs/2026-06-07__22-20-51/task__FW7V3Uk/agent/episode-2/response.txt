@@ -1,0 +1,39 @@
+{
+  "analysis": "We’ve located at least one Investigation Brief section output via the Python snippet, and it includes Meeting Notes with amendments (signed true/false, effective dates). The snippet truncated with many more lines, so we still need full authoritative rules from Briefs 01–09, especially Brief 09 hold timing override, and we need to locate structured sections for compliance mail, policy exceptions, and correction notices. Current extractor output is deterministic but likely ignores these sections (empty reconciliation_report, no exceptions). Next: extract full text for each brief to a local scratch file for reading, and specifically locate Brief 09 and the structured tail headings for Correction Notices / Policy Exceptions / Compliance Mail.",
+  "plan": "1) Dump each Investigation Brief 01–09 into separate temp files so we can read them fully (not truncated). 2) Locate Brief 09 and print it entirely to understand the superseding compliance-hold timing rule. 3) Locate headings/blocks for Correction Notices, Policy Exceptions, and Compliance mail excerpts in the archive to implement parsing and precedence. 4) After rules are understood, we’ll modify extractor code accordingly.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, os\nsrc='/app/data/audit_archive.md'\nlines=open(src,'r',encoding='utf-8').read().splitlines(True)\nbrief_re=re.compile(r'^(#+\\s*)?Investigation\\s+Brief\\s*(0[1-9]|[1-9])\\b', re.I)\nstarts=[]\nfor i,l in enumerate(lines):\n    m=brief_re.search(l)\n    if m:\n        n=int(m.group(2))\n        starts.append((n,i))\nstarts=sorted(starts)\n# write each brief to /tmp/brief_XX.md\nfor k,(n,s) in enumerate(starts):\n    e = starts[k+1][1] if k+1<len(starts) else len(lines)\n    out=f'/tmp/brief_{n:02d}.md'\n    with open(out,'w',encoding='utf-8') as f:\n        f.writelines(lines[s:e])\n    print(out, 'lines', e-s)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "ls -ლა /tmp/brief_*.md 2>/dev/null || ls -la /tmp/brief_*.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Compliance|hold|sent:\" /tmp/brief_0*.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Correction Notice|notice_id|winning correction|supersed|precedence|targets:\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Policy Exception|approved_by:\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Transaction Ledger\\b(?! \\(working copy\\))|Transaction Ledger \\(working copy\\)|provisional:\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

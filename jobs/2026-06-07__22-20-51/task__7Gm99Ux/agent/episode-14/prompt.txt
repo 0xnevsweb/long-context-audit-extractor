@@ -1,0 +1,70 @@
+New Terminal Output:
+
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/parser/slice.js <<'EOF'
+> function escapeRegExp(s) {
+>   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> }
+>
+> /**
+>  * Slice a top-level markdown section whose heading line matches exactly.
+>  * Heading detection is anchored to whole lines to avoid decoy substrings.
+>  */
+> function sliceSectionByExactHeading(markdown, headingLine) {
+>   const headRe = new RegExp(`^${escapeRegExp(headingLine)}\\s*$`, "m");
+>   const headMatch = markdown.match(headRe);
+>   if (!headMatch || headMatch.index == null) return "";
+>
+>   const start = headMatch.index;
+>   const afterStart = start + headMatch[0].length;
+>   const rest = markdown.slice(afterStart);
+>
+>   const nextRe = /^##\s+/m;
+>   const nextMatch = rest.match(nextRe);
+>   const end = nextMatch && nextMatch.index != null ? afterStart + nextMatch.index : markdown.length;
+>
+>   return markdown.slice(start, end);
+> }
+>
+> module.exports = { sliceSectionByExactHeading };
+> EOF
+root@58b3f47e1f8d:/app# perl -0777 -i -pe 's/require\("\.\/sections"\)/require("\.\/slice")/g' /app/audit-extractor/src/parser/ledger.js /app/audit-extractor/sr
+c/parser/emails.js /app/audit-extractor/src/parser/policy.js /app/audit-extractor/src/parser/corrections.js /app/audit-extractor/src/parser/meetings.js
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+> const { parseLedger } = require("./ledger");
+> const { parseMeetings } = require("./meetings");
+> const { parseEmails } = require("./emails");
+> const { parseCorrections } = require("./corrections");
+> const { parsePolicyExceptions } = require("./policy");
+>
+> function parseArchive(markdown) {
+>   return {
+>     ledger: parseLedger(markdown),
+>     meetings: parseMeetings(markdown),
+>     emails: parseEmails(markdown),
+>     corrections: parseCorrections(markdown),
+>     policyExceptions: parsePolicyExceptions(markdown),
+>   };
+> }
+>
+> module.exports = { parseArchive };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/parser/slice.js && node -c /app/audit-extractor/src/parser/ledger.js && node -c /app/audit-extractor/sr
+c/parser/emails.js && node -c /app/audit-extractor/src/parser/policy.js && node -c /app/audit-extractor/src/parser/corrections.js && node -c /app/audit-extracto
+r/src/parser/meetings.js && node -c /app/audit-extractor/src/parser/sections.js
+root@58b3f47e1f8d:/app# node - <<'NODE'
+> const fs = require('node:fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md = fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed = parseArchive(md);
+> console.log('ledger', parsed.ledger.length);
+> console.log('meetings', parsed.meetings.length);
+> console.log('emails', parsed.emails.length);
+> console.log('corrections', parsed.corrections.length);
+> console.log('policyExceptions', parsed.policyExceptions.length);
+> NODE
+ledger 32
+meetings 3
+emails 4
+corrections 6
+policyExceptions 3
+root@58b3f47e1f8d:/app#

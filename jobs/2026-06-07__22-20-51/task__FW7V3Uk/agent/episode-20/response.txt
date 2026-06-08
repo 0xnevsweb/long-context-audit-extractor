@@ -1,0 +1,23 @@
+{
+  "analysis": "Outputs are now deterministic and transactions/exceptions are populated. However reconciliation_report.jsonl is still empty (sha256 is empty file). That means parsed.corrections is likely empty due to parser/corrections.js using markdown.indexOf(\"## Transaction Ledger\") which matches the working copy ledger heading before the real ledger, truncating slice too early (or other parsing bug). We need to fix parseCorrections to end at the authoritative ledger heading (exact) or at working copy? It should include correction notices before ledger; in archive, correction notices come right before working copy ledger, so end should be the working copy ledger heading, not the first '## Transaction Ledger' generic. Also corrections should be written and applied; currently report is built from parsed.corrections so empty => parse failure. Next step: inspect parser/corrections.js and adjust section slicing.",
+  "plan": "1) Inspect parser/corrections.js current logic. 2) Change it to find start at '## Correction Notices' and end at '## Transaction Ledger (working copy)' if present, else at '## Transaction Ledger\\n' exact, ensuring we include all CORR blocks. Avoid using \"\\n\" escapes by using NL fromCharCode. 3) Rerun extractor and confirm reconciliation_report.jsonl now contains lines sorted by notice_id. 4) Verify determinism again. Finally run extractor with outdir /app/output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/parser/corrections.js').write_text('''function parseCorrections(markdown) {\n  const start = markdown.indexOf(\"## Correction Notices\");\n  if (start < 0) return [];\n\n  // Corrections appear immediately before the ledger tail.\n  // Prefer ending at the working-copy ledger heading if present.\n  const end1 = markdown.indexOf(\"## Transaction Ledger (working copy)\", start);\n  const end2 = markdown.indexOf(\"## Transaction Ledger\", start);\n  const end = end1 >= 0 ? end1 : end2;\n\n  const slice = end >= 0 && end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const noticeId = lines[0].trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {\n      notices.push(entry);\n    }\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\n''', encoding='utf-8')\nprint('corrections.js fixed')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out_fix1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "wc -l /tmp/audit_out_fix1/reconciliation_report.jsonl && head -n 20 /tmp/audit_out_fix1/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

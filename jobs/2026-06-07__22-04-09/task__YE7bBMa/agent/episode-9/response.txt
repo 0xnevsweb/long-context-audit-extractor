@@ -1,0 +1,23 @@
+{
+  "analysis": "We now have ledger.js snippet: it currently de-dupes by first-seen transaction_id (rows.some...), which is wrong given the archive contains duplicate TXNs where provisional:true should be ignored in favor of final. ledger.js also doesn’t parse provisional at all, so it can’t apply Brief 01 rule; this likely causes owner/status drift and wrong ledger sourcing. Structured section headings show multiple Email Excerpts and Policy Exceptions earlier marked draft/non-authoritative; authoritative structured sections appear near end: Email Excerpts at line 1732, Policy Exceptions at 2883, Correction Notices at 2900. We still need sections.js (not shown) and the extracted briefs text with actual rules; then implement parser fixes (ledger provisional, emails sent date, select correct sections), reconciliation fixes, and output formatting.",
+  "plan": "1) Print full ledger.js and sections.js to confirm how they choose which section occurrences to parse (first vs last) and adjust to prefer authoritative tail sections (not draft). 2) Extract and view the first ~120 lines of each Brief 01–09 (likely contains the binding rules) from /tmp/briefs_01_09.txt. 3) Patch parsers: ledger should keep latest non-provisional (or per brief), parse provisional flag; emails should parse sent date and only use authoritative Email Excerpts section; policy exceptions should use authoritative section too; corrections should parse from authoritative section. 4) Patch reconciliation/writers/sorts/exceptions per spec and briefs. Next command batch focuses on viewing sections.js, full ledger.js, and brief headers in /tmp/briefs_01_09.txt.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 0[1-9]\" /tmp/briefs_01_09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nfor n,i in starts:\n  print(f\"\\n===== BRIEF {n:02d} (lines {i+1}-{i+120}) =====\")\n  print('\\n'.join(lines[i:i+120]))\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

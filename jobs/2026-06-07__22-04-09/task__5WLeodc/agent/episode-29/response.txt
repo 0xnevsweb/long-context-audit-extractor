@@ -1,0 +1,27 @@
+{
+  "analysis": "We have authoritative exception rules from Briefs 07–09 and 08 (over_limit, compliance_hold with Brief 09 timing, policy_waiver requiring approved_by: compliance, retroactive_review requiring a winning status correction). We still need to capture Brief 04 correction precedence details (winning correction, tie-breaks, previous_value definition) and Brief 05 meeting amendment rules (signed/effective behavior). Current code still lacks: parsing email sent dates, filtering senders, policy exception approved_by details, meeting effective date usage, provisional ledger exclusion, correction winner selection and previous_value computation, exception flag assignment, correct output file shapes, and stable deterministic sorting.",
+  "plan": "1) Inspect the missing authoritative rule text by printing narrow windows around the key line numbers for Brief 04 (corrections), Brief 05 (meetings), and correction application instructions. 2) Inspect current parsers for policy and meetings to confirm what data is currently extracted and what must be extended (approved_by/effective). 3) With rules in hand, implement code updates across parsers, reconcile logic, exception builder, sort utilities, and output writers to meet the spec and ensure deterministic outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '535,575p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '845,885p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '660,730p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,140p' audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

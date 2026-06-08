@@ -1,0 +1,91 @@
+{
+  "analysis": "The last displayed output is still narrative text (case study / draft sidebar) and does not include the code or the authoritative tail sections we intended to print. The earlier batched commands likely did not run (or their output scrolled away). We need to re-run the source inspections and specifically print the authoritative structured sections around lines 2840–3152, plus the key Investigation Brief blocks. We'll re-run with smaller, targeted commands and then proceed to patch code.",
+  "plan": "1) Re-run code file dumps (index, parsers, normalize, writers) in manageable chunks. 2) Display the authoritative structured sections near the end (Policy Exceptions, Correction Notices, Transaction Ledger) to understand exact record formats. 3) Display Investigation Brief 01–09 text sections using line ranges based on earlier grep results so we can implement reconciliation semantics correctly (especially Brief 03 and Brief 09).",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2860,3055p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '3055,3152p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,120p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '214,340p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,520p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '555,760p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '672,978p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1455,1525p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

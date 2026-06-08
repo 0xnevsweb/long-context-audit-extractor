@@ -1,0 +1,41 @@
+Current Terminal Screen:
+659:## Investigation Brief 08 — Exception Flags (Part II)
+661:Continued from Brief 07. Set `policy_waiver` when final status is `approved`,
+668:===== Investigation Brief 08 (excerpt lines 1153-1232) =====
+669:## Investigation Brief 08 — Exception Flags (Part II) — supporting chronology
+671:In May journal, HR finance migrated payroll accrual true-up workflows to a new ticketing tool. Migration cutover introduced correction batch ordering, which
+ did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+689:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+709:Memo WP-5165 summarizes a panel on payroll accrual true-up chaired by M. Chen. Participants debated whether informal spreadsheets should ever override ledge
+r owners; Brief 05 closes that debate for the FY24 extractor.
+719:Peer review #301 of HR finance sampling found 8 mislinked emails on payroll accrual true-up. None of the mislinked messages originated from compliance addre
+sses, supporting Brief 02 sender restrictions.
+721:Stakeholder workshop #161 on payroll accrual true-up produced conflicting recollections about which correction notice superseded an earlier owner change; Br
+ief 04 governs that precedence for automated output.
+725:In Q1 close, procurement migrated vendor onboarding backlog workflows to a new ticketing tool. Migration cutover introduced retroactive status conflict, whi
+ch did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+729:Regional lead R. Okonkwo hosted a readout on vendor onboarding backlog where finance controllers disputed whether unsigned meeting notes should override led
+ger owners; investigators cited Brief 05 during the session.
+739:Stakeholder workshop #621 on vendor onboarding backlog produced conflicting recollections about which correction notice superseded an earlier owner change;
+Brief 04 governs that precedence for automated output.
+750:===== Investigation Brief 09 (excerpt lines 1455-1464) =====
+751:## Investigation Brief 09 — Mid-Year Amendment
+758:before any correction notice changes `date` or `status`. Brief 03 still governs
+762:===== Investigation Brief 09 (excerpt lines 1465-1544) =====
+763:## Investigation Brief 09 — Mid-Year Amendment — supporting chronology
+769:In August memo, technical accounting migrated lease modification restatement workflows to a new ticketing tool. Migration cutover introduced hold flag suppr
+ession, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+783:Peer review #493 of technical accounting sampling found 14 mislinked emails on lease modification restatement. None of the mislinked messages originated fro
+m compliance addresses, supporting Brief 02 sender restrictions.
+791:Stakeholder workshop #608 on lease modification restatement produced conflicting recollections about which correction notice superseded an earlier owner cha
+nge; Brief 04 governs that precedence for automated output.
+797:Memo WP-1481 summarizes a panel on lease modification restatement chaired by A. Ndiaye. Participants debated whether informal spreadsheets should ever overr
+ide ledger owners; Brief 05 closes that debate for the FY24 extractor.
+819:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+823:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+833:In July review, fixed assets migrated capital project capitalization workflows to a new ticketing tool. Migration cutover introduced policy waiver omission,
+ which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+root@57a25f8d12e0:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+
+### Investigation Brief 09 (lines 1465-3152)
+---
+## Investigation Brief 09 — Mid-Year Amendment
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+
+### Investigation Brief 09 (lines 1465-3152)
+
+---
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+
+### Investigation Brief 09 (lines 1465-3152)
+
+---
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+
+### Investigation Brief 09 (lines 1465-3152)
+
+---
+root@57a25f8d12e0:/app#

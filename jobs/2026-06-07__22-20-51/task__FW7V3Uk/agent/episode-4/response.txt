@@ -1,0 +1,43 @@
+{
+  "analysis": "We successfully used grep to list many email header lines (From/Subject) but haven’t yet found the compliance@ emails or 'sent:' lines required for compliance_hold, nor located correction notice / policy exception headings due to using only head outputs. We need targeted searches for 'compliance@' and 'sent:' and then view the surrounding blocks. Also need to locate where correction notices and policy exceptions are defined structurally and read Brief 09 content directly (we only grepped briefly).",
+  "plan": "1) Search the full archive for 'compliance@' and 'sent:' occurrences with line numbers. 2) For the first few hits, print surrounding context to learn exact formatting. 3) Search for 'notice_id' and 'Correction Notice' and print surrounding context near the tail (we saw a 'targets:' block right before the ledger). 4) Search for 'Policy Exception' occurrences similarly. 5) Print more of Brief 09 to capture the authoritative hold timing rule and any precedence/overlay order notes.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"compliance@\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"^sent:\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# show context around compliance@ and sent:\nkeys=[]\nfor i,l in enumerate(lines,1):\n    if 'compliance@' in l or re.match(r'^sent:', l):\n        keys.append(i)\nfor i in keys[:12]:\n    s=max(1,i-6); e=min(len(lines), i+20)\n    print(f\"\\n--- context around line {i} ---\")\n    for j in range(s,e+1):\n        print(f\"{j:6d}: {lines[j-1]}\")\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"notice_id|Correction Notice|^targets:|^field:|^value:|^effective:\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# find likely correction notice blocks by presence of 'notice_id:'\nidx=[i for i,l in enumerate(lines,1) if re.match(r'^notice_id:\\s*', l)]\nprint('notice_id count', len(idx))\nfor i in idx[:10]:\n    s=max(1,i-8); e=min(len(lines), i+40)\n    print(f\"\\n=== notice block near line {i} ===\")\n    for j in range(s,e+1):\n        print(f\"{j:6d}: {lines[j-1]}\")\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"Policy Exception|approved_by:|exception_id:\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nidx=[i for i,l in enumerate(lines,1) if re.search(r'Policy Exception', l, re.I)]\nprint('policy exception mentions', len(idx))\nfor i in idx[:6]:\n    s=max(1,i-10); e=min(len(lines), i+50)\n    print(f\"\\n=== policy context near line {i} ===\")\n    for j in range(s,e+1):\n        print(f\"{j:6d}: {lines[j-1]}\")\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

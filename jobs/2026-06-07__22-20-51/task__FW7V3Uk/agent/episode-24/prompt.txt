@@ -1,0 +1,41 @@
+Current Terminal Screen:
+526:Subject: retention hold reminder — coordination 39
+529:recon was elevated but no compliance decisions are recorded in this message.
+536:around compliance threads during October count.
+539:Subject: retention hold reminder — coordination 41
+542:wire cutoff failures staffing gaps. This email does not reference compliance@
+549:was elevated but no compliance decisions are recorded in this message.
+562:up. No merge fields present.
+568:but no compliance decisions are recorded in this message.
+574:backlog. No merge fields present.
+581:compliance@ senders or transaction ids.
+584:Subject: retention hold reminder — coordination 48
+root@c97f4e7457e4:/app# grep -nEi "Correction" /tmp/brief_04.md | head -n 40
+1:## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+3:Quality review #167 sampled 23 payroll accrual true-up tickets and found correction batch ordering whenever provisional ledger rows were not filtered before m
+erge.
+7:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Bri
+ef 09 later in this archive supersedes that draft practice for production reconciliation.
+11:Stakeholder workshop #718 on payroll accrual true-up produced conflicting recollections about which correction notice superseded an earlier owner change; Bri
+ef 04 governs that precedence for automated output.
+15:SOX testing team WP-1031 linked retroactive status conflict on payroll accrual true-up to a manual override logged at 02:14 local time between two automated
+correction imports.
+19:Audit technologist S. Patel replayed FY24 mailbox snapshots and showed how payroll accrual true-up threads arrived out of order relative to correction notice
+s, surfacing mailbox ingestion lag on four high-balance rows.
+21:Committee packet #801 chronicles how payroll accrual true-up escalated after J. Huang observed ledger slice confusion between two correction batches. Cross-c
+hecks against amendment minutes were required before accepting any owner change.
+23:Grant compliance WP-9154 tied payroll accrual true-up attestation gaps to mailbox ingestion lag visible only when hold flags used corrected rather than pre-c
+orrection ledger dates.
+35:Controller staff described payroll accrual true-up as a secondary driver of correction batch ordering while rebuilding the May journal close calendar. They e
+mphasized that decoy ledger headings in draft appendices must be ignored.
+63:Committee packet #938 chronicles how capital project capitalization escalated after P. Okafor observed policy waiver omission between two correction batches.
+ Cross-checks against amendment minutes were required before accepting any owner change.
+75:Grant compliance WP-4261 tied capital project capitalization attestation gaps to owner field churn visible only when hold flags used corrected rather than pr
+e-correction ledger dates.
+79:SOX testing team WP-2431 linked effective-date mismatch on capital project capitalization to a manual override logged at 02:14 local time between two automat
+ed correction imports.
+81:Stakeholder workshop #276 on capital project capitalization produced conflicting recollections about which correction notice superseded an earlier owner chan
+ge; Brief 04 governs that precedence for automated output.
+107:Audit technologist P. Okafor replayed FY24 mailbox snapshots and showed how capital project capitalization threads arrived out of order relative to correcti
+on notices, surfacing retroactive status conflict on four high-balance rows.
+root@c97f4e7457e4:/app#

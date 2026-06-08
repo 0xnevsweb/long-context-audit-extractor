@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     } else if (notice.field === "date") {
+>       target.date = notice.value;
+>       // Brief 06: effective_date becomes correction effective when status/date corrected
+>       target.date = notice.effective;
+>     }
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: previousValue,
+>       new_value: String(notice.value),
+>       effective: notice.effective,
+>     });
+>   }
+>
+>   // Sort report by notice_id ascending for output.
+>   sortByNoticeId(report);
+>
+>   const items = sortByTransactionId(
+>     [...byId.values()].map((row) => ({
+>       transaction_id: row.transaction_id,
+>       owner: row.owner,
+>       status: String(row.status).toLowerCase(),
+>       effective_date: row.date,
+>       amount_usd: Number(row.amount),
+>       exception_reason: null,
+>       // internal
+>       _preCorrectionDate: row._preCorrectionDate,
+>       _qualifyingEmails: qualifyingEmailsByTxn.get(row.transaction_id) || [],
+>       _hadStatusCorrection: row._hadStatusCorrection,
+>     })),
+>   );
+>
+>   return { items, report };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@de10d3a691f3:/app#

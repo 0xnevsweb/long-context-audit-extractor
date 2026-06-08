@@ -1,0 +1,141 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# grep -n "compliance_hold" /tmp/briefs_01_09.md | head -n 20
+979:`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+982:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1465:amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+root@de10d3a691f3:/app# grep -n "previous_value" /tmp/briefs_01_09.md | head -n 20
+556:greatest `effective` date wins. For each winning notice, `previous_value` in
+root@de10d3a691f3:/app# grep -n "For extractor output" /tmp/briefs_01_09.md | head -n 40
+5:slice. For extractor output, treat only the markdown section whose heading
+root@de10d3a691f3:/app# grep -n "winning correction" /tmp/briefs_01_09.md | head -n 20
+860:ledger `date` field (YYYY-MM-DD on output). When a winning correction notice
+1155:final status is `reversed`, `amount_usd` > 5000, and a winning correction
+root@de10d3a691f3:/app# sed -n '960,1005p' /tmp/briefs_01_09.md
+
+Fixed-assets specialist A. Ndiaye argued that inventory obsolescence reserve capitalization memos should not alter ledger status; investigators agreed while not
+ing those memos still inform exception coding narratives.
+
+Internal audit follow-up #564 tracked how inventory obsolescence reserve exceptions were closed without matching policy waiver paperwork, a separate issue from
+extractor merge ordering.
+
+SOX testing team WP-6179 linked ledger slice confusion on inventory obsolescence reserve to a manual override logged at 02:14 local time between two automated c
+orrection imports.
+
+Operations analyst S. Patel demonstrated that inventory obsolescence reserve batches processed after midnight UTC inherited stale owner fields, a symptom consis
+tent with effective-date mismatch rather than incorrect amount parsing.
+
+External advisors reviewing inventory obsolescence reserve during October count asked for a machine-readable trace explaining why rejected rows received hold fl
+ags. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+Lead reviewer R. Okonkwo opened working paper WP-3462 after operations finance reported that inventory obsolescence reserve distorted the October count reconcil
+iation. The team reconstructed mailbox ordering and found correction batch ordering affecting at least 21 transaction threads.
+
+Grant compliance WP-3449 tied inventory obsolescence reserve attestation gaps to effective-date mismatch visible only when hold flags used corrected rather than
+ pre-correction ledger dates.
+
+## Investigation Brief 07
+— Exception Flags (Part I)
+
+Exception coding review: `exception_reason` is null unless a code applies. Set
+`over_limit` when `amount_usd` strictly exceeds 10000. Set `compliance_hold`
+when final status is `rejected`, a qualifying `compliance@` email referenced
+that transaction, and that email block includes a `sent:` line. The sent-date
+comparison used for `compliance_hold` is defined in Investigation Brief 09
+(Mid-Year Amendment), not Brief 03. Multiple reasons join with semicolon in
+lexical order of the reason codes.
+
+## Investigation Brief 07
+— Exception Flags (Part I) — supporting chronology
+
+Stakeholder workshop #199 on revenue cutoff testing produced conflicting recollections about which correction notice superseded an earlier owner change; Brief 0
+4 governs that precedence for automated output.
+
+During September fieldwork, R. Okonkwo compared two cold extractor runs and documented correction batch ordering on revenue cutoff testing. Operations initially
+ attributed the drift to cache state; QA disproved that hypothesis the following morning.
+
+Fixed-assets specialist L. Bergstrom argued that revenue cutoff testing capitalization memos should not alter ledger status; investigators agreed while noting t
+hose memos still inform exception coding narratives.
+
+Lead reviewer P. Okafor opened working paper WP-6447 after external audit reported that revenue cutoff testing distorted the September fieldwork reconciliation.
+ The team reconstructed mailbox ordering and found correction batch ordering affecting at least 15 transaction threads.
+
+Follow-up #859 confirmed that external audit routed revenue cutoff testing statements through a shared inbox with 16 delegates. Investigators flagged policy wai
+ver omission as the likely root cause of inconsistent status columns.
+
+Quality review #106 sampled 24 revenue cutoff testing tickets and found ledger slice confusion whenever provisional ledger rows were not filtered before merge.
+
+Committee packet #872 chronicles how revenue cutoff testing escalated after T. Singh observed retroactive status conflict between two correction batches. Cross-
+checks against amendment minutes were required before accepting any owner change.
+
+Risk assessment WP-1682 links revenue cutoff testing to control gaps in mail ingestion for external audit. The assessment explicitly warns against treating alte
+rnate ledger headings or appendix commentary as transaction sources.
+
+SOX testing team WP-3440 linked mailbox ingestion lag on revenue cutoff testing to a manual override logged at 02:14 local time between two automated correction
+ imports.
+root@de10d3a691f3:/app# sed -n '1448,1495p' /tmp/briefs_01_09.md
+
+Stakeholder workshop #551 on FX revaluation lag produced conflicting recollections about which correction notice superseded an earlier owner change; Brief 04 go
+verns that precedence for automated output.
+
+Fixed-assets specialist J. Huang argued that FX revaluation lag capitalization memos should not alter ledger status; investigators agreed while noting those mem
+os still inform exception coding narratives.
+
+In June rates, treasury migrated FX revaluation lag workflows to a new ticketing tool. Migration cutover introduced correction batch ordering, which did not rep
+roduce once ledger sourcing rules from Brief 01 were applied manually.
+
+During June rates, K. Morales compared two cold extractor runs and documented ledger slice confusion on FX revaluation lag. Operations initially attributed the
+drift to cache state; QA disproved that hypothesis the following morning.
+
+Committee packet #982 chronicles how FX revaluation lag escalated after K. Morales observed retroactive status conflict between two correction batches. Cross-ch
+ecks against amendment minutes were required before accepting any owner change.
+
+Counsel memo WP-4353 advises retaining full FX revaluation lag threads because litigation hold scope may extend beyond the transactions named in formal notices.
+
+## Investigation Brief 09
+— Mid-Year Amendment
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+## Investigation Brief 09
+— Mid-Year Amendment — supporting chronology
+
+Tax counsel flagged lease modification restatement restatement risk during August memo close, unrelated to extractor precedence but relevant to why the archive
+retains full correspondence.
+
+Platform engineer A. Ndiaye noted that lease modification restatement webhook retries duplicated compliance messages in the investigative export, requiring dedu
+plication by subject and sent timestamp during human review.
+
+In August memo, technical accounting migrated lease modification restatement workflows to a new ticketing tool. Migration cutover introduced hold flag suppressi
+on, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+
+Grant compliance WP-5480 tied lease modification restatement attestation gaps to hold flag suppression visible only when hold flags used corrected rather than p
+re-correction ledger dates.
+
+Risk assessment WP-8316 links lease modification restatement to control gaps in mail ingestion for technical accounting. The assessment explicitly warns against
+ treating alternate ledger headings or appendix commentary as transaction sources.
+
+SOX testing team WP-6062 linked ledger slice confusion on lease modification restatement to a manual override logged at 02:14 local time between two automated c
+orrection imports.
+
+Internal audit follow-up #581 tracked how lease modification restatement exceptions were closed without matching policy waiver paperwork, a separate issue from
+extractor merge ordering.
+
+During August memo, L. Bergstrom compared two cold extractor runs and documented owner field churn on lease modification restatement. Operations initially attri
+buted the drift to cache state; QA disproved that hypothesis the following morning.
+
+Data governance WP-1783 catalogs legacy technical accounting folders still containing lease modification restatement spreadsheets. Those folders are evidentiary
+ only; extractor output must come from canonical structured sections.
+
+Peer review #493 of technical accounting sampling found 14 mislinked emails on lease modification restatement. None of the mislinked messages originated from co
+mpliance addresses, supporting Brief 02 sender restrictions.
+
+External advisors reviewing lease modification restatement during August memo asked for a machine-readable trace explaining why rejected rows received hold flag
+s. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+root@de10d3a691f3:/app#

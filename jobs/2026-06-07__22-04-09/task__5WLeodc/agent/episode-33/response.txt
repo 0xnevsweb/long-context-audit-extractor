@@ -1,0 +1,15 @@
+{
+  "analysis": "Ledger parser now ignores provisional:true and uses exact Transaction Ledger heading. Sort util now stable and adds sortByNoticeId. Next we must overhaul reconcile.js, exceptions.js, and writers to meet spec. We'll also need to adjust schema/validate.js potentially if it expects old envelopes. Let's inspect validate.js/constants to ensure we align. Then implement reconcile semantics: sender filter, status precedence, winning corrections per Brief 04, effective_date per Brief 06, compliance_hold timing per Brief 09, and exception flags per Brief 07/08.",
+  "plan": "1) Inspect current validate.js and constants.js to ensure they won't reject new format or guide what tests expect. 2) Rewrite normalize/reconcile.js to implement the full reconciliation pipeline and generate report entries with previous_value and notice sorting. 3) Rewrite normalize/exceptions.js to compute exception_reason for each transaction and produce exceptions list. 4) Rewrite writers: jsonWriter.js (items envelope), csvWriter.js (header+format+escaping), reportWriter.js (sort by notice_id). 5) Run extractor to /tmp/out and confirm file shapes, then run twice and diff for determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/schema/validate.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/lib/constants.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,68 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# cat > audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   // Ignore decoy headings like "## Transaction Ledger (working copy)".
+>   // Use the authoritative header line exactly.
+>   const startMatch = markdown.match(/^##\s+Transaction Ledger\s*$/m);
+>   const start = startMatch ? startMatch.index : -1;
+>   if (start < 0) {
+>     return [];
+>   }
+>   const slice = markdown.slice(start);
+>
+>   const rows = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     // Ignore provisional rows (Brief 01)
+>     if (/^provisional:\s*true\s*$/im.test(block)) {
+>       continue;
+>     }
+>
+>     const lines = block.split("\n");
+>     const transactionId = lines[0].trim();
+>     if (!transactionId.startsWith("TXN-")) {
+>       continue;
+>     }
+>     if (rows.some((row) => row.transaction_id === transactionId)) {
+>       continue;
+>     }
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (trimmed.startsWith("amount:")) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (trimmed.startsWith("owner:")) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("status:")) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (trimmed.startsWith("date:")) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     rows.push(row);
+>   }
+>   return rows;
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@de10d3a691f3:/app# cat > audit-extractor/src/utils/sort.js <<'EOF'
+> function sortByTransactionId(items) {
+>   return items.sort((a, b) => {
+>     if (a.transaction_id === b.transaction_id) return 0;
+>     return a.transaction_id < b.transaction_id ? -1 : 1;
+>   });
+> }
+>
+> function sortByNoticeId(items) {
+>   return items.sort((a, b) => {
+>     if (a.notice_id === b.notice_id) return 0;
+>     return a.notice_id < b.notice_id ? -1 : 1;
+>   });
+> }
+>
+> module.exports = { sortByTransactionId, sortByNoticeId };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/parser/ledger.js && node -c audit-extractor/src/utils/sort.js
+root@de10d3a691f3:/app#

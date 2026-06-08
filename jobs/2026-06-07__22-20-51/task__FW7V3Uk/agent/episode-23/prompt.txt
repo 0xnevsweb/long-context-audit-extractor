@@ -1,0 +1,41 @@
+Current Terminal Screen:
+Internal audit circulated observations on grant compliance attestation
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> from pathlib import Path
+> p='/app/audit-extractor/src/normalize/reconcile.js'
+> print(Path(p).read_text(encoding='utf-8')[:1200])
+> PY
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings || []) {
+    if (!meeting.signed) continue;
+    const target = byId.get(meeting.transaction_id);
+    if (target) target.owner = meeting.owner;
+  }
+
+  const complianceSentByTxn = new Map();
+  for (const email of parsed.emails || []) {
+    const target = byId.get(email.transaction_id);
+    if (!target) continue;
+    target.status = email.status;
+    const prev = complianceSentByTxn.get(email.transaction_id);
+    if (!prev || email.sent > prev) complianceSentByTxn.set(email.transaction_id, email.sent);
+  }
+
+  const policyApprovedByTxn = new Map();
+  for (const ex of parsed.policyExceptions || []) {
+    if (!ex?.transaction_id) continue;
+    policyApprovedByTxn.set(ex.transaction_id, String(ex.approved_by || "").trim().toLowerCase());
+  }
+
+  const notices = [...(parsed.corrections || [])].sort((a, b) =>
+    a.notice_id < b.notice_id ? -1 : a.notice_id > b.notic
+root@c97f4e7457e4:/app#

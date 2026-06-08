@@ -1,0 +1,22 @@
+New Terminal Output:
+ory
+root@edd51c718576:/app# cat /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@edd51c718576:/app# grep -n "module.exports" -n /app/audit-extractor/src/utils/sort.js
+5:module.exports = { sortByTransactionId };
+root@edd51c718576:/app# perl -0777 -i -pe 's/const \{ sortById \} = require\("\.\.\/utils\/sort"\);/const { sortByTransactionId } = require("..\/utils\/sort");/
+g; s/\bsortById\(/sortByTransactionId(/g' /app/audit-extractor/src/normalize/reconcile.js
+root@edd51c718576:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1 || echo "exit=$?"
+root@edd51c718576:/app# ls -la /tmp/audit-out1
+total 32
+drwxr-xr-x 2 root root 4096 Jun  8 05:30 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:28 ..
+-rw-r--r-- 1 root root 4109 Jun  8 05:30 exceptions.json
+-rw-r--r-- 1 root root  728 Jun  8 05:30 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2699 Jun  8 05:30 transactions.csv
+-rw-r--r-- 1 root root 7562 Jun  8 05:30 transactions.json
+root@edd51c718576:/app#

@@ -1,0 +1,35 @@
+{
+  "analysis": "We found ledger headings: '## Transaction Ledger (working copy)' at 2938 and authoritative '## Transaction Ledger' at 2946. There are also correction notice and policy exception sections around 2883-2900. Many TXN blocks follow (### TXN-...). Next we must inspect the archive around 2880-3050 to understand the exact structured formats for policy exceptions, correction notices, and ledger rows, and then inspect email section headings around 2260/2600/2870 where subjects appear. We also still need the parser code for sections/ledger/emails/corrections to match these headings and see if it’s mistakenly using working copy sections.",
+  "plan": "1) Display archive around 2870-3055 to capture Policy Exceptions (draft vs authoritative), Correction Notices, and both ledger sections, verifying which is authoritative and how rows are formatted. 2) Display archive around the email excerpts area (around 2200-2660 and 2840-2885) to see headings/format and timestamps. 3) Then compare against parser logic to ensure it targets the correct sections and ignores working copies/drafts/decoys. Based on that, we’ll adjust parsers and reconciliation order.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '2840,3060p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2200,2705p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2705,2945p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

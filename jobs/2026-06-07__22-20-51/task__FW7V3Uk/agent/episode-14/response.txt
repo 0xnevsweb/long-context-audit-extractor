@@ -1,0 +1,23 @@
+{
+  "analysis": "ledger.js is now fixed, but emails.js has a syntax error: the regex literal in `slice.split(/\\n\\n+/)` got broken into multiple lines during rewrite, likely due to escaping issues in our earlier multi-file Python write. We need to rewrite emails.js cleanly and also quickly sanity-check other rewritten files for similar accidental newlines/regex breaks before rerunning.",
+  "plan": "1) Inspect current /app/audit-extractor/src/parser/emails.js to see the broken content. 2) Overwrite emails.js with a clean, minimal valid implementation. 3) Run a quick Node require check by running the CLI again; if more syntax errors appear, inspect and rewrite those specific files. 4) Once extractor runs, inspect output correctness/determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/parser/emails.js').write_text('''function parseEmails(markdown) {\n  const start = markdown.indexOf(\"## Email Excerpts\");\n  const end = markdown.indexOf(\"## Policy Exceptions\");\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})$/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n\n    if (!fromMatch || !subjectMatch || !sentMatch || !statusMatch) continue;\n\n    const from = fromMatch[1].trim().toLowerCase();\n    if (!from.startsWith(\"compliance@\")) continue;\n\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      sent: sentMatch[1].trim(),\n      status: statusMatch[1].trim().toLowerCase(),\n    });\n  }\n\n  return emails;\n}\n\nmodule.exports = { parseEmails };\n''', encoding='utf-8')\nprint('emails.js fixed')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_out_fix1\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

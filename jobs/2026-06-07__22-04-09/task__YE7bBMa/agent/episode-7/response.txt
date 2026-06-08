@@ -1,0 +1,27 @@
+{
+  "analysis": "We still don’t have the key rule text captured in view; terminal currently shows narrative lines (non-authoritative) from within briefs, but we need the explicit rule statements from Briefs 01–09 (especially 01, 04, 05, 06, 07, 08, 09). Also sections.js/ledger.js outputs weren’t shown yet, likely scrolled. We must re-open those files and directly locate the short authoritative rule paragraphs inside /tmp/briefs_01_09.txt using targeted searches and then view around those lines. Once we have the precise rules (provisional ledger selection, signed meetings, email timing/dedupe, correction precedence, hold/exception flags and Brief 09 amendment), we can implement code changes.",
+  "plan": "1) Re-run sed for sections.js and ledger.js (they’re essential). 2) Use grep to locate the exact rule bullet/paragraph lines in briefs (look for phrases like \"must\", \"only\", \"base\", \"ignore\", \"deduplicate\", \"flag\", \"hold\", \"effective date\", \"supersedes\"). 3) Print surrounding context (sed -n N,Mp) for each relevant rule hit, especially Brief 09. 4) After rules are extracted, proceed to editing code files with apply_patch in the next round.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"Ledger rows|provisional|Meeting|signed|Email|From:|sent:|deduplic|Correction|notice|supersed|override|hold|exception|flag|merge|overlay|order|precedence|effective\" /tmp/briefs_01_09.txt | head -n 200\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 09\" /tmp/briefs_01_09.txt\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\n# find likely rule paragraphs\nkeys=[\n  'Ledger rows provide', 'provisional', 'ignore', 'must', 'deduplicate', 'signed',\n  'From line', 'compliance@', 'precedence', 'supersede', 'hold', 'exception',\n  'effective date', 'overlay'\n]\nfor i,l in enumerate(lines,1):\n  if any(k.lower() in l.lower() for k in keys):\n    if re.search(r'(must|only|ignore|deduplic|supersed|precedence|hold|exception)', l, re.I):\n      print(f\"{i}:{l}\")\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,31 @@
+{
+  "analysis": "We can see the tail of /app/data/audit_archive.md includes structured Ledger Rows with transaction blocks. It includes a duplicate TXN with a provisional:true entry followed by a final entry, confirming Brief 01 likely requires ignoring provisional ledger rows in favor of non-provisional. We still haven't captured the full briefs text output in the terminal (previous commands likely produced a lot of output and scrolled); we must re-extract the key rules (Briefs 01–09) and inspect parser outputs to implement them. We also need to apply major code fixes: correct output envelopes/CSV, implement exception flags (policy exceptions at least), apply compliance email rules with timing + sender filter, apply corrections with precedence and previous_value, and ensure deterministic ordering (stable sort, sort report by notice_id, lexical exception codes).",
+  "plan": "1) Re-run focused extraction of Investigation Briefs 01–09 with boundaries and save into a temp file for easier reading (or grep key rule lines) so we can implement precisely, especially Brief 09 amendment. 2) Inspect sections.js/ledger.js/meetings.js/emails.js now (they were requested but their output isn’t visible), to see available fields like provisional, sent date, from address. 3) Once rules are confirmed, patch: utils/sort comparator (return 0), jsonWriter/csvWriter envelopes and columns, exceptions builder to compute codes + lexical sort, reconcile.js to (a) load ledger base using non-provisional precedence, (b) apply meetings/emails per timing/precedence, (c) apply corrections in correct order and compute previous_value, (d) output sorted items and sorted report lines. 4) Run extractor into /app/output twice and compare sha256 of transactions.json; also quick validate with jq/head.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,380p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nfor n,i in starts:\n  # end at next brief or at structured sections start\n  j=min([idx for nn,idx in starts if idx>i] or [len(lines)])\n  block='\\n'.join(lines[i:j])\n  print(f'\\n###BRIEF{n:02d}_START_LINE_{i+1}###')\n  print(block)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Brief 09\" -n /app/data/audit_archive.md | head -n 50\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

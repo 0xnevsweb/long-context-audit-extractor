@@ -1,0 +1,31 @@
+{
+  "analysis": "The visible output is from the Transaction Ledger section showing TXN blocks with amount/owner/status/date. We still need to see the earlier part of the sed slice that includes Policy Exceptions and Correction Notices headings and content, plus the parser source files (emails/sections/ledger/meetings) which didn’t show due to scroll. Next, we should reprint smaller targeted ranges: around 2875-2955 for exceptions+corrections+ledger headings; and separately show the parser files. Then we can implement fixes: correct envelopes, CSV format, deterministic sorting, compute previous_value and apply corrections in correct effective order, apply meeting amendments only if signed, apply email merges with correct timing (Brief 09), and compute exception_reason flags from policy exceptions and other rules.",
+  "plan": "1) Reprint archive lines 2875-2955 to capture Policy Exceptions and Correction Notices and the start of Transaction Ledger, including any working-copy decoys. 2) Print parser files again (sections.js, ledger.js, emails.js, meetings.js) to verify they select the authoritative sections and extract needed metadata (email dates, compliance hold signals, etc.). 3) After rules are understood from briefs, we’ll modify normalize/reconcile.js and writers, then run extractor twice into /tmp and diff outputs to confirm determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '2875,2955p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2955,3035p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,280p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

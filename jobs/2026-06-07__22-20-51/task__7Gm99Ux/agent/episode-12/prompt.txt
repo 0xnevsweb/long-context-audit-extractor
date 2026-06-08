@@ -1,0 +1,118 @@
+New Terminal Output:
+;
+root@58b3f47e1f8d:/app# grep -n "^## Committee Minutes\|^## Meeting\|^## Committee" /app/data/audit_archive.md | head
+1709:## Meeting Notes
+root@58b3f47e1f8d:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> const { sliceSectionByExactHeading } = require("./sections");
+>
+> function parseLedger(markdown) {
+>   // Only the section whose heading line is exactly `## Transaction Ledger` is authoritative.
+>   const slice = sliceSectionByExactHeading(markdown, "## Transaction Ledger");
+>   if (!slice) return [];
+>
+>   const byId = new Map();
+>
+>   const blocks = slice.split(/^###\s+/m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!/^TXN-[0-9a-f-]+$/i.test(transactionId)) continue;
+>
+>     // Ignore any ledger block that includes `provisional: true` (case-insensitive).
+>     const provisionalMatch = block.match(/^provisional:\s*(true|false)\s*$/im);
+>     if (provisionalMatch && provisionalMatch[1].trim().toLowerCase() === "true") {
+>       continue;
+>     }
+>
+>     const row = { transaction_id: transactionId.toUpperCase() };
+>     for (const line of lines.slice(1)) {
+>       const trimmed = line.trim();
+>       if (/^amount:\s*/i.test(trimmed)) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (/^owner:\s*/i.test(trimmed)) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (/^status:\s*/i.test(trimmed)) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (/^date:\s*/i.test(trimmed)) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     // When same transaction id appears multiple times, the last non-provisional wins.
+>     byId.set(row.transaction_id, row);
+>   }
+>
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/parser/ledger.js
+root@58b3f47e1f8d:/app# sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf-8').read().splitlines()
+> for i,l in enumerate(lines,1):
+>     if re.match(r'^## (Committee Minutes|Committee|Meeting)', l):
+>         print(i,l)
+> PY
+1709 ## Meeting Notes
+root@58b3f47e1f8d:/app# node - <<'NODE'
+> const fs = require('node:fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md = fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed = parseArchive(md);
+> console.log('ledger sample', parsed.ledger.slice(0,3));
+> console.log('ledger count', parsed.ledger.length);
+> NODE
+/app/audit-extractor/src/parser/ledger.js:5
+  const slice = sliceSectionByExactHeading(markdown, "## Transaction Ledger");
+                ^
+
+TypeError: sliceSectionByExactHeading is not a function
+    at parseLedger (/app/audit-extractor/src/parser/ledger.js:5:17)
+    at parseArchive (/app/audit-extractor/src/parser/sections.js:34:13)
+    at [stdin]:4:16
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [stdin]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10)
+    at node:internal/main/eval_stdin:32:5
+    at Socket.<anonymous> (node:internal/process/execution:224:5)
+
+Node.js v20.11.1
+root@58b3f47e1f8d:/app#

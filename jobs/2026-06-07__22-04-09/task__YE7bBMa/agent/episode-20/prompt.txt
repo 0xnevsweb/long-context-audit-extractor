@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> const p = parseArchive(md);
+> console.log({
+>   ledger: p.ledger.length,
+>   meetings: p.meetings.length,
+>   emails: p.emails.length,
+>   corrections: p.corrections.length,
+>   policyExceptions: p.policyExceptions.size,
+> });
+> console.log('emails last 3', p.emails.slice(-3));
+> console.log('corrections last 3', p.corrections.slice(-3));
+> NODE
+{
+  ledger: 32,
+  meetings: 4,
+  emails: 6,
+  corrections: 0,
+  policyExceptions: 3
+}
+emails last 3 [
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-de3b42d7-919c-5839-a490-b039d9c97092',
+    sent: '2024-08-15',
+    status: 'rejected'
+  },
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-1b083448-63e3-5527-a20a-edd71416341c',
+    sent: '2024-08-10',
+    status: 'rejected'
+  },
+  {
+    from_addr: 'compliance@corp.internal',
+    transaction_id: 'TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f',
+    sent: '2024-09-01',
+    status: 'reversed'
+  }
+]
+corrections last 3 []
+root@57a25f8d12e0:/app#

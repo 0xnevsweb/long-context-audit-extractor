@@ -1,0 +1,41 @@
+Current Terminal Screen:
+root@58b3f47e1f8d:/app# sed -n '1,360p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@58b3f47e1f8d:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@58b3f47e1f8d:/app# sed -n '1,220p' /app/audit-extractor/src/utils/date.js
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+module.exports = { isIsoDate };
+root@58b3f47e1f8d:/app# grep -n "^## Email Excerpts\|^## Policy Exceptions\|^## Correction Notices\|^## Transaction Ledger" /app/data/audit_archive.md
+200:## Email Excerpts (archived thread)
+788:## Policy Exceptions (draft)
+1732:## Email Excerpts
+2883:## Policy Exceptions
+2900:## Correction Notices
+2938:## Transaction Ledger (working copy)
+2946:## Transaction Ledger
+root@58b3f47e1f8d:/app#

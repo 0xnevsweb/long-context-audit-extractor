@@ -1,0 +1,41 @@
+Current Terminal Screen:
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@de10d3a691f3:/app# cat > audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(markdown) {
+>   const start = markdown.indexOf("## Email Excerpts");
+>
+>   // The archive contains decoy headings like "## Policy Exceptions (draft)".
+>   // Stop at the authoritative "## Policy Exceptions" header line only.
+>   const endMatch = markdown.match(/^##\s+Policy Exceptions\s*$/m);
+>   const end = endMatch ? endMatch.index : -1;
+>
+>   const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+>
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>     if (!fromMatch || !subjectMatch || !statusMatch) {
+>       continue;
+>     }
+>     const from = fromMatch[1].trim();
+>     emails.push({
+>       from_addr: from,
+>       transaction_id: subjectMatch[1],
+>       status: statusMatch[1].trim().toLowerCase(),
+>       sent: sentMatch ? sentMatch[1].trim() : null,
+>       qualifying: from.toLowerCase().includes("compliance@"),
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/parser/meetings.js && node -c audit-extractor/src/parser/policy.js && node -c audit-extractor/src/parser/ema
+ils.js
+root@de10d3a691f3:/app#

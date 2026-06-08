@@ -1,0 +1,41 @@
+Current Terminal Screen:
+      "exception_reason": "over_limit"
+    },
+    {
+      "transaction_id": "TXN-de3b42d7-919c-5839-a490-b039d9c97092",
+      "owner": "dlee",
+      "status": "approved",
+      "effective_date": "2024-12-12",
+      "amount_usd": 15607.62,
+      "exception_reason": "over_limit;policy_waiver"
+    }
+  ]
+}
+root@c97f4e7457e4:/app# head -n 20 /tmp/audit_out_fix1/reconciliation_report.jsonl
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> import json
+> items=json.load(open('/tmp/audit_out_fix1/transactions.json'))['items']
+> print('count', len(items))
+> print('sorted', all(items[i]['transaction_id']<=items[i+1]['transaction_id'] for i in range(len(items)-1)))
+> print('exception non-null', sum(1 for r in items if r['exception_reason'] is not None))
+> ex=json.load(open('/tmp/audit_out_fix1/exceptions.json'))['items']
+> print('exceptions count', len(ex))
+> print('exceptions sorted', all(ex[i]['transaction_id']<=ex[i+1]['transaction_id'] for i in range(len(ex)-1)))
+> PY
+count 32
+sorted True
+exception non-null 15
+exceptions count 15
+exceptions sorted True
+root@c97f4e7457e4:/app# mkdir -p /tmp/audit_out_fix2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_
+fix2
+root@c97f4e7457e4:/app# sha256sum /tmp/audit_out_fix1/* /tmp/audit_out_fix2/* | sed 's#/tmp/audit_out_fix[12]/##g' | sort
+7ad019e64dcda80640549f170334d3c416da1517b59a41c4907efaa921ca084a  transactions.csv
+7ad019e64dcda80640549f170334d3c416da1517b59a41c4907efaa921ca084a  transactions.csv
+826ed7c1995a06510a9f676ae96d081cc8ff7e255db6470d71cdd493a4f6cfd2  exceptions.json
+826ed7c1995a06510a9f676ae96d081cc8ff7e255db6470d71cdd493a4f6cfd2  exceptions.json
+b62260589b4284fbea488295ba5dbc0a8fe68dc8d85cdb3696692d63b964a4fd  transactions.json
+b62260589b4284fbea488295ba5dbc0a8fe68dc8d85cdb3696692d63b964a4fd  transactions.json
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  reconciliation_report.jsonl
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  reconciliation_report.jsonl
+root@c97f4e7457e4:/app#

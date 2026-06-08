@@ -1,0 +1,31 @@
+{
+  "analysis": "Extractor now runs and produces the four required files. CSV header is correct and amount formatting shows two decimals. `jq` is unavailable, so we must validate JSON via node/python. reconciliation_report.jsonl shows previous_value populated and entries appear sorted by notice_id (writer sorts). Remaining concern: compliance_hold timing per Brief 09 is only minimally implemented (any compliance email triggers) and may be incorrect; also correction application order and winning logic may need to follow briefs (we chose latest effective and tie by notice_id). We must read Brief 09 text to implement correct sent-date comparison for compliance_hold and ensure corrections/meetings/mail overlay order matches briefs. Also need ensure transactions.json items are sorted by transaction_id ascending; looks like uppercase IDs and lexical order works. Next: read Brief 07–09 authoritative text properly and adjust compliance_hold and possibly correction precedence. Also ensure deterministic output in /app/output and rerun for byte-identical output.",
+  "plan": "1) Use python to parse and count items/exceptions and confirm sorting and null/empty behavior without jq. 2) Extract and display Brief 09 text from archive by line numbers to implement correct compliance_hold sent-date comparison and any additional requirements for correction precedence. 3) Update reconcile.js accordingly (complianceHold boolean should apply only when final status rejected and a qualifying compliance email’s sent date meets comparison rule vs relevant date). 4) Run extractor twice into temp dirs and diff to ensure byte-identical. 5) Run final extraction into /app/output.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\np='/tmp/audit-out/transactions.json'\nobj=json.load(open(p))\nitems=obj['items']\nprint('transactions', len(items))\n# verify sorted\nids=[r['transaction_id'] for r in items]\nprint('sorted', ids==sorted(ids))\n# count exceptions\nexc=[r for r in items if r['exception_reason'] is not None]\nprint('flagged', len(exc))\n# check csv null cell behavior quickly\nimport csv\nrows=list(csv.DictReader(open('/tmp/audit-out/transactions.csv')))\nempty_exc=sum(1 for r in rows if r['exception_reason']=='' )\nprint('csv empty exception cells', empty_exc)\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# find brief 09 and print around it\nstart=None\nfor i,l in enumerate(lines):\n    if l.startswith('## Investigation Brief 09'):\n        start=i\n        break\nif start is None:\n    raise SystemExit('no brief 09')\nend=len(lines)\nfor j in range(start+1,len(lines)):\n    if re.match(r'^## Investigation Brief 0[1-9]\\b', lines[j]):\n        end=j\n        break\nprint('Brief09 lines', start+1, 'to', end)\nprint('\\n'.join(lines[start:end]))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 50\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

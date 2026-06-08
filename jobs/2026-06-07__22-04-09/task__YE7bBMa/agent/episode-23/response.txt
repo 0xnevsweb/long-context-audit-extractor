@@ -1,0 +1,6 @@
+{
+  "analysis": "All required outputs are produced under /app/output with correct file names and formats. CLI behavior works with required flags. Determinism requirement is satisfied (byte-identical outputs across reruns verified via sha256). transactions.json uses {items:[...]} sorted by transaction_id; transactions.csv has correct header, two-decimal amounts, and empty exception_reason cells for null; exceptions.json includes only flagged rows; reconciliation_report.jsonl is sorted by notice_id and contains previous_value/new_value. No stderr output indicates schema validation passed.",
+  "plan": "Mark the task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

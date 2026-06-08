@@ -1,0 +1,115 @@
+New Terminal Output:
+
+root@de10d3a691f3:/app# sed -n '1,120p' audit-extractor/src/parser/emails.js
+function parseEmails(markdown) {
+  const start = markdown.indexOf("## Email Excerpts");
+  const end = markdown.indexOf("## Policy Exceptions");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+  const emails = [];
+  const blocks = slice.split(/\n\n+/);
+  for (const block of blocks) {
+    const fromMatch = block.match(/^From:\s*(.+)$/im);
+    const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    const statusMatch = block.match(/^status:\s*(\w+)/im);
+    if (!fromMatch || !subjectMatch || !statusMatch) {
+      continue;
+    }
+    emails.push({
+      from_addr: fromMatch[1].trim(),
+      transaction_id: subjectMatch[1],
+      status: statusMatch[1].trim().toLowerCase(),
+    });
+  }
+  return emails;
+}
+
+module.exports = { parseEmails };
+root@de10d3a691f3:/app# cat > audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(markdown) {
+>   const start = markdown.indexOf("## Email Excerpts");
+>
+>   // The archive contains decoy headings like "## Policy Exceptions (draft)".
+>   // Stop at the authoritative "## Policy Exceptions" header line only.
+>   const endMatch = markdown.match(/^##\s+Policy Exceptions\s*$/m);
+>   const end = endMatch ? endMatch.index : -1;
+>
+>   const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+>
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     if (!fromMatch || !subjectMatch || !statusMatch) {
+>       continue;
+>     }
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1],
+>       status: statusMatch[1].trim().toLowerCase(),
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@de10d3a691f3:/app# node -c audit-extractor/src/parser/emails.js
+root@de10d3a691f3:/app# sed -n '1,140p' audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@de10d3a691f3:/app# sed -n '1,220p' audit-extractor/src/parser/sections.js
+const { parseLedger } = require("./ledger");
+const { parseMeetings } = require("./meetings");
+const { parseEmails } = require("./emails");
+const { parseCorrections } = require("./corrections");
+const { parsePolicyExceptions } = require("./policy");
+
+function parseArchive(markdown) {
+  return {
+    ledger: parseLedger(markdown),
+    meetings: parseMeetings(markdown),
+    emails: parseEmails(markdown),
+    corrections: parseCorrections(markdown),
+    policyExceptions: parsePolicyExceptions(markdown),
+  };
+}
+
+module.exports = { parseArchive };
+root@de10d3a691f3:/app#

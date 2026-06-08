@@ -1,0 +1,41 @@
+Current Terminal Screen:
+l notices.
+
+Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. Brief
+ 09 later in this archive supersedes that draft practice for production reconciliation.
+
+Working paper WP-4341 documents a three-way match failure on grant compliance attestation where accrual true-ups near $9,034 never received matching compliance
+responses during November certification.
+
+Tax counsel flagged grant compliance attestation restatement risk during November certification close, unrelated to extractor precedence but relevant to why the
+ archive retains full correspondence.
+
+External advisors reviewing grant compliance attestation during November certification asked for a machine-readable trace explaining why rejected rows received
+hold flags. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+
+Stakeholder workshop #404 on grant compliance attestation produced conflicting recollections about which correction notice superseded an earlier owner change; B
+rief 04 governs that precedence for automated output.
+
+Site visit #202 to compliance exported 13 compliance threads tied to grant compliance attestation. Reviewers noted that retroactive status conflict appeared whe
+never correction batches straddled a weekend wire cutoff.
+
+Controller staff described grant compliance attestation as a secondary driver of mailbox ingestion lag while rebuilding the November certification close calenda
+r. They emphasized that decoy ledger headings in draft appendices must be ignored.
+
+## Meeting Notes
+
+Committee minutes include signed amendments affecting owner fields.
+
+#### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+owner: asmith
+signed: true
+effective: 2024-02-01
+
+#### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+owner: bwong
+signed: false
+
+#### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+owner: evans
+signed: true
+root@de10d3a691f3:/app#

@@ -1,0 +1,35 @@
+{
+  "analysis": "We haven’t yet seen the outputs of the index/writer/brief commands (screen is showing ledger tail again), so we still need to inspect index.js, writers, and especially Brief 09 text to implement compliance_hold timing. Next we should rerun those inspections but redirect to temp files to avoid truncation, then view the relevant parts. After that, implement reconcile.js and exceptions.js fixes and run the CLI to generate required outputs in /app/output.",
+  "plan": "1) Capture index.js and writer sources to temp files and view them. 2) Extract Briefs 07–09 from the archive into /tmp/briefs_07_09.txt and view. 3) Based on those rules, update reconcile.js and exceptions.js, and potentially csvWriter/jsonWriter. 4) Run extractor into /app/output, then validate file presence, sorting, formatting, and rerun for byte-identical output.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nout=[]\nfor a,b in zip(starts, starts[1:]):\n    head=lines[a]\n    if head.startswith('## Investigation Brief 07') or head.startswith('## Investigation Brief 08') or head.startswith('## Investigation Brief 09'):\n        out.append('\\n'.join(lines[a:b]))\n        out.append('\\n'+'='*100+'\\n')\nopen('/tmp/briefs_07_09.txt','w',encoding='utf-8').write('\\n'.join(out))\nprint('wrote /tmp/briefs_07_09.txt')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /tmp/briefs_07_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,560p' /tmp/briefs_07_09.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '560,900p' /tmp/briefs_07_09.txt\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

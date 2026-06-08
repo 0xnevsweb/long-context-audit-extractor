@@ -1,0 +1,15 @@
+{
+  "analysis": "The displayed excerpt is within the 940–1035 range but it only shows supporting chronology lines around 1010+, not the actual Brief 07 rule lines which likely occur near 973–982. We need to specifically print the exact lines around 973–990 and around 384–392 for Brief 03. We'll narrow the sed ranges to capture the brief headers and rule bullets clearly.",
+  "plan": "Print narrower line windows around the known brief start lines (384 and 973) using nl+sed to capture the authoritative text. Then implement compliance mail merge and compliance_hold comparison accordingly in reconcile.js and rerun extraction.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '378,410p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '968,992p'\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

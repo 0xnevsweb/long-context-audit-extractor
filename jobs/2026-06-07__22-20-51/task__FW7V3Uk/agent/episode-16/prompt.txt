@@ -1,0 +1,104 @@
+New Terminal Output:
+
+root@c97f4e7457e4:/app# nl -ba /app/audit-extractor/src/parser/emails.js | sed -n '1,40p'
+     1  function parseEmails(markdown) {
+     2    const start = markdown.indexOf("## Email Excerpts");
+     3    const end = markdown.indexOf("## Policy Exceptions");
+     4    const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+     5
+     6    const emails = [];
+     7    const blocks = slice.split(/
+     8
+     9  +/);
+    10
+    11    for (const block of blocks) {
+    12      const fromMatch = block.match(/^From:\s*(.+)$/im);
+    13      const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+    14      const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})$/im);
+    15      const statusMatch = block.match(/^status:\s*(\w+)/im);
+    16
+    17      if (!fromMatch || !subjectMatch || !sentMatch || !statusMatch) continue;
+    18
+    19      const from = fromMatch[1].trim().toLowerCase();
+    20      if (!from.startsWith("compliance@")) continue;
+    21
+    22      emails.push({
+    23        from_addr: fromMatch[1].trim(),
+    24        transaction_id: subjectMatch[1],
+    25        sent: sentMatch[1].trim(),
+    26        status: statusMatch[1].trim().toLowerCase(),
+    27      });
+    28    }
+    29
+    30    return emails;
+    31  }
+    32
+    33  module.exports = { parseEmails };
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> from pathlib import Path
+> p=Path('/app/audit-extractor/src/parser/emails.js')
+> raw=p.read_bytes()
+> print('bytes', len(raw))
+> # show first 120 bytes with escapes
+> print(raw[:120])
+> PY
+bytes 1010
+b'function parseEmails(markdown) {\n  const start = markdown.indexOf("## Email Excerpts");\n  const end = markdown.indexOf("'
+root@c97f4e7457e4:/app# python3 - <<'PY'
+> from pathlib import Path
+> Path('/app/audit-extractor/src/parser/emails.js').write_text('''function parseEmails(markdown) {
+>   const start = markdown.indexOf("## Email Excerpts");
+>   const end = markdown.indexOf("## Policy Exceptions");
+>   const slice = start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+>
+>   // Avoid regex literals here to keep parsing robust across environments.
+>   const normalized = slice.replace(/\r\n/g, "\n");
+>   const blocks = normalized.split("\n\n");
+>
+>   const emails = [];
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})$/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>
+>     if (!fromMatch || !subjectMatch || !sentMatch || !statusMatch) continue;
+>
+>     const from = fromMatch[1].trim().toLowerCase();
+>     if (!from.startsWith("compliance@")) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1],
+>       sent: sentMatch[1].trim(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> ''', encoding='utf-8')
+> print('emails.js rewritten w/o split regex literal')
+> PY
+emails.js rewritten w/o split regex literal
+root@c97f4e7457e4:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1
+/app/audit-extractor/src/parser/emails.js:7
+  const normalized = slice.replace(/
+                                   ^
+
+SyntaxError: Invalid regular expression: missing /
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/parser/sections.js:3:25)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@c97f4e7457e4:/app#

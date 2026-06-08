@@ -1,0 +1,39 @@
+{
+  "analysis": "We now see reconcile.js returns { items, report } and already outputs items with the required row fields including exception_reason initialized to null. However current jsonWriter/csvWriter still use wrong envelopes/headers. Also reconcile.js currently lowercases status and sets effective_date from row.date and amount_usd from row.amount. But it likely doesn't apply mail merges, meeting amendments, correction notices, policy exceptions, or provisional filtering correctly; report generation exists but currently empty, implying corrections parsing or application isn't happening or isn't considered 'winning'. Next: inspect full reconcile.js and parsers (sections/ledger/emails/policy/corrections/meetings) to ensure authoritative sections and implement rules per briefs; then update writers and exception logic.",
+  "plan": "1) Re-open full reconcile.js from the top to understand current overlay order, correction selection, and report building. 2) Inspect sections.js to see how it chooses which headings are authoritative (must avoid draft 'Policy Exceptions (draft)' and 'Transaction Ledger (working copy)'). 3) Inspect ledger.js/policy.js/corrections.js/emails.js/meetings.js to verify parsing of authoritative tail sections and record shapes. 4) Then patch: select authoritative headings exactly, implement provisional filtering, stable dedupe, correct overlay order and Brief 09 mail timing, generate report sorted by notice_id, compute exception_reason codes and ensure determinism; finally patch writers to required envelopes/CSV formatting.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,520p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

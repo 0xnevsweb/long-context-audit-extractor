@@ -1,0 +1,117 @@
+New Terminal Output:
+
+root@57a25f8d12e0:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/ledger.js
+> @@
+>  function parseLedger(markdown) {
+> -  const start = markdown.indexOf("## Transaction Ledger");
+> +  // The archive may include decoy ledgers (e.g. "working copy").
+> +  // Source from the canonical structured tail section by taking the last occurrence.
+> +  const start = markdown.lastIndexOf("## Transaction Ledger\n");
+>    if (start < 0) {
+>      return [];
+>    }
+>    const slice = markdown.slice(start);
+>    const rows = [];
+>    const blocks = slice.split(/^### /m).slice(1);
+>    for (const block of blocks) {
+> @@
+> -    if (rows.some((row) => row.transaction_id === transactionId)) {
+> -      continue;
+> -    }
+> -    const row = { transaction_id: transactionId };
+> +    const row = { transaction_id: transactionId };
+>      for (const line of lines) {
+>        const trimmed = line.trim();
+>        if (trimmed.startsWith("amount:")) {
+>          row.amount = Number(trimmed.split(":")[1].trim());
+>        } else if (trimmed.startsWith("owner:")) {
+>          row.owner = trimmed.split(":")[1].trim();
+>        } else if (trimmed.startsWith("status:")) {
+>          row.status = trimmed.split(":")[1].trim();
+>        } else if (trimmed.startsWith("date:")) {
+>          row.date = trimmed.split(":")[1].trim();
+> +      } else if (trimmed.startsWith("provisional:")) {
+> +        row.provisional = trimmed.split(":")[1].trim().toLowerCase() === "true";
+>        }
+>      }
+> -    rows.push(row);
+> +    // Prefer non-provisional ledger rows when duplicates exist.
+> +    const existingIdx = rows.findIndex((r) => r.transaction_id === transactionId);
+> +    if (existingIdx === -1) {
+> +      rows.push(row);
+> +    } else {
+> +      const existing = rows[existingIdx];
+> +      if (existing.provisional && !row.provisional) {
+> +        rows[existingIdx] = row;
+> +      }
+> +    }
+>    }
+>    return rows;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@57a25f8d12e0:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/emails.js
+> @@
+>  function parseEmails(markdown) {
+> -  const start = markdown.indexOf("## Email Excerpts");
+> +  // Earlier excerpts are marked non-authoritative; use the canonical tail section.
+> +  const start = markdown.lastIndexOf("## Email Excerpts");
+>    const end = markdown.indexOf("## Policy Exceptions");
+>    const slice =
+>      start >= 0 && end > start ? markdown.slice(start, end) : markdown;
+>    const emails = [];
+>    const blocks = slice.split(/\n\n+/);
+>    for (const block of blocks) {
+>      const fromMatch = block.match(/^From:\s*(.+)$/im);
+>      const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+> +    const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})$/im);
+>      const statusMatch = block.match(/^status:\s*(\w+)/im);
+>      if (!fromMatch || !subjectMatch || !statusMatch) {
+>        continue;
+>      }
+>      emails.push({
+>        from_addr: fromMatch[1].trim(),
+>        transaction_id: subjectMatch[1],
+> +      sent: sentMatch ? sentMatch[1].trim() : null,
+>        status: statusMatch[1].trim().toLowerCase(),
+>      });
+>    }
+>    return emails;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@57a25f8d12e0:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/policy.js
+> @@
+>  function parsePolicyExceptions(markdown) {
+> -  const start = markdown.indexOf("## Policy Exceptions");
+> +  // Earlier policy exception sections are drafts; use the canonical tail section.
+> +  const start = markdown.lastIndexOf("## Policy Exceptions");
+>    const end = markdown.indexOf("## Correction Notices");
+>    const slice =
+>      start >= 0 && end > start ? markdown.slice(start, end) : "";
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@57a25f8d12e0:/app# apply_patch <<'PATCH'
+> *** Begin Patch
+> *** Update File: audit-extractor/src/parser/corrections.js
+> @@
+>  function parseCorrections(markdown) {
+> -  const start = markdown.indexOf("## Correction Notices");
+> +  // Use the canonical tail section.
+> +  const start = markdown.lastIndexOf("## Correction Notices");
+>    if (start < 0) {
+>      return [];
+>    }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@57a25f8d12e0:/app#

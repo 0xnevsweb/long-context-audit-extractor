@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>     const from = fromMatch[1].trim().toLowerCase();
+>     if (!from.startsWith("compliance@")) continue;
+>
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1],
+>       sent: sentMatch[1].trim(),
+>       status: statusMatch[1].trim().toLowerCase(),
+>     });
+>   }
+>
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> ''', encoding='utf-8')
+> print('emails.js fixed')
+> PY
+emails.js fixed
+root@c97f4e7457e4:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1
+/app/audit-extractor/src/parser/emails.js:7
+  const blocks = slice.split(/
+                             ^
+
+SyntaxError: Invalid regular expression: missing /
+    at internalCompileFunction (node:internal/vm:77:18)
+    at wrapSafe (node:internal/modules/cjs/loader:1288:20)
+    at Module._compile (node:internal/modules/cjs/loader:1340:27)
+    at Module._extensions..js (node:internal/modules/cjs/loader:1435:10)
+    at Module.load (node:internal/modules/cjs/loader:1207:32)
+    at Module._load (node:internal/modules/cjs/loader:1023:12)
+    at Module.require (node:internal/modules/cjs/loader:1235:19)
+    at require (node:internal/modules/helpers:176:18)
+    at Object.<anonymous> (/app/audit-extractor/src/parser/sections.js:3:25)
+    at Module._compile (node:internal/modules/cjs/loader:1376:14)
+
+Node.js v20.11.1
+root@c97f4e7457e4:/app# ls -la /tmp/audit_out_fix1
+ls: cannot access '/tmp/audit_out_fix1': No such file or directory
+root@c97f4e7457e4:/app#

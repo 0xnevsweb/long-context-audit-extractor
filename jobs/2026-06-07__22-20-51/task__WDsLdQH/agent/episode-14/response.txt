@@ -1,0 +1,27 @@
+{
+  "analysis": "We still aren't seeing the grep outputs for brief headings; only a snippet of narrative around ~1485-1510. Output is getting truncated/overwritten. We'll rerun just the greps (short output) to capture exact line numbers, then print tight ranges starting exactly at those lines. We'll do this in smaller batches to avoid scrolling.",
+  "plan": "1) Run grep for all brief headings and capture line numbers. 2) For each key brief, print a narrow range starting at the heading line (e.g., headingLine to headingLine+60). 3) Once rules are captured, begin implementing parser and reconciliation fixes.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md | sed -n '1,20p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /app/data/audit_archive.md | sed -n '20,60p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,60p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,420p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

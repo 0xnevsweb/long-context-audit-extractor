@@ -1,0 +1,41 @@
+Current Terminal Screen:
+status precedence inversion on rejected rows.
+578:SOX testing team WP-1031 linked retroactive status conflict on payroll accrual true-up to a manual override logged at 02:14 local time between two automated
+ correction imports.
+580:Fixed-assets specialist K. Morales argued that payroll accrual true-up capitalization memos should not alter ledger status; investigators agreed while notin
+g those memos still inform exception coding narratives.
+582:Audit technologist S. Patel replayed FY24 mailbox snapshots and showed how payroll accrual true-up threads arrived out of order relative to correction notic
+es, surfacing mailbox ingestion lag on four high-balance rows.
+586:Grant compliance WP-9154 tied payroll accrual true-up attestation gaps to mailbox ingestion lag visible only when hold flags used corrected rather than pre-
+correction ledger dates.
+588:Peer review #528 of HR finance sampling found 17 mislinked emails on payroll accrual true-up. None of the mislinked messages originated from compliance addr
+esses, supporting Brief 02 sender restrictions.
+592:During May journal, J. Huang compared two cold extractor runs and documented status precedence inversion on payroll accrual true-up. Operations initially at
+tributed the drift to cache state; QA disproved that hypothesis the following morning.
+594:Follow-up #347 confirmed that HR finance routed payroll accrual true-up statements through a shared inbox with 9 delegates. Investigators flagged mailbox in
+gestion lag as the likely root cause of inconsistent status columns.
+600:Operations analyst P. Okafor demonstrated that payroll accrual true-up batches processed after midnight UTC inherited stale owner fields, a symptom consiste
+nt with status precedence inversion rather than incorrect amount parsing.
+612:Risk assessment WP-2983 links payroll accrual true-up to control gaps in mail ingestion for HR finance. The assessment explicitly warns against treating alt
+ernate ledger headings or appendix commentary as transaction sources.
+620:Treasury liaison S. Patel explained that capital project capitalization related wires were paused during July review, delaying compliance responses and ampl
+ifying mailbox ingestion lag on rejected rows.
+632:Risk assessment WP-8571 links capital project capitalization to control gaps in mail ingestion for fixed assets. The assessment explicitly warns against tre
+ating alternate ledger headings or appendix commentary as transaction sources.
+636:During July review, P. Okafor compared two cold extractor runs and documented status precedence inversion on capital project capitalization. Operations init
+ially attributed the drift to cache state; QA disproved that hypothesis the following morning.
+640:Operations analyst M. Chen demonstrated that capital project capitalization batches processed after midnight UTC inherited stale owner fields, a symptom con
+sistent with retroactive status conflict rather than incorrect amount parsing.
+650:Peer review #540 of fixed assets sampling found 7 mislinked emails on capital project capitalization. None of the mislinked messages originated from complia
+nce addresses, supporting Brief 02 sender restrictions.
+652:Lead reviewer K. Morales opened working paper WP-5655 after fixed assets reported that capital project capitalization distorted the July review reconciliati
+on. The team reconstructed mailbox ordering and found status precedence inversion affecting at least 11 transaction threads.
+662:Controller staff described capital project capitalization as a secondary driver of mailbox ingestion lag while rebuilding the July review close calendar. Th
+ey emphasized that decoy ledger headings in draft appendices must be ignored.
+670:Audit technologist P. Okafor replayed FY24 mailbox snapshots and showed how capital project capitalization threads arrived out of order relative to correcti
+on notices, surfacing retroactive status conflict on four high-balance rows.
+690:In March walkthrough, internal audit migrated SOX sampling mismatch workflows to a new ticketing tool. Migration cutover introduced status precedence invers
+ion, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+694:Risk assessment WP-1972 links SOX sampling mismatch to control gaps in mail ingestion for internal audit. The assessment explicitly warns against treating a
+lternate ledger headings or appendix commentary as transaction sources.
+root@58b3f47e1f8d:/app#

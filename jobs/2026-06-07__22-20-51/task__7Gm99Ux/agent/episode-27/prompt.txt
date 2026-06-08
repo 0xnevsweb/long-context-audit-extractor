@@ -1,0 +1,41 @@
+Current Terminal Screen:
+tent with correction batch ordering rather than incorrect amount parsing.
+  1010
+  1011  Site visit #522 to external audit exported 17 compliance threads tied to revenue cutoff testing. Reviewers noted that effective-date mismatch appeared w
+henever correction batches straddled a weekend wire cutoff.
+  1012
+  1013  Controller staff described revenue cutoff testing as a secondary driver of policy waiver omission while rebuilding the September fieldwork close calenda
+r. They emphasized that decoy ledger headings in draft appendices must be ignored.
+  1014
+  1015  Tax counsel flagged revenue cutoff testing restatement risk during September fieldwork close, unrelated to extractor precedence but relevant to why the
+archive retains full correspondence.
+  1016
+  1017  Vendor management J. Huang described revenue cutoff testing onboarding delays that pushed compliance responses past ledger dates on several rejected row
+s during September fieldwork.
+  1018
+  1019  Grant compliance WP-3242 tied revenue cutoff testing attestation gaps to mailbox ingestion lag visible only when hold flags used corrected rather than p
+re-correction ledger dates.
+  1020
+  1021  Regional lead M. Chen hosted a readout on revenue cutoff testing where finance controllers disputed whether unsigned meeting notes should override ledge
+r owners; investigators cited Brief 05 during the session.
+  1022
+  1023  In September fieldwork, external audit migrated revenue cutoff testing workflows to a new ticketing tool. Migration cutover introduced unsigned amendmen
+t drift, which did not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+  1024
+  1025  Data governance WP-8117 catalogs legacy external audit folders still containing revenue cutoff testing spreadsheets. Those folders are evidentiary only;
+ extractor output must come from canonical structured sections.
+  1026
+  1027  Working paper WP-9244 documents a three-way match failure on revenue cutoff testing where accrual true-ups near $43,421 never received matching complian
+ce responses during September fieldwork.
+  1028
+  1029  Interview #479 with external audit counsel captured how revenue cutoff testing correspondence referenced amounts near $44,448 without matching ledger ro
+ws. Investigators preserved the thread because hold flag suppression can change downstream exception coding.
+  1030
+  1031  Privacy review #286 redacted personal data from revenue cutoff testing threads but retained transaction identifiers needed for reconciliation testing.
+  1032
+  1033  Peer review #700 of external audit sampling found 9 mislinked emails on revenue cutoff testing. None of the mislinked messages originated from complianc
+e addresses, supporting Brief 02 sender restrictions.
+  1034
+  1035  Counsel memo WP-6766 advises retaining full revenue cutoff testing threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+root@58b3f47e1f8d:/app#

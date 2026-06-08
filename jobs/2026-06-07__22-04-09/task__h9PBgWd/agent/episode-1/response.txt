@@ -1,0 +1,55 @@
+{
+  "analysis": "CLI already enforces subcommand `extract` and requires `--input` and `--outdir` with stderr+exit(1) on missing flags. Current extractor runs and produces four files, and repeated runs (with same inputs) appear byte-identical for those outputs. However, reconciliation_report.jsonl is empty and exceptions.json is effectively empty (22 bytes likely `{ \"items\": [] }`). Finance QA reports drift between reruns and incorrect reconciliation semantics (status drift, compliance holds missing later mail, corrections applied to wrong rows). So the main problem is in reconciliation logic (merging ledger + meetings + compliance mail + corrections + exception flags), not the basic CLI scaffolding. We have line ranges for authoritative Investigation Briefs 01–09; we must read them (ignore supporting chronology and decoys) and then inspect current implementation in src/index.js and related lib/parser/normalize to see what rules are currently implemented incorrectly or nondeterministically.",
+  "plan": "1) Read the authoritative sections for Briefs 01–09 (the first, non-chronology sections for each brief, and the mid-year amendment language in Brief 09), extracting concrete merge ordering, precedence, timing comparisons, and exception flag definitions. 2) Locate the structured source data sections near the end (Email Excerpts, Policy Exceptions, Correction Notices, canonical Transaction Ledger) to understand parsing expectations. 3) Inspect current code paths that parse and reconcile these sources and generate outputs; identify where rules differ from the briefs (especially compliance mail timing and correction precedence, and applying corrections to correct ledger row). 4) After understanding discrepancies, implement fixes with deterministic sorting and stable application order, then rerun extractor to /tmp and compare outputs across reruns and validate formatting/sorting requirements.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '11,25p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '214,221p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '384,392p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '555,563p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '672,679p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '856,864p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '973,982p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1145,1152p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1455,1464p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^## (Email Excerpts|Policy Exceptions|Correction Notices|Transaction Ledger)\" /app/data/audit_archive.md | head -n 50\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -maxdepth 3 -type f | sed 's#/app/audit-extractor/src/##' | sort\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

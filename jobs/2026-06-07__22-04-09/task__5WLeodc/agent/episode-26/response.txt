@@ -1,0 +1,31 @@
+{
+  "analysis": "The python/grep output again got overwhelmed by narrative context; we still haven't surfaced the actual rule lines for compliance_hold and correction precedence. To avoid large dumps, we should directly locate exact line numbers for key phrases (compliance_hold appears at ~979 and ~1465 earlier) using grep -n, then use sed around those exact line numbers (small windows). Same for 'For extractor output' and 'previous_value'.",
+  "plan": "1) Get exact line numbers for the first few occurrences of: compliance_hold, previous_value, For extractor output, and 'winning correction'. 2) For each, print a small range (e.g., ±15 lines) around that line number using sed. This will isolate the authoritative rule statements.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"compliance_hold\" /tmp/briefs_01_09.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"previous_value\" /tmp/briefs_01_09.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"For extractor output\" /tmp/briefs_01_09.md | head -n 40\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"winning correction\" /tmp/briefs_01_09.md | head -n 20\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '960,1005p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1448,1495p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

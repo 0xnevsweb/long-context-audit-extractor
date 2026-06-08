@@ -1,0 +1,39 @@
+{
+  "analysis": "Extractor now runs successfully (no error output). We need to inspect generated outputs in /tmp/audit_out_fix1 for correct filenames and content: envelopes {items}, CSV header includes exception_reason and amounts with 2 decimals, exceptions.json contains only flagged rows, reconciliation_report.jsonl non-empty and sorted by notice_id with correct previous_value. Also must ensure determinism and CLI missing flag behavior. We have not yet implemented Brief 09 hold timing or winning correction precedence; our current implementation applies all corrections in notice_id order and treats any compliance email as hold trigger. We should at least confirm report is written and exceptions appear. Then we can refine to match briefs if needed. Next: inspect output and run two runs to compare hashes.",
+  "plan": "1) List /tmp/audit_out_fix1 and preview each file. 2) Validate transactions.json schema (top-level items) and that items are sorted by transaction_id. 3) Ensure exceptions.json only includes non-null exception_reason, with same row shape. 4) Ensure reconciliation_report.jsonl has one JSON per line and is sorted by notice_id. 5) Re-run extraction to a second dir and compare sha256s for determinism. 6) If outputs still fail spec (e.g., previous_value empty, wrong envelope, etc.), fix accordingly.",
+  "commands": [
+    {
+      "keystrokes": "ls -la /tmp/audit_out_fix1\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 30 /tmp/audit_out_fix1/transactions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 5 /tmp/audit_out_fix1/transactions.csv\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat /tmp/audit_out_fix1/exceptions.json\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "head -n 20 /tmp/audit_out_fix1/reconciliation_report.jsonl\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport json\nitems=json.load(open('/tmp/audit_out_fix1/transactions.json'))['items']\nprint('count', len(items))\nprint('sorted', all(items[i]['transaction_id']<=items[i+1]['transaction_id'] for i in range(len(items)-1)))\nprint('exception non-null', sum(1 for r in items if r['exception_reason'] is not None))\nex=json.load(open('/tmp/audit_out_fix1/exceptions.json'))['items']\nprint('exceptions count', len(ex))\nprint('exceptions sorted', all(ex[i]['transaction_id']<=ex[i+1]['transaction_id'] for i in range(len(ex)-1)))\nPY\n",
+      "duration": 0.5
+    },
+    {
+      "keystrokes": "mkdir -p /tmp/audit_out_fix2 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "sha256sum /tmp/audit_out_fix1/* /tmp/audit_out_fix2/* | sed 's#/tmp/audit_out_fix[12]/##g' | sort\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

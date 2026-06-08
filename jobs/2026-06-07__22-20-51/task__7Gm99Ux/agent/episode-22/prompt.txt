@@ -1,0 +1,60 @@
+New Terminal Output:
+
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import json
+> p='/tmp/audit-out/transactions.json'
+> obj=json.load(open(p))
+> items=obj['items']
+> print('transactions', len(items))
+> # verify sorted
+> ids=[r['transaction_id'] for r in items]
+> print('sorted', ids==sorted(ids))
+> # count exceptions
+> exc=[r for r in items if r['exception_reason'] is not None]
+> print('flagged', len(exc))
+> # check csv null cell behavior quickly
+> import csv
+> rows=list(csv.DictReader(open('/tmp/audit-out/transactions.csv')))
+> empty_exc=sum(1 for r in rows if r['exception_reason']=='' )
+> print('csv empty exception cells', empty_exc)
+> PY
+transactions 32
+sorted True
+flagged 16
+csv empty exception cells 16
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf-8').read().splitlines()
+> # find brief 09 and print around it
+> start=None
+> for i,l in enumerate(lines):
+>     if l.startswith('## Investigation Brief 09'):
+>         start=i
+>         break
+> if start is None:
+>     raise SystemExit('no brief 09')
+> end=len(lines)
+> for j in range(start+1,len(lines)):
+>     if re.match(r'^## Investigation Brief 0[1-9]\b', lines[j]):
+>         end=j
+>         break
+> print('Brief09 lines', start+1, 'to', end)
+> print('\n'.join(lines[start:end]))
+> PY
+Brief09 lines 1455 to 1464
+## Investigation Brief 09 — Mid-Year Amendment
+
+Mid-year QA found compliance holds disappearing after date corrections. This
+amendment supersedes any earlier wording about hold timing. For `compliance_hold`
+only, compare each qualifying email's `sent:` date against the transaction's
+ledger date immediately before correction notices are applied — that is, the date
+in effect after ledger load, meeting amendments, and compliance mail merges, but
+before any correction notice changes `date` or `status`. Brief 03 still governs
+mail-driven status changes; this amendment governs only the hold flag.
+
+root@58b3f47e1f8d:/app# rm -rf /tmp/audit-out1 /tmp/audit-out2 && mkdir -p /tmp/audit-out1 /tmp/audit-out2
+root@58b3f47e1f8d:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+root@58b3f47e1f8d:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+root@58b3f47e1f8d:/app# diff -ru /tmp/audit-out1 /tmp/audit-out2 | head -n 50
+root@58b3f47e1f8d:/app#

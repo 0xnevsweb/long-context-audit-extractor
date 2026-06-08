@@ -8,7 +8,9 @@ Service root: `/app/audit-extractor`
 
 Missing `--input` or `--outdir`: message on stderr, exit code 1.
 
-Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict. This contract covers output shapes only.
+Reconciliation semantics (ledger sourcing, mail timing, correction precedence, exception flags, overlay order) are defined only in Investigation Briefs 01–09 of the input markdown at `/app/data/audit_archive.md`. Brief 09 supersedes earlier hold-timing wording where they conflict.
+
+Output filenames, field schemas, CSV header order, and CLI requirements are specified in the task `instruction.md` at `/app/instruction.md` during evaluation. This document mirrors those shapes for local reference.
 
 ## Artifacts
 

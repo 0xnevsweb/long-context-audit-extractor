@@ -1,0 +1,23 @@
+{
+  "analysis": "We got grep hits from /tmp/briefs_07_09.txt but the screen is showing unrelated mid-file lines; we still haven't displayed the actual Brief 07–09 authoritative rule text. We'll proceed with the clear spec-level fixes we already know: CSV output format, JSON envelopes, exceptions envelope and sorting. For compliance_hold and correction precedence we still need Brief 07–09 content; we can extract just the actual brief sections from the archive by line numbers and write them to /tmp and view. Next implement output writer fixes now, then return to brief extraction and reconcile.js changes.",
+  "plan": "1) Fix csvWriter.js to include exception_reason column, correct header order, two-decimal formatting, and empty cell for null. 2) Inspect and, if needed, fix jsonWriter.js to emit envelopes {items:[...]} for both transactions and exceptions. 3) Fix normalize/exceptions.js to return sorted flagged items (by transaction_id) and keep row shape identical. 4) After these mechanical fixes, extract actual Brief 07–09 blocks from the archive (using python to find headings and print ranges) to implement reconcile.js correctly (previous_value, email timing per Brief 09, policy waiver, retroactive review).",
+  "commands": [
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/csvWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\n\nfunction csvEscape(value) {\n  // Minimal CSV quoting for commas/quotes/newlines.\n  const s = String(value);\n  if (/[\",\\n]/.test(s)) {\n    return `\"${s.replace(/\"/g, '\"\"')}\"`;\n  }\n  return s;\n}\n\nfunction writeTransactionsCsv(filePath, items) {\n  const header =\n    \"transaction_id,owner,status,effective_date,amount_usd,exception_reason\";\n\n  const lines = items.map((row) => {\n    const amount = Number(row.amount_usd);\n    const amountStr = Number.isFinite(amount) ? amount.toFixed(2) : \"\";\n    const exc = row.exception_reason == null ? \"\" : String(row.exception_reason);\n\n    return [\n      row.transaction_id,\n      row.owner,\n      row.status,\n      row.effective_date,\n      amountStr,\n      exc,\n    ]\n      .map(csvEscape)\n      .join(\",\");\n  });\n\n  fs.writeFileSync(filePath, [header, ...lines].join(\"\\n\"));\n}\n\nmodule.exports = { writeTransactionsCsv };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'\nconst { sortByTransactionId } = require(\"../utils/sort\");\n\nfunction buildExceptions(items) {\n  const flagged = items.filter((row) => row.exception_reason != null);\n  return sortByTransactionId(flagged);\n}\n\nmodule.exports = { buildExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node -c /app/audit-extractor/src/output/csvWriter.js && node -c /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

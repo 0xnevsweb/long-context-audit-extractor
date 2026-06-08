@@ -1,0 +1,19 @@
+{
+  "analysis": "The terminal output is still showing narrative text from within the briefs extraction, but not the brief headers/rule paragraphs we need; likely the previous Python dump is very long and we’re seeing mid-brief content. We need a more controlled way to extract only the authoritative 'rule' paragraphs near the beginning of each brief, or at least show the first ~40 lines after each brief heading. Also need sections.js content (not visible) to adjust which structured sections are parsed (draft vs final). Next we should: (1) print sections.js explicitly and (2) use python to locate each brief heading and print only a small slice after it, and (3) specifically extract Brief 09 rule text about hold timing override. Then we can start editing code.",
+  "plan": "1) Re-print sections.js and capture it. 2) Generate a compact rules view: for each brief 01–09, print heading plus next 60 lines only. 3) For Brief 09, also grep within that brief for 'hold' and 'override/supersede' and print context. 4) Once rules are visible, proceed to code patches in next step.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\nstarts=[]\nfor i,l in enumerate(lines):\n  m=re.match(r'^## Investigation Brief (0[1-9])\\b',l)\n  if m:\n    starts.append((int(m.group(1)), i))\nstarts.sort()\nfor n,i in starts:\n  print(f\"\\n===== BRIEF {n:02d} (excerpt) =====\")\n  print('\\n'.join(lines[i:i+70]))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/tmp/briefs_01_09.txt'\nlines=open(p,encoding='utf-8').read().splitlines()\n# locate brief 09 block\nstart=None\nfor i,l in enumerate(lines):\n  if re.match(r'^## Investigation Brief 09\\b',l):\n    start=i;break\nif start is None:\n  raise SystemExit('Brief 09 not found')\nend=len(lines)\nfor j in range(start+1,len(lines)):\n  if re.match(r'^## Investigation Brief \\d\\d\\b',lines[j]):\n    end=j;break\nblock=lines[start:end]\n# print lines around hold/timing keywords\nkeys=re.compile(r'hold|timing|sent|effective|override|supersed',re.I)\nfor idx,l in enumerate(block):\n  if keys.search(l):\n    lo=max(0,idx-3); hi=min(len(block),idx+10)\n    print('\\n'.join(block[lo:hi]))\n    print('---')\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

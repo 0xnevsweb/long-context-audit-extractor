@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  2927  targets: TXN-e6379197-8911-50c2-b4eb-e0a8edf1eb0f
+  2928  field: date
+  2929  value: 2024-08-01
+  2930  effective: 2024-08-01
+  2931
+  2932  ### CORR-c27e46a1
+  2933  targets: TXN-1b083448-63e3-5527-a20a-edd71416341c
+  2934  field: date
+  2935  value: 2024-09-01
+  2936  effective: 2024-09-01
+  2937
+  2938  ## Transaction Ledger (working copy)
+  2939
+  2940  ### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+  2941  amount: 99999.00
+  2942  owner: decoy
+  2943  status: reversed
+  2944  date: 2020-01-01
+  2945
+  2946  ## Transaction Ledger
+  2947
+  2948  ### TXN-88519dfd-79ff-5de0-ae59-862ab932bc25
+  2949  amount: 500.00
+  2950  owner: jdoe
+  2951  status: pending
+  2952  date: 2024-01-01
+  2953
+  2954  ### TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+  2955  amount: 7500.00
+  2956  owner: asmith
+  2957  status: approved
+  2958  date: 2024-02-02
+  2959
+  2960  ### TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+  2961  amount: 3246.84
+  2962  owner: bwong
+  2963  status: rejected
+  2964  date: 2024-03-03
+  2965
+root@edd51c718576:/app#

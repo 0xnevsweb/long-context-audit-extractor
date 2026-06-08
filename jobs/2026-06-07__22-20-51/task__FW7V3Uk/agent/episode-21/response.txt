@@ -1,0 +1,27 @@
+{
+  "analysis": "corrections.js has the same newline-escape issue: `block.split(\"\\n\")` got written as a literal newline inside the quotes. We must avoid any backslash escapes in string literals. Use NL = String.fromCharCode(10) like in other parsers and split(NL). Rewrite corrections.js accordingly.",
+  "plan": "1) Overwrite corrections.js using NL constant and no \"\\n\" escapes. 2) Rerun extractor and check reconciliation_report.jsonl is non-empty. 3) Re-run to ensure deterministic hashes.",
+  "commands": [
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nPath('/app/audit-extractor/src/parser/corrections.js').write_text('''function parseCorrections(markdown) {\n  const NL = String.fromCharCode(10);\n\n  const start = markdown.indexOf(\"## Correction Notices\");\n  if (start < 0) return [];\n\n  // Corrections appear immediately before the ledger tail.\n  // Prefer ending at the working-copy ledger heading if present.\n  const end1 = markdown.indexOf(\"## Transaction Ledger (working copy)\", start);\n  const end2 = markdown.indexOf(\"## Transaction Ledger\", start);\n  const end = end1 >= 0 ? end1 : end2;\n\n  const slice = end >= 0 && end > start ? markdown.slice(start, end) : markdown.slice(start);\n\n  const notices = [];\n  const blocks = slice.split(/^### /m).slice(1);\n\n  for (const block of blocks) {\n    const lines = block.split(NL);\n    const noticeId = (lines[0] || \"\").trim();\n    if (!noticeId.startsWith(\"CORR-\")) continue;\n\n    const entry = { notice_id: noticeId };\n\n    for (const line of lines) {\n      const trimmed = String(line || \"\").trim();\n      if (trimmed.startsWith(\"targets:\")) {\n        entry.transaction_id = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"field:\")) {\n        entry.field = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"value:\")) {\n        entry.value = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"effective:\")) {\n        entry.effective = trimmed.split(\":\")[1].trim();\n      }\n    }\n\n    if (entry.transaction_id && entry.field && entry.value != null && entry.effective) {\n      notices.push(entry);\n    }\n  }\n\n  return notices;\n}\n\nmodule.exports = { parseCorrections };\n''', encoding='utf-8')\nprint('corrections.js fixed w/ NL')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rm -rf /tmp/audit_out_fix1 && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix1\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "ls -la /tmp/audit_out_fix1 && wc -l /tmp/audit_out_fix1/reconciliation_report.jsonl && head -n 20 /tmp/audit_out_fix1/reconciliation_report.jsonl\n",
+      "duration": 0.2
+    },
+    {
+      "keystrokes": "mkdir -p /tmp/audit_out_fix2 && rm -rf /tmp/audit_out_fix2/* && node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit_out_fix2\n",
+      "duration": 2.0
+    },
+    {
+      "keystrokes": "sha256sum /tmp/audit_out_fix1/* /tmp/audit_out_fix2/* | sed 's#/tmp/audit_out_fix[12]/##g' | sort\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

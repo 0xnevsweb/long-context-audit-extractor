@@ -1,0 +1,27 @@
+{
+  "analysis": "The grep results we see are still narrative mentions of unsigned amendments, pointing to Brief 05 as authoritative for whether unsigned meeting notes override ledger owners. We need the actual rule text from Brief 05. Our sed ranges for 960-1015 / 1115-1165 / 1435-1505 didn't show here (scroll likely). We should directly locate where 'Investigation Brief 05' begins in /tmp/briefs_01_09.md and then view that section around it, similarly for Brief 09 and any explicit correction precedence brief (Brief 04 mentioned earlier).",
+  "plan": "1) Find line numbers for the headings of Briefs 01,04,05,07,09 in /tmp/briefs_01_09.md. 2) Print key parts of Brief 04 (correction precedence), Brief 05 (meeting amendment signed rule), Brief 09 (compliance_hold timing). 3) With these rules, proceed to implement reconcile and output formatting changes.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 04\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 05\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /tmp/briefs_01_09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nimport re\nlines=Path('/tmp/briefs_01_09.md').read_text('utf-8',errors='replace').splitlines()\nheads=[]\nfor i,l in enumerate(lines):\n    m=re.match(r'^## Investigation Brief (\\d{2})\\b', l)\n    if m:\n        heads.append((int(m.group(1)), i+1))\nprint('heads', heads)\n# print brief 04/05/09 windows\nwant={4:180,5:220,9:260}\nfor num,ln in heads:\n    if num in want:\n        start=ln\n        end=min(len(lines), ln+want[num])\n        print('\\n'+'='*20, f'BRIEF {num:02d} lines {start}-{end}', '='*20)\n        for j in range(start-1, end):\n            print(f\"{j+1}: {lines[j]}\")\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+82: Stakeholder workshop #276 on capital project capitalization produced conflicting recollections about which correction notice superseded an earlier owner cha
+nge; Brief 04 governs that precedence for automated output.
+83:
+84: Tax counsel flagged capital project capitalization restatement risk during July review close, unrelated to extractor precedence but relevant to why the arch
+ive retains full correspondence.
+
+-- hit line 82
+72: Platform engineer K. Morales noted that capital project capitalization webhook retries duplicated compliance messages in the investigative export, requiring
+ deduplication by subject and sent timestamp during human review.
+73:
+74: During July review, P. Okafor compared two cold extractor runs and documented status precedence inversion on capital project capitalization. Operations init
+ially attributed the drift to cache state; QA disproved that hypothesis the following morning.
+75:
+76: Grant compliance WP-4261 tied capital project capitalization attestation gaps to owner field churn visible only when hold flags used corrected rather than p
+re-correction ledger dates.
+77:
+78: Operations analyst M. Chen demonstrated that capital project capitalization batches processed after midnight UTC inherited stale owner fields, a symptom con
+sistent with retroactive status conflict rather than incorrect amount parsing.
+79:
+80: SOX testing team WP-2431 linked effective-date mismatch on capital project capitalization to a manual override logged at 02:14 local time between two automa
+ted correction imports.
+81:
+82: Stakeholder workshop #276 on capital project capitalization produced conflicting recollections about which correction notice superseded an earlier owner cha
+nge; Brief 04 governs that precedence for automated output.
+83:
+84: Tax counsel flagged capital project capitalization restatement risk during July review close, unrelated to extractor precedence but relevant to why the arch
+ive retains full correspondence.
+85:
+86: Quality review #868 sampled 3 capital project capitalization tickets and found policy waiver omission whenever provisional ledger rows were not filtered bef
+ore merge.
+87:
+88: Peer review #540 of fixed assets sampling found 7 mislinked emails on capital project capitalization. None of the mislinked messages originated from complia
+nce addresses, supporting Brief 02 sender restrictions.
+89:
+90: Lead reviewer K. Morales opened working paper WP-5655 after fixed assets reported that capital project capitalization distorted the July review reconciliati
+on. The team reconstructed mailbox ordering and found status precedence inversion affecting at least 11 transaction threads.
+91:
+92: Memo WP-2291 summarizes a panel on capital project capitalization chaired by K. Morales. Participants debated whether informal spreadsheets should ever over
+ride ledger owners; Brief 05 closes that debate for the FY24 extractor.
+root@de10d3a691f3:/app#

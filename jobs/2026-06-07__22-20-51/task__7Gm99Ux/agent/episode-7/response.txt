@@ -1,0 +1,31 @@
+{
+  "analysis": "We inspected meetings.js: it scans the entire markdown for amendments using a regex and then slices 400 chars after match index; that is fragile and may pick up decoy amendments outside authoritative minutes, and fixed-length slicing can miss fields or capture wrong ones depending on spacing. sort.js comparator is non-total (doesn’t return 0 for equal) and doesn’t handle locale; but main issue is deterministic ordering and proper sorting by notice_id for report. date.js only checks ISO format. We located multiple headings: an archived Email Excerpts thread at ~200 and a real Email Excerpts at 1732; likewise a draft Policy Exceptions at 788 and real Policy Exceptions at 2883. Current policy parser uses indexOf starting at first occurrence (draft), which is wrong. Similarly, email parser likely latches onto archived thread. This explains reconciliation drift and missed later mail: parsers reading wrong sections. We must use anchored heading parsing to select authoritative sections (likely headings exactly `## Email Excerpts`, `## Policy Exceptions`, `## Correction Notices`, and `## Committee Minutes`/meetings per briefs) and ignore drafts/archived threads. Then implement Brief 09 hold timing and correction mapping.",
+  "plan": "1) Inspect sections.js to see if it can extract sections by exact heading line; if not, implement it and refactor emails/policy/meetings/corrections/ledger to use it with exact headings. 2) Inspect corrections.js to see how it parses and chooses corrections; ensure it uses `## Correction Notices` exact heading. 3) Patch policy.js to parse authoritative Policy Exceptions section and extract approved_by. 4) Patch emails.js to parse authoritative Email Excerpts section, requiring from: compliance@..., sent: YYYY-MM-DD, transaction id, and status. Ensure later mail is included and compared per Brief 09. 5) Patch meetings.js to only parse authoritative committee minutes section and require signed: true (per likely brief) before applying amendments. 6) Patch reconcile.js: load base ledger (last non-provisional per id), apply meeting amendments, merge emails, apply winning corrections in correct precedence; compute report with correct previous_value and sort by notice_id; compute exception flags and lexical ordering. 7) Patch sort utilities (ensure stable total ordering, add sortByNoticeId), and writers (report sort). Then run extractor into /app/output and validate outputs and determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# show exact heading lines around the authoritative sections\nfor lineno in [1720,1732,1750,2870,2883,2895,2898,2900,2915,2936,2938,2946]:\n    if 1 <= lineno <= len(lines):\n        print(f\"{lineno}: {lines[lineno-1]}\")\nPY\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,55 @@
+{
+  "analysis": "Repo is present under /app/audit-extractor with a Node CLI already enforcing `extract` and required --input/--outdir (stderr + exit 1). Source tree includes parsers (ledger/meetings/policy/corrections/emails), reconciliation normalization, deterministic sorting util, and writers (json/csv/report). We have not yet inspected the reconciliation rules in Investigation Briefs 01–09 (especially Brief 09 override), nor the normalize/reconcile + exceptions logic that likely causes drift/misapplied holds/corrections. The earlier `sed` of src/index.js got truncated, so we still need to view full file and then inspect reconcile/exceptions and writers for ordering/determinism.",
+  "plan": "1) View full src/index.js to confirm output file names and writer usage. 2) Inspect reconcile/exceptions implementation and sort/date utils for nondeterminism and incorrect precedence. 3) Open docs/extractor-output-contract.md to see intended contract. 4) Read the authoritative Investigation Briefs 01–09 from the real input at /app/data/audit_archive.md (not the copy under repo) and locate structured tail sections (ledger rows/corrections/etc). 5) After rules are clear, patch reconcile/exceptions/report generation to apply correct overlay order, stable sorting, lexical exception code ordering, and correct previous_value calculation for report. 6) Run CLI against /app/data/audit_archive.md into /app/output and verify 4 files + determinism by hashing transactions.json over multiple runs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/docs/extractor-output-contract.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 0[1-9]\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

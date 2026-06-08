@@ -1,0 +1,35 @@
+{
+  "analysis": "We now have the structured formats needed: qualifying compliance mails are blocks with From: compliance@corp.internal, Subject containing TXN id, a 'sent: YYYY-MM-DD' line, and a 'status: ...' line. Policy Exceptions are under '## Policy Exceptions' with repeated '### Policy Exception' blocks containing transaction, approved_by, reason. Correction Notices are under '## Correction Notices' with '### CORR-...' blocks: targets, field, value, effective. Ledger sections follow immediately after, including a decoy working copy ledger to ignore. Next we must implement reconciliation semantics and flag rules per briefs, including Brief 09 timing comparison for compliance_hold. Also existing extractor likely ignores these structured sections; we must update parsing, apply overlays and corrections, and produce reconciliation_report.jsonl entries with previous_value/new_value and effective date, sorted by notice_id.",
+  "plan": "1) Read full Briefs 01–09 from /tmp/brief_XX.md, focusing on: merge order (ledger load, meeting amendments, compliance mail merges, correction precedence) and the Brief 09 override for hold timing. 2) Inspect current extractor source to see how it parses today and what needs replacing. 3) Implement a deterministic parser for the structured tail sections (mail blocks, policy exceptions, correction notices, transaction ledger excluding working copy and excluding provisional rows as defined in briefs). 4) Implement reconciliation pipeline per briefs, compute exception flags, build reconciliation_report.jsonl with correct previous_value snapshots, and ensure stable sorting and formatting. 5) Add/enforce CLI missing flag behavior to stderr with exit code 1.",
+  "commands": [
+    {
+      "keystrokes": "for f in /tmp/brief_0{1..9}.md; do echo \"\\n===== $f =====\"; sed -n '1,220p' \"$f\"; done\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /tmp/brief_07.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,520p' /tmp/brief_08.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '220,620p' /tmp/brief_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "ls -la /app/audit-extractor/src\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/cli.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "find /app/audit-extractor/src -type f -name '*.js' -maxdepth 4 -print0 | xargs -0 -I{} sh -c 'echo \"\\n===== {} =====\"; sed -n \"1,260p\" \"{}\"'\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,249 @@
+New Terminal Output:
+
+root@8eb6883b8e1c:/app# sed -n '1,200p' /app/audit-extractor/src/utils/date.js
+function isIsoDate(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(value);
+}
+
+module.exports = { isIsoDate };
+root@8eb6883b8e1c:/app# sed -n '1,200p' /app/audit-extractor/src/utils/sort.js
+function sortByTransactionId(items) {
+  return items.sort((a, b) => (a.transaction_id < b.transaction_id ? -1 : 1));
+}
+
+module.exports = { sortByTransactionId };
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/normalize/reconcile.js <<'EOF'
+> const { sortByTransactionId } = require("../utils/sort");
+>
+> const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+>
+> function gteDate(a, b) {
+>   // YYYY-MM-DD lexical compare works
+>   if (!a || !b) return false;
+>   return String(a) >= String(b);
+> }
+>
+> function reconcileTransactions(parsed) {
+>   const byId = new Map();
+>
+>   // Base ledger load
+>   for (const row of parsed.ledger) {
+>     byId.set(row.transaction_id, { ...row });
+>   }
+>
+>   // Meeting amendments (owner only)
+>   for (const meeting of parsed.meetings) {
+>     const target = byId.get(meeting.transaction_id);
+>     if (!target) continue;
+>     if (!meeting.signed) continue;
+>     if (meeting.effective && !gteDate(meeting.effective, target.date)) continue;
+>     if (meeting.owner) target.owner = meeting.owner;
+>   }
+>
+>   // Compliance emails (status only, precedence + optional sent gating)
+>   for (const email of parsed.emails) {
+>     const target = byId.get(email.transaction_id);
+>     if (!target) continue;
+>     if (!String(email.from_addr || "").includes("compliance@")) continue;
+>
+>     if (email.sent && !gteDate(email.sent, target.date)) {
+>       continue;
+>     }
+>
+>     const current = String(target.status || "").toLowerCase();
+>     const proposed = String(email.status || "").toLowerCase();
+>     if (!(proposed in STATUS_ORDER) || !(current in STATUS_ORDER)) continue;
+>     if (STATUS_ORDER[proposed] >= STATUS_ORDER[current]) {
+>       target.status = proposed;
+>     }
+>
+>     // Keep evidence of qualifying email on the transaction for later exception flagging.
+>     target.__qualifying_emails = target.__qualifying_emails || [];
+>     target.__qualifying_emails.push({ sent: email.sent, from_addr: email.from_addr });
+>   }
+>
+>   // Snapshot pre-correction values for Brief 09 compliance_hold timing.
+>   const preCorrection = new Map();
+>   for (const [id, row] of byId.entries()) {
+>     preCorrection.set(id, { date: row.date, status: String(row.status || "").toLowerCase(), owner: row.owner });
+>   }
+>
+>   // Pick winning corrections by (transaction_id, field): greatest effective lexicographically
+>   const winnersByKey = new Map();
+>   for (const notice of parsed.corrections) {
+>     if (!notice || !notice.transaction_id || !notice.field || !notice.effective) continue;
+>     const key = `${notice.transaction_id}::${notice.field}`;
+>     const prev = winnersByKey.get(key);
+>     if (!prev || String(notice.effective) > String(prev.effective)) {
+>       winnersByKey.set(key, notice);
+>     }
+>   }
+>
+>   // Apply winners; build report with previous_value just before applying.
+>   // Apply in notice_id order for determinism (application order shouldn't matter across different fields,
+>   // but this keeps behavior stable).
+>   const winners = [...winnersByKey.values()].sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+>   const report = [];
+>
+>   // Track if status was changed by a winning correction for retroactive_review
+>   const statusChangedByCorrection = new Set();
+>   // Track effective_date override if correction changes status or date
+>   const effectiveOverride = new Map();
+>
+>   for (const notice of winners) {
+>     const target = byId.get(notice.transaction_id);
+>     if (!target) continue;
+>
+>     let prevVal = "";
+>     if (notice.field === "owner") prevVal = String(target.owner ?? "");
+>     else if (notice.field === "status") prevVal = String(target.status ?? "");
+>     else if (notice.field === "date") prevVal = String(target.date ?? "");
+>     else prevVal = String(target[notice.field] ?? "");
+>
+>     if (notice.field === "owner") {
+>       target.owner = notice.value;
+>     } else if (notice.field === "status") {
+>       const before = String(target.status ?? "");
+>       target.status = String(notice.value || "").toLowerCase();
+>       if (String(before).toLowerCase() !== String(target.status).toLowerCase()) {
+>         statusChangedByCorrection.add(notice.transaction_id);
+>       }
+>       effectiveOverride.set(notice.transaction_id, notice.effective);
+>     } else if (notice.field === "date") {
+>       target.date = notice.value;
+>       effectiveOverride.set(notice.transaction_id, notice.effective);
+>     }
+>
+>     report.push({
+>       notice_id: notice.notice_id,
+>       transaction_id: notice.transaction_id,
+>       field: notice.field,
+>       previous_value: prevVal,
+>       new_value: String(notice.value ?? ""),
+>       effective: n
+[... output limited to 10000 bytes; 69 interior bytes omitted ...]
+= row.transaction_id;
+>       const ledgerDate = preCorrection.get(txnId)?.date || row.date;
+>       const effective_date = effectiveOverride.get(txnId) || ledgerDate;
+>       return {
+>         transaction_id: txnId,
+>         owner: row.owner,
+>         status: String(row.status).toLowerCase(),
+>         effective_date,
+>         amount_usd: Number(row.amount),
+>         exception_reason: null,
+>         __meta: {
+>           pre_correction_date: ledgerDate,
+>           qualifying_emails: row.__qualifying_emails || [],
+>           status_changed_by_correction: statusChangedByCorrection.has(txnId),
+>         },
+>       };
+>     }),
+>   );
+>
+>   // Sort report by notice_id ascending as required
+>   report.sort((a, b) => String(a.notice_id).localeCompare(String(b.notice_id)));
+>
+>   return { items, report, policyExceptions: parsed.policyExceptions };
+> }
+>
+> module.exports = { reconcileTransactions, STATUS_ORDER };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/normalize/exceptions.js <<'EOF'
+> function buildExceptions(items) {
+>   return items.filter((row) => row.exception_reason);
+> }
+>
+> function applyExceptionReasons(items, policyExceptions) {
+>   const policyByTxn = new Map();
+>   for (const p of policyExceptions || []) {
+>     if (!p || !p.transaction_id) continue;
+>     policyByTxn.set(p.transaction_id, p);
+>   }
+>
+>   for (const row of items) {
+>     const reasons = [];
+>
+>     const amt = Number(row.amount_usd);
+>     if (amt > 10000) reasons.push("over_limit");
+>
+>     // compliance_hold (Brief 07 + Brief 09)
+>     if (row.status === "rejected") {
+>       const meta = row.__meta || {};
+>       const preDate = meta.pre_correction_date;
+>       const qualifying = (meta.qualifying_emails || []).filter((e) => e && e.sent);
+>       const hasHoldEmail = qualifying.some((e) => String(e.sent) >= String(preDate));
+>       if (hasHoldEmail) reasons.push("compliance_hold");
+>     }
+>
+>     // policy_waiver (Brief 08)
+>     if (row.status === "approved" && amt > 10000) {
+>       const pol = policyByTxn.get(row.transaction_id);
+>       if (pol && String(pol.approved_by).toLowerCase() === "compliance") {
+>         reasons.push("policy_waiver");
+>       }
+>     }
+>
+>     // retroactive_review (Brief 08)
+>     if (row.status === "reversed" && amt > 5000) {
+>       const meta = row.__meta || {};
+>       if (meta.status_changed_by_correction) reasons.push("retroactive_review");
+>     }
+>
+>     reasons.sort();
+>     row.exception_reason = reasons.length ? reasons.join(";") : null;
+>
+>     // Remove internal metadata from output rows
+>     delete row.__meta;
+>   }
+>
+>   return items;
+> }
+>
+> module.exports = { buildExceptions, applyExceptionReasons };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/index.js <<'EOF'
+> const fs = require("node:fs");
+> const path = require("node:path");
+> const { parseArchive } = require("./parser/sections");
+> const { reconcileTransactions } = require("./normalize/reconcile");
+> const { buildExceptions, applyExceptionReasons } = require("./normalize/exceptions");
+> const { writeTransactionsJson, writeExceptionsJson } = require("./output/jsonWriter");
+> const { writeTransactionsCsv } = require("./output/csvWriter");
+> const { writeReconciliationReport } = require("./output/reportWriter");
+> const { validateOutputs } = require("./schema/validate");
+>
+> async function runExtract(inputPath, outputDir) {
+>   const markdown = fs.readFileSync(inputPath, "utf8");
+>   const parsed = parseArchive(markdown);
+>   const reconciled = reconcileTransactions(parsed);
+>   const items = applyExceptionReasons(reconciled.items, parsed.policyExceptions);
+>   const exceptions = buildExceptions(items);
+>   const report = reconciled.report;
+>
+>   fs.mkdirSync(outputDir, { recursive: true });
+>   writeTransactionsJson(path.join(outputDir, "transactions.json"), items);
+>   writeTransactionsCsv(path.join(outputDir, "transactions.csv"), items);
+>   writeExceptionsJson(path.join(outputDir, "exceptions.json"), exceptions);
+>   writeReconciliationReport(path.join(outputDir, "reconciliation_report.jsonl"), report);
+>   validateOutputs(items, exceptions, report);
+> }
+>
+> module.exports = { runExtract };
+> EOF
+root@8eb6883b8e1c:/app# rm -rf /tmp/audit-out4 /tmp/audit-out5 && mkdir -p /tmp/audit-out4 /tmp/audit-out5
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out4
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out5
+root@8eb6883b8e1c:/app# python3 - <<'PY'
+> import hashlib,glob,os
+> files=sorted(glob.glob('/tmp/audit-out4/*'))
+> for p in files:
+>     p2=p.replace('/tmp/audit-out4/','/tmp/audit-out5/')
+>     b1=open(p,'rb').read(); b2=open(p2,'rb').read()
+>     print(os.path.basename(p), 'same' if b1==b2 else 'DIFF')
+> PY
+exceptions.json same
+reconciliation_report.jsonl same
+transactions.csv same
+transactions.json same
+root@8eb6883b8e1c:/app#

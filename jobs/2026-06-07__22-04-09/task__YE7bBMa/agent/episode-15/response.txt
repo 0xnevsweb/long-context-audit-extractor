@@ -1,0 +1,47 @@
+{
+  "analysis": "`apply_patch` is not available in this environment, so we cannot use that helper to modify files. We need to edit files using available tools (e.g., cat > file via heredoc, or use python/perl to rewrite). No changes have been applied yet; parsers remain incorrect (first-occurrence section selection, missing sent date, ledger de-dupe). Next we should modify the relevant source files using heredocs (overwrite with corrected content) or use python scripts to apply small replacements safely.",
+  "plan": "1) Inspect current contents of the parser files to rewrite them precisely: ledger.js, emails.js, policy.js, corrections.js. 2) Overwrite each file with corrected implementation using cat <<'EOF' > file to avoid patch tooling. 3) Re-run a quick node syntax check (node -c not available for JS; instead run node -e require(...) to ensure modules load). 4) After parsers are fixed, proceed to reconciliation/output fixes in subsequent steps.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'\nfunction parseLedger(markdown) {\n  // The archive may include decoy ledgers (e.g. \"Transaction Ledger (working copy)\").\n  // Source from the canonical structured tail section by taking the last occurrence.\n  const start = markdown.lastIndexOf(\"## Transaction Ledger\\n\");\n  if (start < 0) {\n    return [];\n  }\n  const slice = markdown.slice(start);\n  const rows = [];\n  const blocks = slice.split(/^### /m).slice(1);\n\n  for (const block of blocks) {\n    const lines = block.split(\"\\n\");\n    const transactionId = lines[0].trim();\n    if (!transactionId.startsWith(\"TXN-\")) {\n      continue;\n    }\n\n    const row = { transaction_id: transactionId, provisional: false };\n    for (const line of lines) {\n      const trimmed = line.trim();\n      if (trimmed.startsWith(\"amount:\")) {\n        row.amount = Number(trimmed.split(\":\")[1].trim());\n      } else if (trimmed.startsWith(\"owner:\")) {\n        row.owner = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"status:\")) {\n        row.status = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"date:\")) {\n        row.date = trimmed.split(\":\")[1].trim();\n      } else if (trimmed.startsWith(\"provisional:\")) {\n        row.provisional = trimmed.split(\":\")[1].trim().toLowerCase() === \"true\";\n      }\n    }\n\n    // Prefer non-provisional ledger rows when duplicates exist.\n    const existingIdx = rows.findIndex((r) => r.transaction_id === transactionId);\n    if (existingIdx === -1) {\n      rows.push(row);\n      continue;\n    }\n    const existing = rows[existingIdx];\n    if (existing.provisional && !row.provisional) {\n      rows[existingIdx] = row;\n    }\n  }\n\n  return rows;\n}\n\nmodule.exports = { parseLedger };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/emails.js <<'EOF'\nfunction parseEmails(markdown) {\n  // Earlier excerpts are marked non-authoritative; use the canonical tail section.\n  const start = markdown.lastIndexOf(\"## Email Excerpts\");\n  const end = markdown.lastIndexOf(\"## Policy Exceptions\");\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n\n  const emails = [];\n  const blocks = slice.split(/\\n\\n+/);\n  for (const block of blocks) {\n    const fromMatch = block.match(/^From:\\s*(.+)$/im);\n    const subjectMatch = block.match(/^Subject:\\s*Re:\\s*(TXN-[0-9a-f-]+)/im);\n    const sentMatch = block.match(/^sent:\\s*(\\d{4}-\\d{2}-\\d{2})$/im);\n    const statusMatch = block.match(/^status:\\s*(\\w+)/im);\n    if (!fromMatch || !subjectMatch || !statusMatch) {\n      continue;\n    }\n    emails.push({\n      from_addr: fromMatch[1].trim(),\n      transaction_id: subjectMatch[1],\n      sent: sentMatch ? sentMatch[1].trim() : null,\n      status: statusMatch[1].trim().toLowerCase(),\n    });\n  }\n  return emails;\n}\n\nmodule.exports = { parseEmails };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/parser/policy.js <<'EOF'\nfunction parsePolicyExceptions(markdown) {\n  // Earlier policy exception sections are drafts; use the canonical tail section.\n  const start = markdown.lastIndexOf(\"## Policy Exceptions\");\n  const end = markdown.lastIndexOf(\"## Correction Notices\");\n  const slice = start >= 0 && end > start ? markdown.slice(start, end) : \"\";\n\n  const ids = new Set();\n  const re = /^transaction:\\s*(TXN-[0-9a-f-]+)\\s*$/gim;\n  let match;\n  while ((match = re.exec(slice)) !== null) {\n    ids.add(match[1]);\n  }\n  return ids;\n}\n\nmodule.exports = { parsePolicyExceptions };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport pathlib\np=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')\nprint(p.read_text(encoding='utf-8'))\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re, pathlib\np=pathlib.Path('/app/audit-extractor/src/parser/corrections.js')\nt=p.read_text(encoding='utf-8')\n# replace first indexOf with lastIndexOf safely\nnt=re.sub(r'markdown\\.indexOf\\(\"## Correction Notices\"\\)', 'markdown.lastIndexOf(\"## Correction Notices\")', t, count=1)\np.write_text(nt,encoding='utf-8')\nprint('updated corrections.js')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "node -e \"require('/app/audit-extractor/src/parser/ledger');require('/app/audit-extractor/src/parser/emails');require('/app/audit-extractor/src/parser/policy');require('/app/audit-extractor/src/parser/corrections');console.log('parsers ok')\"\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

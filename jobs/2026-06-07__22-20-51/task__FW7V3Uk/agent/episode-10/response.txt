@@ -1,0 +1,47 @@
+{
+  "analysis": "We found the real module layout: src/index.js orchestrates; normalize/reconcile.js and normalize/exceptions.js likely implement reconciliation and flags; output writers exist including reportWriter.js. Parser modules exist for ledger/meetings/policy/corrections/emails/sections. extractor.js etc do not exist. Next we must inspect src/index.js, normalize/*, output/*, and utils/date/sort to fix parsing and reconciliation per briefs and produce correct outputs.",
+  "plan": "1) View src/index.js to see extraction pipeline and what is currently written to outputs. 2) Inspect normalize/reconcile.js and normalize/exceptions.js for logic gaps (corrections precedence, mail timing, policy waiver, retroactive review). 3) Inspect output/reportWriter.js to see why reconciliation_report.jsonl is empty and adjust to write winning corrections sorted by notice_id with previous_value/new_value. 4) Inspect parser/ledger.js and parser/sections.js to ensure correct ledger selection (ignore working copy) and provisional row handling. Then implement required changes.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/date.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

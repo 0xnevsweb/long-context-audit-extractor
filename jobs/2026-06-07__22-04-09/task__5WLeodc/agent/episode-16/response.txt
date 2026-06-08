@@ -1,0 +1,27 @@
+{
+  "analysis": "The grep for 'Brief 09' mostly returned repeated 'Draft sidebar (non-authoritative)' lines plus locations where Brief 09 starts (~1461/1472) and a line stating comparison for `compliance_hold` is defined in Brief 09 (line ~982). We need to open Brief 09 section around those line numbers in /tmp/briefs_01_09.md to capture the actual authoritative hold timing rule. Also need to fetch rules about signed meeting notes, correction precedence, exception flag codes. The earlier sed output for 150-260 didn’t show here; we should directly open around the relevant line ranges in /tmp/briefs_01_09.md (e.g., around 900-1050 for hold mention, around 1450-1550 for Brief 09).",
+  "plan": "Use sed to view targeted ranges around (a) the compliance_hold definition mention (~960-1020), (b) Brief 05/meeting signed rules (find 'signed' hits and open around them), (c) correction precedence definitions (search for 'CORR-' or 'correction notices win'), and (d) exception flag codes list. Once extracted, implement in code.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '940,1040p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1420,1565p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"signed meeting|unsigned meeting|Committee minutes|Amendment\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"CORR-|correction batch|winning correction|previous_value\" /tmp/briefs_01_09.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"flag code|exception_reason|compliance_hold|policy_waiver|policy exception\" /tmp/briefs_01_09.md | head -n 200\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

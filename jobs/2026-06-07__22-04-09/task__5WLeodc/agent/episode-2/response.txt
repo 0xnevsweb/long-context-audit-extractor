@@ -1,0 +1,39 @@
+{
+  "analysis": "We confirmed the CLI already enforces subcommand `extract` and requires both --input and --outdir, exiting 1 with stderr message if missing—this matches requirements. The project has parsers for ledger/meetings/policy/corrections/emails and normalization steps for reconcile/exceptions, plus writers for json/csv/report. The remaining work is to inspect these modules and the authoritative rules in /app/data/audit_archive.md (Investigation Briefs 01–09, with Brief 09 overriding earlier hold timing) to fix drifting statuses, missed later compliance mail, and misapplied correction notices, and to ensure deterministic output byte-for-byte across reruns.",
+  "plan": "1) Inspect current extraction pipeline (src/index.js, handbook loader, reconcile and exceptions normalization, and writers) to see current ordering, sorting, and any nondeterministic behavior. 2) Inspect parsers, especially emails/corrections/meetings/policy, for timing/precedence logic that could cause drift. 3) Read the Investigation Brief sections in the archive to extract the precise overlay order and precedence rules (especially Brief 09 amendment). After that, we’ll reproduce output in a temp directory and diff across two runs to pinpoint nondeterminism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' audit-extractor/src/lib/handbook.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,240p' audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,220p' audit-extractor/src/utils/sort.js\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,23 @@
+{
+  "analysis": "We have key rules captured:\n- Brief 06: effective_date starts as ledger date; if winning correction changes date or status, effective_date becomes that notice's effective date; otherwise keep ledger date.\n- Brief 07: exception_reason null unless codes apply; over_limit if amount_usd>10000; compliance_hold if final status rejected and qualifying compliance@ email with sent line; sent-date comparison per Brief 09; multiple codes joined with ';' lexical.\n- Brief 08: policy_waiver if final status approved and amount>10000 and policy exception approved_by compliance; retroactive_review if final status reversed and amount>5000 and winning correction notice changed status.\n- Brief 09: compliance_hold sent date compared against ledger date immediately before corrections applied (after ledger load + meeting amendments + compliance mail merges), not against post-correction date.\nWe still need Brief 01/03/04/05 details for ledger sourcing, mail status changes, correction precedence, meeting owner amendments.\nNext: print those brief sections and then implement code changes across parsers/reconcile/exceptions/writers.",
+  "plan": "1) Print Brief 01, 03, 04, 05 authoritative sections.\n2) Implement parser block extraction and parsing fixes.\n3) Implement reconcile pipeline per overlay order and precedence.\n4) Fix output writers.\n5) Run and diff twice for determinism.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,25p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,392p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '555,563p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '672,679p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

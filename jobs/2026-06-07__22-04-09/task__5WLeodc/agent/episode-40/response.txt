@@ -1,0 +1,6 @@
+{
+  "analysis": "Extractor now produces all four required files under the provided --outdir, with correct JSON envelopes ({items}), correct CSV header/formatting, non-empty reconciliation_report.jsonl with lines sorted by notice_id, and exceptions.json containing only flagged rows. Running the CLI twice with identical input produced byte-identical outputs (diffs empty), satisfying determinism. Parsers were fixed to ignore decoy headings and provisional ledger rows, enforce compliance@ sender rules, and implement Brief 09 hold timing. Reconcile logic implements correction precedence and previous_value, and exception flags match Briefs 07–09 and 08.",
+  "plan": "No further changes needed; mark task complete for grading.",
+  "commands": [],
+  "task_complete": true
+}

@@ -1,0 +1,35 @@
+{
+  "analysis": "We successfully inspected parser/corrections.js (shown at terminal) and parser/policy.js: corrections are parsed as blocks with CORR-* id, targets/field/value/effective; policy exceptions currently only returns a Set of transaction ids mentioned under '## Policy Exceptions'. We still have not captured the authoritative Brief 01–09 rules text (especially Brief 09 hold timing and correction precedence) nor inspected ledger/meetings/emails parsers and sections parser output shape. We also haven’t implemented any of the required output contract changes or reconciliation semantics; current code remains far from spec and is nondeterministic (sort comparator). Next we need to view remaining parser files output (sections.js, ledger.js, meetings.js, emails.js) and extract rules from the archive, then implement a correct deterministic reconciliation + exception coding + correct writers/envelopes + report previous_value + sorting.",
+  "plan": "1) Display sections.js to understand how it slices the markdown and what keys (ledger, meetings, emails, corrections, policy) are returned. 2) Display ledger.js/meetings.js/emails.js to see parsed fields (dates, sent timestamps, from addresses) needed for timing and precedence. 3) Extract Investigation Briefs 01–09 content precisely from /app/data/audit_archive.md to implement rules; also inspect tail structured sections (Ledger Rows, Meeting Minutes, Policy Exceptions, Correction Notices) to confirm formats. 4) Once rules known, implement fixes: deterministic sorting, proper merging order, compliance email sender filter + dedupe/timing, correction application with precedence and previous_value, exception_reason calculation with lexical code sort, and correct output writers/envelopes/CSV formatting. For now, run the missing inspections and archive extraction commands.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,300p' /app/audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "rg -n \"^## (Ledger Rows|Meeting Minutes|Email Excerpts|Policy Exceptions|Correction Notices)\" /app/data/audit_archive.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,encoding='utf-8').read().splitlines()\n# print briefs 01-09 blocks with some reasonable cap\nbrief_starts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b',l)]\nfor si, i in enumerate(brief_starts):\n    j = brief_starts[si+1] if si+1 < len(brief_starts) else len(lines)\n    block = lines[i:j]\n    print('\\n'.join(block))\n    print('\\n'+'='*80+'\\n')\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "tail -n 260 /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

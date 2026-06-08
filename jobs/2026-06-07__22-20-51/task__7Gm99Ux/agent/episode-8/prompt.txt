@@ -1,0 +1,41 @@
+Current Terminal Screen:
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@58b3f47e1f8d:/app# python3 - <<'PY'
+> import re
+> p='/app/data/audit_archive.md'
+> lines=open(p,'r',encoding='utf-8').read().splitlines()
+> # show exact heading lines around the authoritative sections
+> for lineno in [1720,1732,1750,2870,2883,2895,2898,2900,2915,2936,2938,2946]:
+>     if 1 <= lineno <= len(lines):
+>         print(f"{lineno}: {lines[lineno-1]}")
+> PY
+1720: signed: false
+1732: ## Email Excerpts
+1750:
+2870: Treasury ops summarized weekend wire coverage impacts on grant compliance
+2883: ## Policy Exceptions
+2895: ### Policy Exception
+2898: reason: executive waiver
+2900: ## Correction Notices
+2915: targets: TXN-51cc9d8a-ea13-56ab-af16-c55e1716132f
+2936: effective: 2024-09-01
+2938: ## Transaction Ledger (working copy)
+2946: ## Transaction Ledger
+root@58b3f47e1f8d:/app#

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+97:
+98: During Q1 close, S. Patel compared two cold extractor runs and documented policy waiver omission on vendor onboarding backlog. Operations initially attribut
+ed the drift to cache state; QA disproved that hypothesis the following morning.
+99:
+
+-- context starting line 84
+84: In Q1 close, procurement migrated vendor onboarding backlog workflows to a new ticketing tool. Migration cutover introduced effective-date mismatch, which d
+id not reproduce once ledger sourcing rules from Brief 01 were applied manually.
+85:
+86: Site visit #345 to procurement exported 18 compliance threads tied to vendor onboarding backlog. Reviewers noted that status precedence inversion appeared w
+henever correction batches straddled a weekend wire cutoff.
+87:
+88: Working paper WP-1389 documents a three-way match failure on vendor onboarding backlog where accrual true-ups near $39,514 never received matching complianc
+e responses during Q1 close.
+89:
+90: Privacy review #216 redacted personal data from vendor onboarding backlog threads but retained transaction identifiers needed for reconciliation testing.
+91:
+92: Audit technologist K. Morales replayed FY24 mailbox snapshots and showed how vendor onboarding backlog threads arrived out of order relative to correction n
+otices, surfacing hold flag suppression on four high-balance rows.
+93:
+94: Peer review #128 of procurement sampling found 13 mislinked emails on vendor onboarding backlog. None of the mislinked messages originated from compliance a
+ddresses, supporting Brief 02 sender restrictions.
+95:
+96: Data governance WP-2595 catalogs legacy procurement folders still containing vendor onboarding backlog spreadsheets. Those folders are evidentiary only; ext
+ractor output must come from canonical structured sections.
+97:
+98: During Q1 close, S. Patel compared two cold extractor runs and documented policy waiver omission on vendor onboarding backlog. Operations initially attribut
+ed the drift to cache state; QA disproved that hypothesis the following morning.
+99:
+100: Counsel memo WP-4430 advises retaining full vendor onboarding backlog threads because litigation hold scope may extend beyond the transactions named in for
+mal notices.
+101:
+root@de10d3a691f3:/app# grep -n "## Ledger" /app/data/audit_archive.md | head -n 20
+root@de10d3a691f3:/app# grep -n "## Correction" /app/data/audit_archive.md | head -n 20
+2900:## Correction Notices
+root@de10d3a691f3:/app# grep -n "## Compliance" /app/data/audit_archive.md | head -n 20
+root@de10d3a691f3:/app# grep -n "## Policy Exceptions" /app/data/audit_archive.md | head -n 20
+788:## Policy Exceptions (draft)
+2883:## Policy Exceptions
+root@de10d3a691f3:/app#

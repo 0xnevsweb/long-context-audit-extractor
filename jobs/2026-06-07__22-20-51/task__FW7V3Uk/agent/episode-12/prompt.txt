@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>        const trimmed = line.trim();
+>        if (trimmed.startsWith("transaction:")) {
+> -        entry.transaction = trimmed.split(":")[1].trim();
+> +        entry.transaction_id = trimmed.split(":")[1].trim();
+>        } else if (trimmed.startsWith("approved_by:")) {
+>          entry.approved_by = trimmed.split(":")[1].trim();
+>        } else if (trimmed.startsWith("reason:")) {
+>          entry.reason = trimmed.split(":")[1].trim();
+>        }
+>      }
+> -    if (entry.transaction && entry.approved_by) {
+> +    if (entry.transaction_id && entry.approved_by) {
+>        exceptions.push(entry);
+>      }
+>    }
+>    return exceptions;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@c97f4e7457e4:/app# sed -n '1,120p' /app/audit-extractor/src/parser/meetings.js
+function parseMeetings(markdown) {
+  const meetings = [];
+  const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+  let match;
+  while ((match = re.exec(markdown)) !== null) {
+    const block = markdown.slice(match.index, match.index + 400);
+    const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+    const signedMatch = block.match(/^signed:\s*(.+)$/im);
+    meetings.push({
+      transaction_id: match[1],
+      owner: ownerMatch ? ownerMatch[1].trim() : "",
+      signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+    });
+  }
+  return meetings;
+}
+
+module.exports = { parseMeetings };
+root@c97f4e7457e4:/app#

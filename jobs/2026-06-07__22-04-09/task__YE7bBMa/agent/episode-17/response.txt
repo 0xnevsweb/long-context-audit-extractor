@@ -1,0 +1,27 @@
+{
+  "analysis": "We have successfully updated jsonWriter (envelope now {items}), csvWriter (correct header incl exception_reason, escaping, amount formatting to 2 decimals, newline at end, empty cell for null), and utils/sort.js (stable comparator with equality + added sortByNoticeId). Remaining work: implement reconciliation semantics and exception flags per Investigation Briefs 01–09, fix exceptions.json shape (now correct via writer but buildExceptions still wrong), fix reportWriter ordering and report previous_value, and ensure deterministic output ordering everywhere. Also need to ensure transactions.json top-level items sorted by transaction_id and exceptions.json includes only flagged rows sorted. Finally run extractor twice and verify byte-identical transactions.json.",
+  "plan": "1) Update reportWriter to sort by notice_id and ensure trailing newline exactly once. 2) Implement normalize/reconcile.js per briefs: enforce sender restriction and parse sent date already; apply status precedence; respect signed meeting amendments; apply corrections in correct order and compute previous_value at application time; keep a pre-correction snapshot date/status for Brief 09 compliance_hold timing. 3) Implement normalize/exceptions.js to compute exception_reason codes (at minimum: policy_exception from parsed.policyExceptions, compliance_hold from qualifying compliance emails with sent > pre-correction ledger date per Brief 09; plus any other flags from briefs once confirmed) with lexical ordering and null when none; then build exceptions.json by filtering non-null. 4) Update output/report generation to include only winning corrections per Brief 04 and previous_value strings. 5) Run CLI with grader args into /app/output twice; compare sha256sum of transactions.json; sanity check JSON/CSV headers and counts.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'\nconst fs = require(\"node:fs\");\nconst { sortByNoticeId } = require(\"../utils/sort\");\n\nfunction writeReconciliationReport(filePath, report) {\n  const sorted = sortByNoticeId([...report]);\n  const body = sorted.map((row) => JSON.stringify(row)).join(\"\\n\");\n  fs.writeFileSync(filePath, body ? `${body}\\n` : \"\");\n}\n\nmodule.exports = { writeReconciliationReport };\nEOF\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,200p' /app/audit-extractor/src/normalize/exceptions.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out_smoke 2>/tmp/smoke_err.txt || true; echo \"exit:$?\"; ls -la /tmp/out_smoke; head -n 5 /tmp/smoke_err.txt || true\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

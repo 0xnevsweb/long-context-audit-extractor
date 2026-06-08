@@ -1,0 +1,117 @@
+{
+    "schema_version": 1,
+    "created_at": "2026-06-08T05:20:52.224385Z",
+    "harbor": {
+        "version": "0.7.0",
+        "is_editable": false
+    },
+    "invocation": [
+        "harbor",
+        "run",
+        "-a",
+        "terminus-2",
+        "-m",
+        "openai/@openai/gpt-5.2",
+        "-k",
+        "3",
+        "-p",
+        "./task"
+    ],
+    "n_concurrent_trials": 4,
+    "retry": {
+        "max_retries": 0,
+        "exclude_exceptions": [
+            "VerifierTimeoutError",
+            "VerifierOutputParseError",
+            "AgentTimeoutError",
+            "RewardFileNotFoundError",
+            "RewardFileEmptyError"
+        ],
+        "wait_multiplier": 1.0,
+        "min_wait_sec": 1.0,
+        "max_wait_sec": 60.0
+    },
+    "trials": [
+        {
+            "task": {
+                "name": "task",
+                "type": "local",
+                "digest": "sha256:2ade2cd4e018264b119ef925f65b0770c32adeca9fe26973fecf9f19036ffa3d",
+                "path": "task"
+            },
+            "timeout_multiplier": 1.0,
+            "agent": {
+                "name": "terminus-2",
+                "model_name": "openai/@openai/gpt-5.2",
+                "kwargs": {},
+                "env": {}
+            },
+            "environment": {
+                "type": "docker",
+                "force_build": false,
+                "delete": true,
+                "suppress_override_warnings": false,
+                "env": {},
+                "kwargs": {}
+            },
+            "verifier": {
+                "env": {},
+                "disable": false
+            }
+        },
+        {
+            "task": {
+                "name": "task",
+                "type": "local",
+                "digest": "sha256:2ade2cd4e018264b119ef925f65b0770c32adeca9fe26973fecf9f19036ffa3d",
+                "path": "task"
+            },
+            "timeout_multiplier": 1.0,
+            "agent": {
+                "name": "terminus-2",
+                "model_name": "openai/@openai/gpt-5.2",
+                "kwargs": {},
+                "env": {}
+            },
+            "environment": {
+                "type": "docker",
+                "force_build": false,
+                "delete": true,
+                "suppress_override_warnings": false,
+                "env": {},
+                "kwargs": {}
+            },
+            "verifier": {
+                "env": {},
+                "disable": false
+            }
+        },
+        {
+            "task": {
+                "name": "task",
+                "type": "local",
+                "digest": "sha256:2ade2cd4e018264b119ef925f65b0770c32adeca9fe26973fecf9f19036ffa3d",
+                "path": "task"
+            },
+            "timeout_multiplier": 1.0,
+            "agent": {
+                "name": "terminus-2",
+                "model_name": "openai/@openai/gpt-5.2",
+                "kwargs": {},
+                "env": {}
+            },
+            "environment": {
+                "type": "docker",
+                "force_build": false,
+                "delete": true,
+                "suppress_override_warnings": false,
+                "env": {},
+                "kwargs": {}
+            },
+            "verifier": {
+                "env": {},
+                "disable": false
+            }
+        }
+    ]
+}

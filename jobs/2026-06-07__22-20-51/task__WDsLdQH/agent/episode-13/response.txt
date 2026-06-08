@@ -1,0 +1,67 @@
+{
+  "analysis": "Our last attempt to print Brief 09 rules did not include the actual heading/rules; we only saw supporting chronology narrative around lines 1470–1495. We need to locate the exact line for '## Investigation Brief 09 — Mid-Year Amendment' (previously ~1455) and print a tight range starting at the heading to capture the authoritative rule text about compliance_hold sent-date comparison. Similarly, we need to capture Brief 01 ledger sourcing rule text (including provisional/duplicate guidance), Brief 03 mail timing, Brief 04 correction precedence, Brief 05 meeting amendments, Brief 07/08 exception flags.\n\nNext: use grep to find the brief headings and then print around each heading.",
+  "plan": "1) grep exact heading line numbers for Briefs 01,03,04,05,07,08,09. 2) Print ~60-120 lines after each heading to capture rule text. 3) Then implement code changes based on those rules.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 01\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 03\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 04\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 05\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 07\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 08\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "grep -n \"^## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '11,80p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '384,430p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '555,610p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '672,740p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '820,940p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '940,1100p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1455,1475p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '1455,1510p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

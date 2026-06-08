@@ -1,0 +1,41 @@
+Current Terminal Screen:
+501:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+568:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+716:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+772:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+806:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+959:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds. B
+rief 09 later in this archive supersedes that draft practice for production reconciliation.
+982:comparison used for `compliance_hold` is defined in Investigation Brief 09
+1007:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1085:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1099:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1179:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1267:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1329:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1381:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1437:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1461:## Investigation Brief 09
+1472:## Investigation Brief 09
+1529:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1533:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1633:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+1703:Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging holds.
+Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+root@de10d3a691f3:/app#

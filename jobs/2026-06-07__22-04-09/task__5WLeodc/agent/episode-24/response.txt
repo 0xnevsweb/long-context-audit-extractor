@@ -1,0 +1,27 @@
+{
+  "analysis": "We are back at a normal prompt, but the output shown is just the tail of /tmp/brief09.md (narrative), not the grep results or wc output; likely those commands ran but their outputs scrolled away. We still need the actual rule lines from brief04/05/09. We'll directly grep within each brief slice for specific unique tokens we already know exist: in Brief 09 for `compliance_hold`; in Brief 05 for 'signed:' or 'unsigned'; in Brief 04 for 'CORR-' or 'notice_id'. Then print short contexts around matches.",
+  "plan": "Run grep with -n for specific tokens, then use sed to print small windows around the matching line numbers within the slice files. This will reliably surface the authoritative rules without dumping huge narrative sections.",
+  "commands": [
+    {
+      "keystrokes": "grep -n \"compliance_hold\" /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"hold timing|mail|timestamp|effective\" /tmp/brief09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"signed|unsigned\" /tmp/brief05.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nEi \"CORR-|notice|precedence|supersed\" /tmp/brief04.md | head -n 120\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nfrom pathlib import Path\nimport re\n\ndef show(path, pat, ctx=8, max_hits=8):\n    lines=Path(path).read_text('utf-8',errors='replace').splitlines()\n    hits=[i for i,l in enumerate(lines) if re.search(pat,l)]\n    print(path,'hits',len(hits))\n    for i in hits[:max_hits]:\n        print('\\n-- hit line', i+1)\n        for j in range(max(0,i-ctx), min(len(lines), i+ctx+1)):\n            print(f\"{j+1}: {lines[j]}\")\n\nshow('/tmp/brief09.md', r'compliance_hold|hold timing|mail', ctx=10)\nshow('/tmp/brief05.md', r'signed|unsigned|amend', ctx=10)\nshow('/tmp/brief04.md', r'CORR-|notice_id|previous_value|winning|precedence|supersed', ctx=10)\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed,
+>     });
+>   }
+>
+>   return meetings;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@58b3f47e1f8d:/app# node -c /app/audit-extractor/src/parser/corrections.js && node -c /app/audit-extractor/src/parser/meetings.js
+root@58b3f47e1f8d:/app# node - <<'NODE'
+> const fs = require('node:fs');
+> const { parseArchive } = require('/app/audit-extractor/src/parser/sections');
+> const md = fs.readFileSync('/app/data/audit_archive.md','utf8');
+> const parsed = parseArchive(md);
+> console.log('ledger', parsed.ledger.length);
+> console.log('meetings', parsed.meetings.length);
+> console.log('emails', parsed.emails.length);
+> console.log('corrections', parsed.corrections.length);
+> console.log('policyExceptions', parsed.policyExceptions.length);
+> NODE
+/app/audit-extractor/src/parser/ledger.js:5
+  const slice = sliceSectionByExactHeading(markdown, "## Transaction Ledger");
+                ^
+
+TypeError: sliceSectionByExactHeading is not a function
+    at parseLedger (/app/audit-extractor/src/parser/ledger.js:5:17)
+    at parseArchive (/app/audit-extractor/src/parser/sections.js:29:13)
+    at [stdin]:4:16
+    at runScriptInThisContext (node:internal/vm:144:10)
+    at node:internal/process/execution:109:14
+    at [stdin]-wrapper:6:24
+    at runScript (node:internal/process/execution:92:62)
+    at evalScript (node:internal/process/execution:123:10)
+    at node:internal/main/eval_stdin:32:5
+    at Socket.<anonymous> (node:internal/process/execution:224:5)
+
+Node.js v20.11.1
+root@58b3f47e1f8d:/app#

@@ -1,0 +1,43 @@
+{
+  "analysis": "ripgrep (rg) is not installed, so our planned searches failed. We need to use grep/sed/awk instead to locate Brief 09 rules, correction notices, policy exceptions, compliance mail 'sent:' lines, and ledger sections. We already extracted brief files to /tmp/brief_XX.md; we should search them with grep and view relevant parts.",
+  "plan": "1) Use grep -n to find key terms in Brief 09 and other brief files (hold, compliance, sent:, overrides). 2) Use grep -n on the full archive to find Correction Notice blocks, Policy Exception blocks, mail excerpts, and Transaction Ledger sections (including working copy/provisional). 3) Print the surrounding context with sed to understand exact structured formats for parsing.",
+  "commands": [
+    {
+      "keystrokes": "grep -nEi \"brief 09|amend|override|supersed|hold|compliance|sent:\" /tmp/brief_09.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"hold|compliance|sent:\" /tmp/brief_0*.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^##+\\s+Correction\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"Correction Notice|notice_id|targets:|field:|previous_value|new_value|effective:\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^##+\\s+Policy\" /app/data/audit_archive.md | head\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"Policy Exception|approved_by:\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^##+\\s+Transaction Ledger\" /app/data/audit_archive.md | head -n 40\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"provisional:|working copy\" /app/data/audit_archive.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nE \"^From:|^Subject:|^sent:\" /app/data/audit_archive.md | head -n 120\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

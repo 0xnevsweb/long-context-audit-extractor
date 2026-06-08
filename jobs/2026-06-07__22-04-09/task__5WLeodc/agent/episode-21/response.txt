@@ -1,0 +1,35 @@
+{
+  "analysis": "The sed output shown is still narrative and doesn’t include the top of Brief 04/05/09; likely the displayed region is within one of the windows but not the rule bullets. We need to narrow further within those ranges to find explicit rule lines (often backticked identifiers, 'For extractor output', 'Apply', 'Supersedes', etc.). We'll search within each brief’s line range for backticks or the keywords 'Rule', 'For extractor output', 'Apply', 'Sort', 'winning', 'effective'.",
+  "plan": "1) Extract Brief 04, 05, 09 sections to separate temp files and then grep within them for 'For extractor output', backticks, and specific rule cues. 2) Use sed to print just the lines around those matches. This will reveal the authoritative instructions needed to implement corrections precedence, signed amendments, and compliance_hold timing.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '561,669p' /tmp/briefs_01_09.md > /tmp/brief04.md\nsed -n '679,800p' /tmp/briefs_01_09.md > /tmp/brief05.md\nsed -n '1472,1565p' /tmp/briefs_01_09.md > /tmp/brief09.md\nwc -l /tmp/brief04.md /tmp/brief05.md /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"For extractor output|Rule|Apply|order|precedence|winning|supersed|effective|`\" /tmp/brief04.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"For extractor output|Rule|Apply|order|precedence|winning|supersed|effective|`\" /tmp/brief05.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "grep -nE \"For extractor output|Rule|Apply|order|precedence|winning|supersed|effective|`|compliance_hold\" /tmp/brief09.md\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "sed -n '1,140p' /tmp/brief04.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,160p' /tmp/brief05.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,160p' /tmp/brief09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

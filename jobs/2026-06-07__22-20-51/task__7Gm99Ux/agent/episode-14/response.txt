@@ -1,0 +1,31 @@
+{
+  "analysis": "Circular dependency is resolved. parseArchive now returns counts: ledger 32 rows (plausible), meetings 3 signed amendments, emails 4 (authoritative emails with sent/status/txn), corrections 6 notices, policyExceptions 3 exceptions. Next, reconciliation logic is still incomplete: reconcile.js does not compute exception_reason flags, does not incorporate emails/policyExceptions into merge, and report previous_value is empty and ordering likely wrong. Also corrections winning/precedence and Brief 09 compliance_hold date comparison must be implemented. We also need to ensure output writers produce exactly the required four files with correct envelopes and CSV formatting. Next step: inspect index.js to see how parseArchive feeds reconcileTransactions, then update reconcile.js to implement proper overlays and flags, and update exceptions.js to set envelope and sorting as required.",
+  "plan": "1) Inspect src/index.js and output writers (jsonWriter/csvWriter) to ensure they match required filenames and formats. 2) Update normalize/reconcile.js to accept parsed archive inputs (ledger/meetings/emails/corrections/policyExceptions), apply overlays, apply corrections with previous_value capture, and build report sorted by notice_id (writer already sorts). 3) Implement exception_reason calculation with all four codes and lexical ordering; ensure compliance_hold uses Brief 09 timing rule (we must read Brief 09 text from the archive file around its heading). 4) Update exceptions.js to return envelope {items:[...]} sorted and containing only flagged rows. 5) Run extractor into /app/output and validate determinism and formats.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,220p' /app/audit-extractor/src/index.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/output/jsonWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,320p' /app/audit-extractor/src/output/csvWriter.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -n \"## Investigation Brief 07\\|## Investigation Brief 08\\|## Investigation Brief 09\" /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\nheads=[(i,l) for i,l in enumerate(lines,1) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nfor i,l in heads:\n    if l.startswith('## Investigation Brief 07') or l.startswith('## Investigation Brief 08') or l.startswith('## Investigation Brief 09'):\n        print(i,l)\nPY\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\np='/app/data/audit_archive.md'\nlines=open(p,'r',encoding='utf-8').read().splitlines()\n# dump brief 09 block\nstarts=[i for i,l in enumerate(lines) if re.match(r'^## Investigation Brief 0[1-9]\\b', l)]\nstarts.append(len(lines))\nfor a,b in zip(starts, starts[1:]):\n    head=lines[a]\n    if head.startswith('## Investigation Brief 09'):\n        print('\\n'.join(lines[a:b]))\nPY\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

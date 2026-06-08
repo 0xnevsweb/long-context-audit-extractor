@@ -1,0 +1,41 @@
+Current Terminal Screen:
+External counsel requested preservation of treasury wire cutoff failures
+threads from February recon without implying any status change authority.
+
+From: controller@corp.internal
+Subject: close calendar revision — coordination 29
+
+Controller office moved the March walkthrough close checklist because of SOX
+sampling mismatch staffing gaps. This email does not reference compliance@
+senders or transaction ids.
+
+From: audit-lead@corp.internal
+Subject: retention hold reminder — coordination 30
+
+Please confirm treasury coverage for the treasury wire cutoff failures
+walkthrough next week. We are not requesting any ledger changes from this
+message.
+
+From: hr-payroll@corp.internal
+Subject: retention hold reminder — coordination 31
+
+Treasury ops summarized weekend wire coverage impacts on revenue cutoff
+testing. No merge fields present.
+
+From: controller@corp.internal
+Subject: retention hold reminder — coordination 32
+
+Data platform ticket #7191 tracks an ingestion delay that affected controller
+exports. The delay is explanatory background, not a reconciliation input.
+
+From: hr-payroll@corp.internal
+Subject: retention hold reminder — coordination 33
+
+Risk committee excerpt: year-end close checklist drift exposure in December
+freeze was elevated but no compliance decisions are recorded in this message.
+
+From: hr-payroll@corp.internal
+Subject: close calendar revision — coordination 34
+
+Controller office moved the Q1 close close checklist because of vendor
+root@58b3f47e1f8d:/app#

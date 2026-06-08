@@ -1,0 +1,41 @@
+Current Terminal Screen:
+>    while ((match = re.exec(markdown)) !== null) {
+>      const block = markdown.slice(match.index, match.index + 400);
+>      const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+>      const signedMatch = block.match(/^signed:\s*(.+)$/im);
+> +    const effectiveMatch = block.match(/^effective:\s*([0-9]{4}-[0-9]{2}-[0-9]{2})\s*$/im);
+>      meetings.push({
+>        transaction_id: match[1],
+>        owner: ownerMatch ? ownerMatch[1].trim() : "",
+>        signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+> +      effective_date: effectiveMatch ? effectiveMatch[1] : null,
+>      });
+>    }
+>    return meetings;
+>  }
+> *** End Patch
+> PATCH
+bash: apply_patch: command not found
+root@edd51c718576:/app# mkdir -p /tmp/audit-out1 /tmp/audit-out2 && rm -f /tmp/audit-out1/* /tmp/audit-out2/*
+root@edd51c718576:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out1
+root@edd51c718576:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out2
+root@edd51c718576:/app# diff -u /tmp/audit-out1/transactions.json /tmp/audit-out2/transactions.json || true
+root@edd51c718576:/app# diff -u /tmp/audit-out1/reconciliation_report.jsonl /tmp/audit-out2/reconciliation_report.jsonl || true
+root@edd51c718576:/app# ls -la /tmp/audit-out1 && echo '---' && head -n 3 /tmp/audit-out1/transactions.csv && echo '---' && head -n 5 /tmp/audit-out1/exceptions
+.json && echo '---' && head -n 5 /tmp/audit-out1/reconciliation_report.jsonl
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:28 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:28 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:28 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:28 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2442 Jun  8 05:28 transactions.csv
+-rw-r--r-- 1 root root 7407 Jun  8 05:28 transactions.json
+---
+transaction_id,owner,status,effective_date,amount_usd
+TXN-08b4472a-f4b7-5455-9f43-e97005d4a594,dlee,pending,2024-02-26,15335.5
+TXN-0f577e8c-c09d-517f-8807-b09a17924f9c,bwong,pending,2024-10-10,12860.78
+---
+{
+  "exceptions": []
+}---
+root@edd51c718576:/app#

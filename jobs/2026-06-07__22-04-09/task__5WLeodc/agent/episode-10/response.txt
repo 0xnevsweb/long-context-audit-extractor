@@ -1,0 +1,23 @@
+{
+  "analysis": "Emails parser slices from '## Email Excerpts' to '## Policy Exceptions' (but will include draft 'Policy Exceptions (draft)' earlier unless it finds the later authoritative heading; indexOf finds the first occurrence, so it will stop at the draft at line 788, truncating emails and missing later mail—this explains missed later compliance mail and drift). Meetings parser captures signed boolean but reconcile.js ignores it (applies unsigned amendments). Need sections.js/ledger.js still. Also must ensure emails are filtered by allowed senders/timing and applied in correct order per briefs; currently it ignores dates and from_addr restrictions. Fix: in parseEmails, end marker should be the authoritative '## Policy Exceptions' (not draft), or use lastIndexOf / more robust section extraction. Similarly policy parser already uses start at '## Policy Exceptions' and end at '## Correction Notices'—that start will also hit draft first unless it uses more specific heading match; it currently uses indexOf exact string '## Policy Exceptions' which will match at 2883, not draft '## Policy Exceptions (draft)' (good). But emails end uses '## Policy Exceptions' which will find draft? Actually draft includes that substring, so indexOf hits 788—bad.",
+  "plan": "1) Inspect sections.js and ledger.js to see similar indexOf issues with working copy ledger and other decoys. 2) Patch parsers to locate headings by exact line match (e.g., /^## Policy Exceptions$/m) and choose correct occurrence (authoritative), ignoring '(draft)' and '(working copy)'. 3) After parser fixes, implement reconciliation rules from briefs: apply ledger base, then signed meeting amendments, then compliance mail in correct timing order (and sender restrictions), then corrections with precedence/effective ordering; compute previous_value; build exception_reason codes sorted lexically; output formats and deterministic sorting.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '760,860p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '2820,2925p' /app/data/audit_archive.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

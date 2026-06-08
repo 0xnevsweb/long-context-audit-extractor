@@ -1,0 +1,41 @@
+Current Terminal Screen:
+2130:Subject: retention hold reminder — coordination 54
+2167:controls; findings here are contextual only and must not override
+2171:Subject: retention hold reminder — coordination 60
+2228:controls; findings here are contextual only and must not override
+2244:Subject: retention hold reminder — coordination 71
+2257:Subject: retention hold reminder — coordination 73
+2287:controls; findings here are contextual only and must not override
+2314:Subject: retention hold reminder — coordination 0
+2317:controls; findings here are contextual only and must not override
+2330:controls; findings here are contextual only and must not override
+2413:Subject: retention hold reminder — coordination 15
+2419:Subject: retention hold reminder — coordination 16
+2431:Subject: retention hold reminder — coordination 18
+2437:Subject: retention hold reminder — coordination 19
+2444:Subject: retention hold reminder — coordination 20
+2478:Subject: retention hold reminder — coordination 25
+2512:Subject: retention hold reminder — coordination 30
+2574:findings here are contextual only and must not override Investigation Brief
+2591:Subject: retention hold reminder — coordination 42
+2631:Subject: retention hold reminder — coordination 48
+2654:Subject: retention hold reminder — coordination 0
+2676:controls; findings here are contextual only and must not override
+2693:Subject: retention hold reminder — coordination 6
+2712:Subject: retention hold reminder — coordination 9
+2759:Subject: retention hold reminder — coordination 16
+2773:Subject: retention hold reminder — coordination 18
+2793:Subject: retention hold reminder — coordination 21
+2800:Subject: retention hold reminder — coordination 22
+2819:Subject: retention hold reminder — coordination 25
+2826:Subject: retention hold reminder — coordination 26
+2835:controls; findings here are contextual only and must not override
+2865:Subject: retention hold reminder — coordination 32
+2878:Subject: retention hold reminder — coordination 34
+2888:controls; findings here are contextual only and must not override
+2898:Subject: retention hold reminder — coordination 37
+2927:## Policy Exceptions
+2929:### Policy Exception
+2934:### Policy Exception
+2939:### Policy Exception
+root@57a25f8d12e0:/app#

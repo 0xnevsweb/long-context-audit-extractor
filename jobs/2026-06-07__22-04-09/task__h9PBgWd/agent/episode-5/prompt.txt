@@ -1,0 +1,209 @@
+New Terminal Output:
+
+root@8eb6883b8e1c:/app# command -v python3 && command -v perl && command -v vim || true
+/usr/bin/python3
+/usr/bin/perl
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/sectionUtil.js <<'EOF'
+> function escapeRegExp(str) {
+>   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+> }
+>
+> // Find markdown section body for an exact H2 heading line, e.g.
+> // headingLine = "## Transaction Ledger".
+> // Boundaries are determined by whole-line anchored heading matches.
+> function extractSection(markdown, headingLine) {
+>   const h = escapeRegExp(headingLine);
+>   const re = new RegExp(`^${h}\\s*$`, "gm");
+>   const match = re.exec(markdown);
+>   if (!match) return "";
+>
+>   const startIdx = match.index + match[0].length;
+>   const rest = markdown.slice(startIdx);
+>   const nextHeading = rest.match(/^##\s+.+$/m);
+>   const endIdx = nextHeading ? startIdx + nextHeading.index : markdown.length;
+>   return markdown.slice(startIdx, endIdx);
+> }
+>
+> module.exports = { extractSection };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/ledger.js <<'EOF'
+> function parseLedger(markdown) {
+>   // Caller provides only the authoritative ledger section.
+>   // Brief 01: ignore any ledger block that contains `provisional: true`
+>   // (case-insensitive). When a transaction appears multiple times in
+>   // non-provisional blocks, the last such block in file order wins.
+>
+>   const byId = new Map();
+>   const blocks = markdown.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     if (/^provisional\s*:\s*true\s*$/gim.test(block)) {
+>       continue;
+>     }
+>
+>     const lines = block.split("\n");
+>     const transactionId = (lines[0] || "").trim();
+>     if (!transactionId.startsWith("TXN-")) continue;
+>
+>     const row = { transaction_id: transactionId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (/^amount\s*:/i.test(trimmed)) {
+>         row.amount = Number(trimmed.split(":")[1].trim());
+>       } else if (/^owner\s*:/i.test(trimmed)) {
+>         row.owner = trimmed.split(":")[1].trim();
+>       } else if (/^status\s*:/i.test(trimmed)) {
+>         row.status = trimmed.split(":")[1].trim();
+>       } else if (/^date\s*:/i.test(trimmed)) {
+>         row.date = trimmed.split(":")[1].trim();
+>       }
+>     }
+>
+>     // last one wins
+>     byId.set(transactionId, row);
+>   }
+>   return [...byId.values()];
+> }
+>
+> module.exports = { parseLedger };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/emails.js <<'EOF'
+> function parseEmails(markdown) {
+>   // Caller provides only the authoritative Email Excerpts section.
+>   const slice = markdown;
+>   const emails = [];
+>   const blocks = slice.split(/\n\n+/);
+>   for (const block of blocks) {
+>     const fromMatch = block.match(/^From:\s*(.+)$/im);
+>     const subjectMatch = block.match(/^Subject:\s*Re:\s*(TXN-[0-9a-f-]+)/im);
+>     const statusMatch = block.match(/^status:\s*(\w+)/im);
+>     const sentMatch = block.match(/^sent:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>     if (!fromMatch || !subjectMatch || !statusMatch) {
+>       continue;
+>     }
+>     emails.push({
+>       from_addr: fromMatch[1].trim(),
+>       transaction_id: subjectMatch[1],
+>       status: statusMatch[1].trim().toLowerCase(),
+>       sent: sentMatch ? sentMatch[1] : null,
+>     });
+>   }
+>   return emails;
+> }
+>
+> module.exports = { parseEmails };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/policy.js <<'EOF'
+> function parsePolicyExceptions(markdown) {
+>   // Caller provides only the authoritative Policy Exceptions section.
+>   const slice = markdown;
+>   const items = [];
+>
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const txn = (lines[0] || "").trim();
+>     if (!txn.startsWith("TXN-")) continue;
+>     const approvedByMatch = block.match(/^approved_by:\s*(.+)\s*$/im);
+>     items.push({
+>       transaction_id: txn,
+>       approved_by: approvedByMatch ? approvedByMatch[1].trim().toLowerCase() : "",
+>     });
+>   }
+>   return items;
+> }
+>
+> module.exports = { parsePolicyExceptions };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/corrections.js <<'EOF'
+> function parseCorrections(markdown) {
+>   // Caller provides only the authoritative Correction Notices section.
+>   const slice = markdown;
+>   const notices = [];
+>   const blocks = slice.split(/^### /m).slice(1);
+>   for (const block of blocks) {
+>     const lines = block.split("\n");
+>     const noticeId = (lines[0] || "").trim();
+>     if (!noticeId.startsWith("CORR-")) {
+>       continue;
+>     }
+>     const entry = { notice_id: noticeId };
+>     for (const line of lines) {
+>       const trimmed = line.trim();
+>       if (/^targets\s*:/i.test(trimmed)) {
+>         entry.transaction_id = trimmed.split(":")[1].trim();
+>       } else if (/^field\s*:/i.test(trimmed)) {
+>         entry.field = trimmed.split(":")[1].trim();
+>       } else if (/^value\s*:/i.test(trimmed)) {
+>         entry.value = trimmed.split(":")[1].trim();
+>       } else if (/^effective\s*:/i.test(trimmed)) {
+>         entry.effective = trimmed.split(":")[1].trim();
+>       }
+>     }
+>     notices.push(entry);
+>   }
+>   return notices;
+> }
+>
+> module.exports = { parseCorrections };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/meetings.js <<'EOF'
+> function parseMeetings(markdown) {
+>   const meetings = [];
+>   const re = /^#### Amendment for (TXN-[0-9a-f-]+)\s*$/gim;
+>   let match;
+>   while ((match = re.exec(markdown)) !== null) {
+>     const after = markdown.slice(match.index);
+>     const next = after.slice(1).match(/^#### Amendment for TXN-[0-9a-f-]+\s*$/im);
+>     const block = next ? after.slice(0, next.index + 1) : after;
+>
+>     const ownerMatch = block.match(/^owner:\s*(.+)$/im);
+>     const signedMatch = block.match(/^signed:\s*(.+)$/im);
+>     const effectiveMatch = block.match(/^effective:\s*(\d{4}-\d{2}-\d{2})\s*$/im);
+>
+>     meetings.push({
+>       transaction_id: match[1],
+>       owner: ownerMatch ? ownerMatch[1].trim() : "",
+>       signed: signedMatch ? signedMatch[1].trim().toLowerCase() === "true" : false,
+>       effective: effectiveMatch ? effectiveMatch[1] : null,
+>     });
+>   }
+>   return meetings;
+> }
+>
+> module.exports = { parseMeetings };
+> EOF
+root@8eb6883b8e1c:/app# cat > /app/audit-extractor/src/parser/sections.js <<'EOF'
+> const { parseLedger } = require("./ledger");
+> const { parseMeetings } = require("./meetings");
+> const { parseEmails } = require("./emails");
+> const { parseCorrections } = require("./corrections");
+> const { parsePolicyExceptions } = require("./policy");
+> const { extractSection } = require("./sectionUtil");
+>
+> function parseArchive(markdown) {
+>   return {
+>     ledger: parseLedger(extractSection(markdown, "## Transaction Ledger")),
+>     meetings: parseMeetings(markdown),
+>     emails: parseEmails(extractSection(markdown, "## Email Excerpts")),
+>     corrections: parseCorrections(extractSection(markdown, "## Correction Notices")),
+>     policyExceptions: parsePolicyExceptions(extractSection(markdown, "## Policy Exceptions")),
+>   };
+> }
+>
+> module.exports = { parseArchive };
+> EOF
+root@8eb6883b8e1c:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/audit-out3
+root@8eb6883b8e1c:/app# ls -la /tmp/audit-out3 && wc -c /tmp/audit-out3/*
+total 28
+drwxr-xr-x 2 root root 4096 Jun  8 05:07 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:07 ..
+-rw-r--r-- 1 root root   22 Jun  8 05:07 exceptions.json
+-rw-r--r-- 1 root root 1045 Jun  8 05:07 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2439 Jun  8 05:07 transactions.csv
+-rw-r--r-- 1 root root 7404 Jun  8 05:07 transactions.json
+   22 /tmp/audit-out3/exceptions.json
+ 1045 /tmp/audit-out3/reconciliation_report.jsonl
+ 2439 /tmp/audit-out3/transactions.csv
+ 7404 /tmp/audit-out3/transactions.json
+10910 total
+root@8eb6883b8e1c:/app#

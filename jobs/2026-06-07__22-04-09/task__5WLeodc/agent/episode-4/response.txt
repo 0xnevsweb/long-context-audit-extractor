@@ -1,0 +1,47 @@
+{
+  "analysis": "We only see a slice of the archive around meeting notes plus a note that Brief 09 supersedes draft hold practice. The earlier commands to display parser sources and the extracted Briefs likely produced more output but the screen currently shows only the tail end (meeting notes). We still need: (1) the parser code outputs, (2) the full text of Investigation Briefs 01–09 (or at least the rule bullets), and (3) the structured tail sections (ledger rows, compliance mail, correction notices) so we can implement reconciliation semantics correctly.",
+  "plan": "1) Re-display parser source files to capture their logic. 2) Extract and save the Investigation Briefs 01–09 into a temporary file for easier targeted searching of rules (hold timing, mail precedence, correction precedence, exception codes, overlay order). 3) Locate structured tail headings in the archive (ledger, mail, corrections) and inspect them. 4) Then we’ll run the current extractor twice into /tmp to quantify nondeterminism and see incorrect outputs.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/meetings.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,340p' audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' audit-extractor/src/parser/policy.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "python3 - <<'PY'\nimport re\nfrom pathlib import Path\ntext=Path('/app/data/audit_archive.md').read_text('utf-8',errors='replace')\npattern=re.compile(r'(?ms)^#+\\s*Investigation Brief\\s*0?(\\d+)\\b(.*?)(?=^#+\\s*Investigation Brief\\s*0?\\d+\\b|\\Z)')\nbriefs=[]\nfor num,body in pattern.findall(text):\n    n=int(num)\n    if 1<=n<=9:\n        briefs.append((n, body.strip()))\nbriefs.sort()\nout='\\n\\n'.join([f\"## Investigation Brief {n:02d}\\n{b}\" for n,b in briefs])\nPath('/tmp/briefs_01_09.md').write_text(out,'utf-8')\nprint('wrote', '/tmp/briefs_01_09.md', 'chars', len(out))\nPY\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"hold|compliance|mail|correction|notice|precedence|effective\" /tmp/briefs_01_09.md | head -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"##\" /app/data/audit_archive.md | tail -n 80\n",
+      "duration": 1.0
+    },
+    {
+      "keystrokes": "rg -n \"Ledger|ledger|Correction|Corrections|Compliance Mail|Emails|Mail Excerpts\" /app/data/audit_archive.md | tail -n 120\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}

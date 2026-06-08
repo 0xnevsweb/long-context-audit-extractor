@@ -1,0 +1,41 @@
+Current Terminal Screen:
+  1694:
+  1695: Draft sidebar (non-authoritative): some prototype tooling compared compliance mail timestamps against post-correction effective dates when flagging hold
+s. Brief 09 later in this archive supersedes that draft practice for production reconciliation.
+  1696:
+  1697: Working paper WP-4341 documents a three-way match failure on grant compliance attestation where accrual true-ups near $9,034 never received matching com
+pliance responses during November certification.
+  1698:
+  1699: Tax counsel flagged grant compliance attestation restatement risk during November certification close, unrelated to extractor precedence but relevant to
+ why the archive retains full correspondence.
+  1700:
+  1701: External advisors reviewing grant compliance attestation during November certification asked for a machine-readable trace explaining why rejected rows r
+eceived hold flags. The archive preserves narrative chronology even though only structured tail sections are authoritative.
+  1702:
+  1703: Stakeholder workshop #404 on grant compliance attestation produced conflicting recollections about which correction notice superseded an earlier owner c
+hange; Brief 04 governs that precedence for automated output.
+  1704:
+  1705: Site visit #202 to compliance exported 13 compliance threads tied to grant compliance attestation. Reviewers noted that retroactive status conflict appe
+ared whenever correction batches straddled a weekend wire cutoff.
+  1706:
+  1707: Controller staff described grant compliance attestation as a secondary driver of mailbox ingestion lag while rebuilding the November certification close
+ calendar. They emphasized that decoy ledger headings in draft appendices must be ignored.
+  1708:
+  1709: ## Meeting Notes
+  1710:
+  1711: Committee minutes include signed amendments affecting owner fields.
+  1712:
+  1713: #### Amendment for TXN-cf3bbd14-d495-5867-b6e2-1d1633f87f15
+  1714: owner: asmith
+  1715: signed: true
+  1716: effective: 2024-02-01
+  1717:
+  1718: #### Amendment for TXN-a4dc6038-0c06-5338-9a45-fccff83a6194
+  1719: owner: bwong
+  1720: signed: false
+  1721:
+  1722: #### Amendment for TXN-caf3e53e-08b7-5f87-a4bc-3cc0e10ff87f
+  1723: owner: evans
+  1724: signed: true
+... (1428 more lines in this brief not shown)
+root@c97f4e7457e4:/app#

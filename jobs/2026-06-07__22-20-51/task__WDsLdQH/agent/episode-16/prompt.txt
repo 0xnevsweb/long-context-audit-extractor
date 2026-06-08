@@ -1,0 +1,42 @@
+New Terminal Output:
+20
+root@edd51c718576:/app# grep -n "^## Investigation Brief" /app/data/audit_archive.md > /tmp/briefs.txt
+root@edd51c718576:/app# cat /tmp/briefs.txt
+11:## Investigation Brief 01 — Ledger Sourcing
+26:## Investigation Brief 01 — Ledger Sourcing — supporting chronology
+214:## Investigation Brief 02 — Status Precedence
+222:## Investigation Brief 02 — Status Precedence — supporting chronology
+384:## Investigation Brief 03 — Compliance Mail Timing
+393:## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+555:## Investigation Brief 04 — Correction Notice Precedence
+564:## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+672:## Investigation Brief 05 — Meeting Amendments and Owners
+680:## Investigation Brief 05 — Meeting Amendments and Owners — supporting chronology
+856:## Investigation Brief 06 — Effective Dates on Output
+865:## Investigation Brief 06 — Effective Dates on Output — supporting chronology
+973:## Investigation Brief 07 — Exception Flags (Part I)
+983:## Investigation Brief 07 — Exception Flags (Part I) — supporting chronology
+1145:## Investigation Brief 08 — Exception Flags (Part II)
+1153:## Investigation Brief 08 — Exception Flags (Part II) — supporting chronology
+1455:## Investigation Brief 09 — Mid-Year Amendment
+1465:## Investigation Brief 09 — Mid-Year Amendment — supporting chronology
+root@edd51c718576:/app# awk -F: '{print $1"\t"$2}' /tmp/briefs.txt
+11      ## Investigation Brief 01 — Ledger Sourcing
+26      ## Investigation Brief 01 — Ledger Sourcing — supporting chronology
+214     ## Investigation Brief 02 — Status Precedence
+222     ## Investigation Brief 02 — Status Precedence — supporting chronology
+384     ## Investigation Brief 03 — Compliance Mail Timing
+393     ## Investigation Brief 03 — Compliance Mail Timing — supporting chronology
+555     ## Investigation Brief 04 — Correction Notice Precedence
+564     ## Investigation Brief 04 — Correction Notice Precedence — supporting chronology
+672     ## Investigation Brief 05 — Meeting Amendments and Owners
+680     ## Investigation Brief 05 — Meeting Amendments and Owners — supporting chronology
+856     ## Investigation Brief 06 — Effective Dates on Output
+865     ## Investigation Brief 06 — Effective Dates on Output — supporting chronology
+973     ## Investigation Brief 07 — Exception Flags (Part I)
+983     ## Investigation Brief 07 — Exception Flags (Part I) — supporting chronology
+1145    ## Investigation Brief 08 — Exception Flags (Part II)
+1153    ## Investigation Brief 08 — Exception Flags (Part II) — supporting chronology
+1455    ## Investigation Brief 09 — Mid-Year Amendment
+1465    ## Investigation Brief 09 — Mid-Year Amendment — supporting chronology
+root@edd51c718576:/app#

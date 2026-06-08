@@ -1,0 +1,117 @@
+New Terminal Output:
+};
+root@edd51c718576:/app# sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js
+function parseLedger(markdown) {
+  const start = markdown.indexOf("## Transaction Ledger");
+  if (start < 0) {
+    return [];
+  }
+  const slice = markdown.slice(start);
+  const rows = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const transactionId = lines[0].trim();
+    if (!transactionId.startsWith("TXN-")) {
+      continue;
+    }
+    if (rows.some((row) => row.transaction_id === transactionId)) {
+      continue;
+    }
+    const row = { transaction_id: transactionId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("amount:")) {
+        row.amount = Number(trimmed.split(":")[1].trim());
+      } else if (trimmed.startsWith("owner:")) {
+        row.owner = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("status:")) {
+        row.status = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("date:")) {
+        row.date = trimmed.split(":")[1].trim();
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+
+module.exports = { parseLedger };
+root@edd51c718576:/app# sed -n '1,320p' /app/audit-extractor/src/parser/corrections.js
+function parseCorrections(markdown) {
+  const start = markdown.indexOf("## Correction Notices");
+  const end = markdown.indexOf("## Transaction Ledger");
+  const slice =
+    start >= 0 && end > start ? markdown.slice(start, end) : "";
+  const notices = [];
+  const blocks = slice.split(/^### /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split("\n");
+    const noticeId = lines[0].trim();
+    if (!noticeId.startsWith("CORR-")) {
+      continue;
+    }
+    const entry = { notice_id: noticeId };
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("targets:")) {
+        entry.transaction_id = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("field:")) {
+        entry.field = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("value:")) {
+        entry.value = trimmed.split(":")[1].trim();
+      } else if (trimmed.startsWith("effective:")) {
+        entry.effective = trimmed.split(":")[1].trim();
+      }
+    }
+    notices.push(entry);
+  }
+  return notices;
+}
+
+module.exports = { parseCorrections };
+root@edd51c718576:/app# grep -n "^## Email" /app/data/audit_archive.md | head -n 50
+200:## Email Excerpts (archived thread)
+1732:## Email Excerpts
+root@edd51c718576:/app# grep -n "compliance@" /app/data/audit_archive.md | tail -n 30
+204:From: compliance@corp.internal
+209:From: compliance@corp.internal
+220:contains `compliance@` anywhere in the address; ignore all other senders.
+977:when final status is `rejected`, a qualifying `compliance@` email referenced
+1830:compliance@ senders or transaction ids.
+1849:revaluation lag staffing gaps. This email does not reference compliance@
+1928:sampling mismatch staffing gaps. This email does not reference compliance@
+1960:onboarding backlog staffing gaps. This email does not reference compliance@
+1967:revaluation lag staffing gaps. This email does not reference compliance@
+2006:wire cutoff failures staffing gaps. This email does not reference compliance@
+2045:compliance@ senders or transaction ids.
+2231:compliance@ senders or transaction ids.
+2250:obsolescence reserve staffing gaps. This email does not reference compliance@
+2260:From: compliance@corp.internal
+2397:compliance@ senders or transaction ids.
+2444:sampling mismatch staffing gaps. This email does not reference compliance@
+2517:wire cutoff failures staffing gaps. This email does not reference compliance@
+2597:wire cutoff failures staffing gaps. This email does not reference compliance@
+2600:From: compliance@audit.corp
+2604:From: compliance@corp.internal
+2653:compliance@ senders or transaction ids.
+2753:compliance@ senders or transaction ids.
+2778:onboarding backlog staffing gaps. This email does not reference compliance@
+2817:wire cutoff failures staffing gaps. This email does not reference compliance@
+2873:From: compliance@corp.internal
+2878:From: compliance@corp.internal
+root@edd51c718576:/app# grep -n "sent:" /app/data/audit_archive.md | tail -n 30
+206:sent: 2020-01-01
+211:sent: 2024-01-01
+388:`sent: YYYY-MM-DD`, apply the status change only if sent is greater than or
+389:equal to the ledger date for that transaction. When no `sent:` line is present,
+978:that transaction, and that email block includes a `sent:` line. The sent-date
+1459:only, compare each qualifying email's `sent:` date against the transaction's
+2262:sent: 2024-06-15
+2606:sent: 2024-08-15
+2875:sent: 2024-08-10
+2880:sent: 2024-09-01
+root@edd51c718576:/app# grep -n "## Email" /app/data/audit_archive.md | tail -n 20
+200:## Email Excerpts (archived thread)
+1732:## Email Excerpts
+root@edd51c718576:/app#

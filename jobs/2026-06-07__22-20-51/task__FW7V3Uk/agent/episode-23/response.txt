@@ -1,0 +1,27 @@
+{
+  "analysis": "We still need to implement winning correction selection and Brief 09 hold timing. The brief outputs weren’t shown (terminal currently only shows a generic line), so we should re-run sed on the briefs with line numbers and search within them for key rules (precedence, winning, effective ordering, hold timing). Once we have the rule text, we can modify normalize/reconcile.js and normalize/exceptions.js accordingly. Currently reconcile applies all corrections in notice_id order, leading to multiple report entries for same field and wrong retroactive_review detection. Also complianceSentByTxn is stored but not used with sent-date comparison.",
+  "plan": "1) Print relevant parts of Brief 04 and Brief 09 around keywords to capture the precise rules using grep and sed (since file is local). 2) Based on those rules, rewrite normalize/reconcile.js to: compute winners per txn+field; apply only winners; apply in effective date order; record previous_value correctly; return context indicating which transactions had winning status correction. 3) Rewrite normalize/exceptions.js compliance_hold logic to use sent-date comparison per Brief 09. 4) Re-run extractor and confirm reconciliation_report.jsonl now contains only winning corrections and exceptions updated. 5) Run final extraction to /app/output.",
+  "commands": [
+    {
+      "keystrokes": "nl -ba /tmp/brief_04.md | sed -n '1,260p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /tmp/brief_09.md | sed -n '1,320p'\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"precedence|winner|winning|supersed|effective\" /tmp/brief_04.md | head -n 80\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"hold|compliance|sent|timing|compare|amend\" /tmp/brief_09.md | head -n 120\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "grep -nEi \"Correction\" /tmp/brief_04.md | head -n 40\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

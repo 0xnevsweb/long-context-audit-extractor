@@ -1,0 +1,103 @@
+New Terminal Output:
+
+root@57a25f8d12e0:/app# sed -n '1,220p' /app/audit-extractor/src/output/reportWriter.js
+const fs = require("node:fs");
+
+function writeReconciliationReport(filePath, report) {
+  const body = report.map((row) => JSON.stringify(row)).join("\n");
+  fs.writeFileSync(filePath, body ? `${body}\n` : "");
+}
+
+module.exports = { writeReconciliationReport };
+root@57a25f8d12e0:/app# cat > /app/audit-extractor/src/output/reportWriter.js <<'EOF'
+> const fs = require("node:fs");
+> const { sortByNoticeId } = require("../utils/sort");
+>
+> function writeReconciliationReport(filePath, report) {
+>   const sorted = sortByNoticeId([...report]);
+>   const body = sorted.map((row) => JSON.stringify(row)).join("\n");
+>   fs.writeFileSync(filePath, body ? `${body}\n` : "");
+> }
+>
+> module.exports = { writeReconciliationReport };
+> EOF
+root@57a25f8d12e0:/app# sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js
+const { sortByTransactionId } = require("../utils/sort");
+
+const STATUS_ORDER = { pending: 0, approved: 1, rejected: 2, reversed: 3 };
+
+function reconcileTransactions(parsed) {
+  const byId = new Map();
+  for (const row of parsed.ledger) {
+    byId.set(row.transaction_id, { ...row });
+  }
+
+  for (const meeting of parsed.meetings) {
+    const target = byId.get(meeting.transaction_id);
+    if (target) {
+      target.owner = meeting.owner;
+    }
+  }
+
+  for (const email of parsed.emails) {
+    const target = byId.get(email.transaction_id);
+    if (target) {
+      target.status = email.status;
+    }
+  }
+
+  const report = [];
+  for (const notice of parsed.corrections) {
+    const target = byId.get(notice.transaction_id);
+    if (!target) {
+      continue;
+    }
+    if (notice.field === "owner") {
+      target.owner = notice.value;
+    } else if (notice.field === "status") {
+      target.status = notice.value;
+    } else if (notice.field === "date") {
+      target.date = notice.value;
+    }
+    report.push({
+      notice_id: notice.notice_id,
+      transaction_id: notice.transaction_id,
+      field: notice.field,
+      previous_value: "",
+      new_value: notice.value,
+      effective: notice.effective,
+    });
+  }
+
+  const items = sortByTransactionId(
+    [...byId.values()].map((row) => ({
+      transaction_id: row.transaction_id,
+      owner: row.owner,
+      status: String(row.status).toLowerCase(),
+      effective_date: row.date,
+      amount_usd: Number(row.amount),
+      exception_reason: null,
+    })),
+  );
+
+  return { items, report };
+}
+
+module.exports = { reconcileTransactions, STATUS_ORDER };
+root@57a25f8d12e0:/app# sed -n '1,200p' /app/audit-extractor/src/normalize/exceptions.js
+function buildExceptions(items) {
+  return items.filter((row) => row.exception_reason);
+}
+
+module.exports = { buildExceptions };
+root@57a25f8d12e0:/app# node /app/audit-extractor/src/cli.js extract --input /app/data/audit_archive.md --outdir /tmp/out_smoke 2>/tmp/smoke_err.txt || true; ec
+ho "exit:$?"; ls -la /tmp/out_smoke; head -n 5 /tmp/smoke_err.txt || true
+exit:0
+total 24
+drwxr-xr-x 2 root root 4096 Jun  8 05:10 .
+drwxrwxrwt 1 root root 4096 Jun  8 05:10 ..
+-rw-r--r-- 1 root root   17 Jun  8 05:10 exceptions.json
+-rw-r--r-- 1 root root    0 Jun  8 05:10 reconciliation_report.jsonl
+-rw-r--r-- 1 root root 2502 Jun  8 05:10 transactions.csv
+-rw-r--r-- 1 root root 7398 Jun  8 05:10 transactions.json
+root@57a25f8d12e0:/app#

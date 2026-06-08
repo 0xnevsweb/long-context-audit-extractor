@@ -1,0 +1,19 @@
+{
+  "analysis": "We now have authoritative rules:\n- Exception flags (Brief 07): exception_reason null unless codes apply; over_limit when amount_usd>10000; compliance_hold when final status rejected AND there is a qualifying compliance@ email referencing txn AND that email block includes sent: line; sent-date comparison defined in Brief 09; join multiple reasons with semicolons in lexical order.\n- Brief 09: for compliance_hold only, compare qualifying email sent date against transaction ledger date immediately before corrections applied (after ledger load + meeting amendments + compliance mail merges, before any correction changes date/status).\n- Brief 04 line around 556: greatest effective date wins; previous_value definition is there. Need to inspect around line ~540-575 to capture full correction precedence rule. Also Brief 01 mentions ignore provisional ledger rows. We must update parsers accordingly (ledger ignore provisional), emails parser must also parse sent: date and filter From contains compliance@. Reconcile must use status precedence order (pending<approved<rejected<reversed) when applying emails/corrections? And corrections selection: winning notice per txn+field by greatest effective date (tie-breaking maybe by notice_id). Also exception_reason needs policy_waiver (Brief 07 cont) and maybe another flag at line 1155 (reversed & amount>5000 & winning correction...). Need to open around 530-575 and 840-880 and 1145-1165.",
+  "plan": "1) Inspect Brief 04 correction rules around line 540-575 to get full precedence/tie-break and previous_value computation. 2) Inspect around line 840-875 for winning correction notice application and field mapping (date/status/owner) and overlay order. 3) Inspect around line 1145-1160 for additional exception flags (policy_waiver and maybe correction-related). 4) Then implement code changes: parseEmails should capture sent date; ledger parser should skip provisional true blocks; reconcile should apply overlays in correct order and status precedence; compute winning corrections and report lines with previous_value; build exception_reason codes and output files per spec; fix writers and sorting for determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '520,590p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '830,900p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1125,1170p' /tmp/briefs_01_09.md\n",
+      "duration": 0.1
+    }
+  ],
+  "task_complete": false
+}

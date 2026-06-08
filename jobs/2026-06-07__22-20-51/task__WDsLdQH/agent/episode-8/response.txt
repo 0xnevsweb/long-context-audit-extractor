@@ -1,0 +1,35 @@
+{
+  "analysis": "Policy parsing is clearly wrong/incomplete: it just finds the first occurrence of '## Policy Exceptions' which will match the draft section at line ~788, not the authoritative one at ~2883. It also only collects transaction IDs and ignores required condition approved_by: compliance (Brief 08) and likely other fields. Meetings parser scans entire markdown for amendments and may also pick up draft/non-authoritative sections unless briefs specify otherwise. We still need to inspect sections.js (how archive is sliced), ledger.js, corrections.js, emails.js, and reconcile.js to implement the correct rules and to ensure authoritative sections are parsed.\n\nKey next fix: change parsers to target authoritative headings exactly (e.g., '^## Policy Exceptions$' not the draft variant) and parse structured blocks with fields.",
+  "plan": "1) View sections.js, ledger.js, corrections.js, emails.js, and reconcile.js to see current logic and how parsed content is passed. 2) Update sections.js to extract authoritative slices by regex on exact headings ('## Policy Exceptions', '## Correction Notices', '## Transaction Ledger') and avoid '(draft)' and '(working copy)'. Alternatively, pass full markdown but make each parser locate exact authoritative heading with line-based parsing.\n3) Update policy parser to parse each exception block and record transaction_id and approved_by.\n4) Ensure emails parser only reads authoritative email section (not 'Email Excerpts (archived thread)' which is explicitly non-authoritative).\n5) After parser fixes, update reconcile logic to apply overlays and generate report; then compute exception flags and fix writers.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/sections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/parser/ledger.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/corrections.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,360p' /app/audit-extractor/src/parser/emails.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '1,260p' /app/audit-extractor/src/normalize/reconcile.js\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2865,2920p'\n",
+      "duration": 1
+    },
+    {
+      "keystrokes": "nl -ba /app/data/audit_archive.md | sed -n '2920,2965p'\n",
+      "duration": 1
+    }
+  ],
+  "task_complete": false
+}

@@ -1,0 +1,31 @@
+{
+  "analysis": "We didn’t get the diagnostic parse counts output (likely scrolled off), but we now have evidence in /tmp/brief_rules.txt that Brief 08 defines exception flags, and Brief 09 excerpt is present. We need to directly view Briefs 01–08 rule paragraphs (not supporting chronology) to implement. Particularly: Brief 01 ledger sourcing (provisional, decoy ledgers), Brief 03 mail-driven status changes and dedupe/timing, Brief 04 correction precedence and 'winning' notice concept, Brief 05 meeting owner override rules (signed vs unsigned), Briefs 06–08 exception flags definitions including compliance_hold and policy_waiver. Next step: open /tmp/brief_rules.txt around each brief header to read the rule lines; then implement reconcile.js and exceptions.js accordingly. Also need to re-run the diagnostic node snippet again after to confirm corrections/emails parsed and report non-empty.",
+  "plan": "1) Print concise rule parts from /tmp/brief_rules.txt for Briefs 01–08: show from each header until the next header or 40-80 lines, focusing on the initial rule statement (not supporting chronology). 2) Re-run the parse diagnostic node snippet to confirm parser counts for corrections etc. 3) Rewrite normalize/reconcile.js and normalize/exceptions.js based on extracted rules: deterministic, correct precedence, and hold timing per Brief 09. 4) Run extractor into /app/output and verify outputs + determinism.",
+  "commands": [
+    {
+      "keystrokes": "sed -n '1,120p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '120,260p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '260,420p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '420,620p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "sed -n '620,760p' /tmp/brief_rules.txt\n",
+      "duration": 0.1
+    },
+    {
+      "keystrokes": "node - <<'NODE'\nconst fs = require('node:fs');\nconst { parseArchive } = require('/app/audit-extractor/src/parser/sections');\nconst md = fs.readFileSync('/app/data/audit_archive.md','utf8');\nconst p = parseArchive(md);\nconsole.log({\n  ledger: p.ledger.length,\n  meetings: p.meetings.length,\n  emails: p.emails.length,\n  corrections: p.corrections.length,\n  policyExceptions: p.policyExceptions.size,\n});\nconsole.log('emails last 3', p.emails.slice(-3));\nconsole.log('corrections last 3', p.corrections.slice(-3));\nNODE\n",
+      "duration": 1.0
+    }
+  ],
+  "task_complete": false
+}
